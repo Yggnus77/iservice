@@ -1,3 +1,18 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iService – testes</title>
-<style>body{font-family:system-ui,sans-serif;background:#0A1F44;color:#fff;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}main{text-align:center;padding:24px}a{display:block;margin:14px auto;padding:16px 28px;border-radius:14px;font-weight:700;text-decoration:none;max-width:260px}.c{background:#0052CC;color:#fff}.p{background:#FF8A00;color:#0A1F44}</style></head>
-<body><main><h1>iService</h1><p>Versão de teste</p><a class="c" href="cliente/">App Cliente</a><a class="p" href="profissional/">App Profissional</a></main></body></html>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iService</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{font-family:Montserrat,system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;flex-direction:column;background:#0A1F44}
+.arte{position:relative;width:100%;aspect-ratio:3/2;background:url(fundo.jpg) center/cover no-repeat}
+.arte::after{content:"";position:absolute;inset:auto 0 0 0;height:35%;background:linear-gradient(180deg,rgba(10,31,68,0),#0A1F44)}
+main{padding:20px 20px 40px;text-align:center;max-width:460px;width:100%;align-self:center;margin-top:auto;margin-bottom:auto}
+h1,p{text-shadow:0 2px 12px rgba(10,31,68,.9)}h1{font-size:22px;margin:0 0 6px}p{margin:0 0 22px;opacity:.9;font-weight:500}
+a{display:block;margin:12px 0;padding:16px 20px;border-radius:14px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.c{background:#0052CC;color:#fff}.p{background:#FF8A00;color:#0A1F44}
+small{display:block;margin-top:14px;opacity:.75}
+@media (min-width:900px){
+ body{background:linear-gradient(180deg,rgba(10,31,68,0) 0%,rgba(10,31,68,0) 55%,rgba(10,31,68,.85) 78%,#0A1F44 100%),url(fundo.jpg) center top/cover no-repeat #0A1F44}
+ .arte{display:none}main{margin-top:auto;margin-bottom:0}
+}
+</style></head>
+<body><div class="arte" role="img" aria-label="iService: conectando pessoas a profissionais de confiança"></div><main><h1>Conectando pessoas a profissionais de confiança</h1><p>Versão de teste</p><a class="c" href="cliente/">Sou cliente</a><a class="p" href="profissional/">Sou profissional</a><small>Brasília e Entorno</small></main></body></html>
