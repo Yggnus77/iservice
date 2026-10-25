@@ -1,0 +1,12 @@
+# Flutter/Dart
+.dart_tool/
+build/
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# Chaves locais (nunca versionar)
+config/*.json
+!config/exemplo.json
+.env
