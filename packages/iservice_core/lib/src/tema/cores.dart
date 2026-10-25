@@ -42,6 +42,22 @@ abstract final class Cores {
   );
   static const gradienteAzul = LinearGradient(colors: [Color(0xFF1A6CF0), Color(0xFF0046B8)]);
   static const gradienteLaranja = LinearGradient(colors: [Color(0xFFFFA133), Color(0xFFFF7A00)]);
+
+  /// Imagem da marca (Brasília, logo e profissionais).
+  static const imagemFundo = AssetImage('assets/fundo.jpg', package: 'iservice_core');
+
+  /// Fundo das áreas escuras da marca: a imagem com uma camada azul-escura por cima,
+  /// para o texto branco continuar legível. [escurecer] vai de 0 (só a imagem) a 1.
+  static BoxDecoration fundoMarca({double escurecer = .78, BorderRadius? raio, Alignment alinhamento = Alignment.center}) => BoxDecoration(
+        color: azulEscuro,
+        borderRadius: raio,
+        image: DecorationImage(
+          image: imagemFundo,
+          fit: BoxFit.cover,
+          alignment: alinhamento,
+          colorFilter: ColorFilter.mode(azulEscuro.withValues(alpha: escurecer), BlendMode.srcOver),
+        ),
+      );
 }
 
 /// Cores que mudam entre o app Cliente (azul) e o Profissional (laranja).

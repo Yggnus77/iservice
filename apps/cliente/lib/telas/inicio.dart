@@ -31,7 +31,7 @@ class TelaInicio extends ConsumerWidget {
         child: CustomScrollView(slivers: [
           SliverToBoxAdapter(
             child: Container(
-              decoration: const BoxDecoration(gradient: Cores.gradienteMarca),
+              decoration: Cores.fundoMarca(alinhamento: Alignment.topCenter),
               padding: EdgeInsets.fromLTRB(Medidas.margemTela, MediaQuery.paddingOf(context).top + 12, 8, 24),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [

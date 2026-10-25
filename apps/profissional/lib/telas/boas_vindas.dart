@@ -9,7 +9,7 @@ class TelaAbertura extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: DecoratedBox(
-          decoration: const BoxDecoration(gradient: Cores.gradienteMarca),
+          decoration: Cores.fundoMarca(escurecer: .7),
           child: Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const LogoIService(tamanho: 40, claro: true),
@@ -41,8 +41,7 @@ class TelaBoasVindas extends StatelessWidget {
       (Symbols.emoji_events_rounded, 'Bom trabalho aparece', 'Os mais bem avaliados ficam no topo.'),
     ];
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: Cores.gradienteMarca),
+      body: FundoMarca(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(Medidas.margemTela),

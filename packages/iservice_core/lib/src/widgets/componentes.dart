@@ -478,3 +478,31 @@ Future<T?> escolherEmLista<T>(BuildContext context, {required String titulo, req
     ),
   );
 }
+
+/// Tela cheia com a imagem da marca: Brasília aparece no alto e vai escurecendo
+/// até o azul da marca, onde ficam os textos.
+class FundoMarca extends StatelessWidget {
+  const FundoMarca({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: Cores.fundoMarca(escurecer: .35, alinhamento: Alignment.topCenter),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0, .3, .55, 1],
+              colors: [
+                Cores.azulEscuro.withValues(alpha: .25),
+                Cores.azulEscuro.withValues(alpha: .7),
+                Cores.azulEscuro.withValues(alpha: .93),
+                Cores.azulEscuro.withValues(alpha: .97),
+              ],
+            ),
+          ),
+          child: child,
+        ),
+      );
+}

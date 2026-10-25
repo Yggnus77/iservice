@@ -52,7 +52,7 @@ class _TelaGanhosState extends ConsumerState<TelaGanhos> {
             data: (g) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(gradient: Cores.gradienteMarca, borderRadius: BorderRadius.circular(Medidas.raioCartao)),
+                decoration: Cores.fundoMarca(raio: BorderRadius.circular(Medidas.raioCartao)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(
                     switch (_periodo) { 'semana' => 'Nesta semana', 'ano' => 'Neste ano', _ => 'Neste mês' },

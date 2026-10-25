@@ -31,7 +31,7 @@ class TelaPainel extends ConsumerWidget {
         },
         child: ListView(padding: EdgeInsets.zero, children: [
           Container(
-            decoration: const BoxDecoration(gradient: Cores.gradienteMarca),
+            decoration: Cores.fundoMarca(alinhamento: Alignment.topCenter),
             padding: EdgeInsets.fromLTRB(Medidas.margemTela, MediaQuery.paddingOf(context).top + 12, 8, 20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [

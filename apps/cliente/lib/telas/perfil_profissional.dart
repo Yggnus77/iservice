@@ -71,7 +71,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
           ],
           flexibleSpace: FlexibleSpaceBar(
             background: DecoratedBox(
-              decoration: const BoxDecoration(gradient: Cores.gradienteMarca),
+              decoration: Cores.fundoMarca(alinhamento: Alignment.topCenter),
               child: SafeArea(
                 child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
                   Avatar(nome: p.nome, url: p.fotoUrl, tamanho: 96, online: p.disponivel),
