@@ -15,4 +15,5 @@ export 'src/util/validacao.dart';
 export 'src/widgets/componentes.dart';
 export 'src/telas/chat.dart';
 export 'src/telas/notificacoes.dart';
+export 'src/telas/meus_dados.dart';
 export 'src/dados/profissional_repo.dart';

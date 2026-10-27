@@ -217,10 +217,14 @@ class MeuPerfil {
     this.fotoUrl,
     this.codigoIndicacao,
     this.profissional,
+    this.exclusaoSolicitadaEm,
   });
   final String id;
   final String nome;
   final String? email;
+
+  /// Quando o usuário pediu para excluir a conta (null = conta ativa).
+  final DateTime? exclusaoSolicitadaEm;
   final String? telefone;
   final String? cpf;
   final DateTime? nascimento;
@@ -255,6 +259,7 @@ class MeuPerfil {
       enderecos: [for (final e in (j['enderecos'] as List? ?? const [])) Endereco.fromJson(e)],
       profissional: j['profissional'] == null ? null : MeuCadastroProfissional.fromJson(j['profissional']),
       pontos: (j['pontos'] as num?)?.toInt() ?? 0,
+      exclusaoSolicitadaEm: p['exclusao_solicitada_em'] == null ? null : DateTime.parse(p['exclusao_solicitada_em']),
     );
   }
 }

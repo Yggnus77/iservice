@@ -115,6 +115,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/pedido/:id/avaliar', builder: (_, e) => TelaAvaliar(pedidoId: e.pathParameters['id']!)),
       GoRoute(path: '/notificacoes', builder: (context, _) => TelaNotificacoes(aoAbrirPedido: (id) => context.push('/pedido/$id'))),
+      GoRoute(path: '/meus-dados', builder: (_, _) => const TelaMeusDados()),
       GoRoute(path: '/enderecos', builder: (_, _) => const TelaEnderecos()),
     ],
   );

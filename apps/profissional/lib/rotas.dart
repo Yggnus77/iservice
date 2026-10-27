@@ -94,6 +94,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/notificacoes', builder: (context, _) => TelaNotificacoes(aoAbrirPedido: (id) => context.push('/pedido/$id'))),
+      GoRoute(path: '/meus-dados', builder: (_, _) => const TelaMeusDados()),
     ],
   );
 });

@@ -119,6 +119,23 @@ class ContaRepo {
 
   Future<void> sair() => _tentar(() => _db.auth.signOut());
 
+  /// Pede a exclusão da conta. Confere a senha antes; a conta sai do ar na hora
+  /// e os dados são apagados em até 30 dias. Devolve a data prevista.
+  Future<DateTime> solicitarExclusao({required String senha, String? motivo}) => _tentar(() async {
+        final email = _db.auth.currentUser?.email;
+        if (email == null) throw const ErroIService('Entre na sua conta para continuar.');
+        try {
+          await _db.auth.signInWithPassword(email: email, password: senha);
+        } on AuthException {
+          throw const ErroIService('Senha incorreta.', codigo: 'senha_incorreta');
+        }
+        final r = await _db.rpc('solicitar_exclusao_conta', params: {'p_motivo': motivo});
+        await _db.auth.signOut();
+        return DateTime.parse(r as String).toLocal();
+      });
+
+  Future<void> cancelarExclusao() => _tentar(() => _db.rpc('cancelar_exclusao_conta'));
+
   Future<MeuPerfil?> meuPerfil() => _tentar(() async {
         if (usuarioId == null) return null;
         final r = await _db.rpc('meu_perfil');

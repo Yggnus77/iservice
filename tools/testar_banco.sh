@@ -11,7 +11,7 @@ create schema public;
 grant usage on schema public to anon, authenticated, service_role;
 grant all on schema public to postgres, service_role;
 delete from auth.users;
-select cron.unschedule(jobid) from cron.job where jobname = 'iservice-expirar-pedidos';
+select cron.unschedule(jobid) from cron.job where jobname in ('iservice-expirar-pedidos', 'iservice-excluir-contas');
 SQL
 for f in supabase/migrations/*.sql; do
   psql "$DB" -q -v ON_ERROR_STOP=1 -f "$f" 2>&1 | grep -v 'already exists, skipping' || true

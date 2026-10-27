@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Barra inferior fixa: Início, Explorar, Pedidos, Favoritos e Perfil.
@@ -17,7 +18,7 @@ class ShellCliente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: nav,
+        body: VigiaExclusaoConta(child: nav),
         bottomNavigationBar: DecoratedBox(
           decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).dividerTheme.color!))),
           child: NavigationBar(

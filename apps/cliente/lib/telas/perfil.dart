@@ -72,6 +72,14 @@ class TelaPerfil extends ConsumerWidget {
             Card(
               child: Column(children: [
                 ListTile(
+                  leading: const Icon(Symbols.badge_rounded),
+                  title: const Text('Meus dados'),
+                  subtitle: p.exclusaoSolicitadaEm == null ? null : Text('Exclusão agendada', style: TextStyle(color: c.perigo)),
+                  trailing: const Icon(Symbols.chevron_right_rounded),
+                  onTap: () => context.push('/meus-dados'),
+                ),
+                const Divider(indent: 56),
+                ListTile(
                   leading: const Icon(Symbols.location_on_rounded),
                   title: const Text('Meus endereços'),
                   subtitle: Text('${p.enderecos.length} salvo${p.enderecos.length == 1 ? '' : 's'}'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
@@ -21,7 +22,7 @@ class ShellProfissional extends ConsumerWidget {
       (Symbols.person_rounded, 'Perfil', 0),
     ];
     return Scaffold(
-      body: nav,
+      body: VigiaExclusaoConta(child: nav),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).dividerTheme.color!))),
         child: NavigationBar(

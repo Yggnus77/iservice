@@ -89,6 +89,13 @@ class TelaPerfilPro extends ConsumerWidget {
               const SizedBox(height: 16),
               _Grupo(titulo: 'Conta', itens: [
                 ListTile(
+                  leading: const Icon(Symbols.badge_rounded),
+                  title: const Text('Meus dados'),
+                  subtitle: p.exclusaoSolicitadaEm == null ? null : Text('Exclusão agendada', style: TextStyle(color: c.perigo)),
+                  trailing: const Icon(Symbols.chevron_right_rounded),
+                  onTap: () => context.push('/meus-dados'),
+                ),
+                ListTile(
                   leading: const Icon(Symbols.notifications_rounded),
                   title: const Text('Notificações'),
                   trailing: const Icon(Symbols.chevron_right_rounded),

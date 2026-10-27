@@ -249,4 +249,40 @@ select pg_temp.ok(exists (select 1 from public.buscar_profissionais('eletricista
   'horário combinado aceito não esconde o profissional antes da hora');
 select pg_temp.admin();
 
+-- Exclusão de conta: pedido pelo app, saída das buscas e exclusão em 30 dias.
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  perform public.solicitar_exclusao_conta();
+  raise exception 'FALHOU: exclusão com pedido em andamento';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - não exclui a conta com pedido em andamento';
+end $$;
+select pg_temp.admin();
+insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000c9', 'sai@teste.com', '{"nome":"Sem Pedidos","app":"cliente"}');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c9');
+select pg_temp.ok(public.solicitar_exclusao_conta('teste')::date = (now() + interval '30 days')::date, 'exclusão marcada para daqui a 30 dias');
+select public.cancelar_exclusao_conta();
+select pg_temp.admin();
+select pg_temp.ok((select exclusao_solicitada_em is null from public.perfis where id = '00000000-0000-0000-0000-0000000000c9'), 'usuário pode cancelar a exclusão');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c9');
+select public.solicitar_exclusao_conta();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a2');
+select public.solicitar_exclusao_conta();
+do $$ begin
+  perform public.definir_disponivel(true);
+  raise exception 'FALHOU: voltou a ficar disponível';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - com exclusão pendente o profissional não volta às buscas';
+end $$;
+select pg_temp.admin();
+select pg_temp.ok(public.excluir_contas_vencidas() = 0, 'nada é apagado antes do prazo');
+update public.perfis set exclusao_solicitada_em = now() - interval '31 days'
+where id in ('00000000-0000-0000-0000-0000000000c9', '00000000-0000-0000-0000-0000000000a2');
+select pg_temp.ok(public.excluir_contas_vencidas() = 2, 'contas vencidas são processadas');
+select pg_temp.ok(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000c9')
+  and not exists (select 1 from public.perfis where id = '00000000-0000-0000-0000-0000000000c9'), 'conta sem histórico é apagada por inteiro');
+select pg_temp.ok((select nome = 'Conta excluída' and cpf is null and telefone is null and foto_url is null and email is null and excluido_em is not null
+  from public.perfis where id = '00000000-0000-0000-0000-0000000000a2'), 'conta com histórico tem os dados pessoais apagados');
+select pg_temp.ok((select email is null and encrypted_password = '' from auth.users where id = '00000000-0000-0000-0000-0000000000a2'), 'conta excluída não consegue mais entrar');
+select pg_temp.ok(exists (select 1 from public.pedidos where profissional_id = '00000000-0000-0000-0000-0000000000a2' and status = 'concluido'),
+  'pedidos concluídos ficam guardados sem os dados pessoais');
+
 rollback;
