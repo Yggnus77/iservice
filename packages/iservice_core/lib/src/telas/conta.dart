@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../config.dart';
 import '../dados/modelos.dart';
+import '../dados/repositorios.dart';
 import '../estado/cadastro.dart';
 import '../estado/provedores.dart';
 import '../tema/cores.dart';
@@ -113,9 +114,28 @@ class _TelaEntrarState extends ConsumerState<TelaEntrar> {
       await ref.read(rascunhoCadastroProvider.notifier).aplicarGuardado();
       if (mounted) widget.aoEntrar();
     } catch (e) {
-      if (mounted) mostrarErro(context, e);
+      if (!mounted) return;
+      if (ErroIService.de(e).codigo == 'email_nao_confirmado') {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: const Text('Confirme seu e-mail pelo link que enviamos.'),
+            action: SnackBarAction(label: 'Reenviar', onPressed: _reenviar),
+          ));
+      } else {
+        mostrarErro(context, e);
+      }
     } finally {
       if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  Future<void> _reenviar() async {
+    try {
+      await ref.read(contaRepo).reenviarConfirmacao(_email.text, app: ref.read(appProvider));
+      if (mounted) mostrarMensagem(context, 'Enviamos um novo link para ${_email.text.trim()}.');
+    } catch (e) {
+      if (mounted) mostrarErro(context, e);
     }
   }
 
@@ -125,7 +145,7 @@ class _TelaEntrarState extends ConsumerState<TelaEntrar> {
       return;
     }
     try {
-      await ref.read(contaRepo).recuperarSenha(_email.text);
+      await ref.read(contaRepo).recuperarSenha(_email.text, app: ref.read(appProvider));
       if (mounted) mostrarMensagem(context, 'Enviamos um link para ${_email.text.trim()}.');
     } catch (e) {
       if (mounted) mostrarErro(context, e);
@@ -553,10 +573,29 @@ class _PassoContaState extends ConsumerState<PassoConta> {
 }
 
 /// Aviso de "confirme seu e-mail".
-class TelaConfirmarEmail extends StatelessWidget {
+class TelaConfirmarEmail extends ConsumerStatefulWidget {
   const TelaConfirmarEmail({super.key, required this.email, required this.aoIrParaEntrar});
   final String email;
   final VoidCallback aoIrParaEntrar;
+
+  @override
+  ConsumerState<TelaConfirmarEmail> createState() => _TelaConfirmarEmailState();
+}
+
+class _TelaConfirmarEmailState extends ConsumerState<TelaConfirmarEmail> {
+  bool _enviando = false;
+
+  Future<void> _reenviar() async {
+    setState(() => _enviando = true);
+    try {
+      await ref.read(contaRepo).reenviarConfirmacao(widget.email, app: ref.read(appProvider));
+      if (mounted) mostrarMensagem(context, 'Enviamos um novo link. Confira também o spam.');
+    } catch (e) {
+      if (mounted) mostrarErro(context, e);
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -564,9 +603,10 @@ class TelaConfirmarEmail extends StatelessWidget {
           child: EstadoVazio(
             icone: Symbols.mark_email_unread_rounded,
             titulo: 'Confirme seu e-mail',
-            texto: 'Enviamos um link para $email. Toque nele e depois entre no app: seus dados já estão guardados.',
+            texto: 'Enviamos um link para ${widget.email}. Toque nele e depois entre no app: seus dados já estão guardados.',
             acao: 'Já confirmei, entrar',
-            aoTocarAcao: aoIrParaEntrar,
+            aoTocarAcao: widget.aoIrParaEntrar,
+            rodape: TextButton(onPressed: _enviando ? null : _reenviar, child: const Text('Não recebi, reenviar')),
           ),
         ),
       );

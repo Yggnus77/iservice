@@ -13,6 +13,11 @@ class ConfigIService {
   /// Bucket público onde ficam fotos de perfil, portfólio e avaliações.
   static const bucketsPublicos = {'fotos', 'portfolio', 'avaliacoes'};
 
+  /// Endereço público onde ficam as versões web dos apps (links de e-mail voltam para cá).
+  static const urlSite = String.fromEnvironment('URL_SITE', defaultValue: 'https://iservice.app.br');
+
+  static String urlDoApp(AppIService app) => '$urlSite/${app.name}/';
+
   static bool get configurado => supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
   static Future<void> iniciar() async {

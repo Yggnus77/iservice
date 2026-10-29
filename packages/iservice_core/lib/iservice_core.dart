@@ -17,3 +17,7 @@ export 'src/telas/chat.dart';
 export 'src/telas/notificacoes.dart';
 export 'src/telas/meus_dados.dart';
 export 'src/dados/profissional_repo.dart';
+export 'src/telas/confirmar_celular.dart';
+export 'src/telas/nova_senha.dart';
+export 'src/push.dart';
+export 'src/widgets/mapa_ao_vivo.dart';

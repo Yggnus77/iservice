@@ -28,6 +28,7 @@ class AppProfissional extends ConsumerWidget {
       theme: temaIService(AppIService.profissional, letraGrande: letraGrande),
       darkTheme: temaIService(AppIService.profissional, brilho: Brightness.dark, letraGrande: letraGrande),
       routerConfig: ref.watch(rotasProvider),
+      builder: (_, filho) => VigiaRecuperacaoSenha(child: filho ?? const SizedBox.shrink()),
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

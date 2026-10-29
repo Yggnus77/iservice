@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Iservice Profissional</string>
+	<string>iService Pro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -65,6 +65,16 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>O iService usa sua localização para mostrar ao cliente onde você está enquanto vai até o serviço e para definir sua área de atendimento.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>O iService usa a câmera para a foto de perfil e as fotos do serviço.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O iService usa suas fotos para a foto de perfil e as fotos do serviço.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

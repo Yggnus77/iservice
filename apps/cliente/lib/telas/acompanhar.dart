@@ -123,6 +123,10 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
         _Cabecalho(p: p, aoAcabarPrazo: () => ref.invalidate(pedidosClienteProvider)),
+        if (p.status == StatusPedido.aCaminho) ...[
+          const SizedBox(height: 16),
+          MapaAoVivo(pedidoId: p.id, nomeProfissional: nome, fotoProfissional: p.outraParteFoto),
+        ],
         const SizedBox(height: 16),
         Card(
           child: Padding(

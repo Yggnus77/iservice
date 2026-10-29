@@ -309,4 +309,68 @@ select pg_temp.ok((select email is null and encrypted_password = '' from auth.us
 select pg_temp.ok(exists (select 1 from public.pedidos where profissional_id = '00000000-0000-0000-0000-0000000000a2' and status = 'concluido'),
   'pedidos concluídos ficam guardados sem os dados pessoais');
 
+
+-- Mapa ao vivo: só o profissional do pedido envia, só os dois veem, some ao chegar.
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
+select public.enviar_posicao((select pedido from t), -15.80, -47.90, 12);
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'antes de sair para o local a posição não é enviada');
+select public.avancar_pedido((select pedido from t), 'a_caminho');
+select public.enviar_posicao((select pedido from t), -15.80, -47.90, 12);
+select pg_temp.ok((select count(*) from public.posicoes_pedido where pedido_id = (select pedido from t)) = 1, 'profissional a caminho envia a posição');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select destino_lat between -16 and -15 from public.posicoes_pedido where pedido_id = (select pedido from t)), 'cliente vê a posição e o destino');
+do $$ begin
+  perform public.enviar_posicao((select pedido from t), -15.0, -47.0);
+  raise exception 'FALHOU: cliente enviou posição';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - só o profissional do pedido envia a posição';
+end $$;
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'outro profissional não vê a posição');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
+select public.avancar_pedido((select pedido from t), 'em_atendimento');
+select pg_temp.admin();
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'a posição some quando o profissional chega');
+
+-- Celular confirmado por SMS.
+-- (o banco local antigo não tem auth.users.phone: tools/testar_banco.sh cria a coluna pelo container)
+update auth.users set phone = '5561999990000', phone_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  update public.perfis set telefone_verificado = true where id = auth.uid();
+  raise exception 'FALHOU: marcou sozinho';
+exception when insufficient_privilege then raise notice 'ok - usuário não marca o celular como confirmado sozinho';
+end $$;
+select pg_temp.ok(public.confirmar_celular(), 'celular confirmado pelo SMS');
+select pg_temp.admin();
+select pg_temp.ok((select telefone = '61999990000' and telefone_verificado from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'), 'número confirmado vai para o perfil');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+update public.perfis set telefone = '61988887777' where id = auth.uid();
+select pg_temp.admin();
+select pg_temp.ok((select not telefone_verificado from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'), 'trocar o número desfaz a confirmação');
+update public.app_config set valor = 'true' where chave = 'exigir_celular_verificado';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  perform public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora');
+  raise exception 'FALHOU: pediu sem celular confirmado';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if;
+  if sqlerrm not like '%celular%' then raise exception 'FALHOU: erro inesperado %', sqlerrm; end if;
+  raise notice 'ok - com a exigência ligada, só pede quem confirmou o celular';
+end $$;
+select pg_temp.admin();
+update public.app_config set valor = 'false' where chave = 'exigir_celular_verificado';
+
+-- Push: aparelho registrado e notificação nova não quebram nada sem o Vault.
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select public.registrar_dispositivo('token-teste', 'cliente', 'android');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select public.registrar_dispositivo('token-teste', 'profissional', 'android');
+select pg_temp.admin();
+select pg_temp.ok((select usuario_id from public.dispositivos where token = 'token-teste') = '00000000-0000-0000-0000-0000000000a1', 'aparelho passa para a conta que entrou por último');
+select public.notificar('00000000-0000-0000-0000-0000000000a1', 'teste', 'Teste', 'Corpo');
+select pg_temp.ok(exists (select 1 from public.notificacoes where tipo = 'teste'), 'notificação gravada mesmo sem o envio de push configurado');
+
 rollback;

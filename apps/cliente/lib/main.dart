@@ -28,6 +28,7 @@ class AppCliente extends ConsumerWidget {
       theme: temaIService(AppIService.cliente, letraGrande: letraGrande),
       darkTheme: temaIService(AppIService.cliente, brilho: Brightness.dark, letraGrande: letraGrande),
       routerConfig: ref.watch(rotasProvider),
+      builder: (_, filho) => VigiaRecuperacaoSenha(child: filho ?? const SizedBox.shrink()),
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

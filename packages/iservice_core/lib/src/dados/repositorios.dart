@@ -29,6 +29,21 @@ class ErroIService implements Exception {
       if (m.contains('invalid login')) return const ErroIService('E-mail ou senha incorretos.', codigo: 'login');
       if (m.contains('already registered')) return const ErroIService('Este e-mail já tem conta. Entre com ele.', codigo: 'email_existe');
       if (m.contains('email not confirmed')) return const ErroIService('Confirme seu e-mail pelo link que enviamos.', codigo: 'email_nao_confirmado');
+      if (m.contains('token has expired') || m.contains('invalid otp') || m.contains('otp')) {
+        return const ErroIService('Código incorreto ou vencido. Peça um novo.', codigo: 'codigo_sms');
+      }
+      if (m.contains('phone') && (m.contains('already') || m.contains('registered'))) {
+        return const ErroIService('Este celular já está em outra conta.', codigo: 'celular_existe');
+      }
+      if (m.contains('sms') || m.contains('phone provider') || m.contains('unsupported phone')) {
+        return const ErroIService('A confirmação por SMS ainda não está disponível. Tente mais tarde.', codigo: 'sms_indisponivel');
+      }
+      if (e.statusCode == '429' || m.contains('rate limit') || m.contains('only request this after')) {
+        return const ErroIService('Muitas tentativas. Espere um minuto e tente de novo.', codigo: 'muitas_tentativas');
+      }
+      if (m.contains('same as the old') || m.contains('different from the old')) {
+        return const ErroIService('A nova senha precisa ser diferente da anterior.', codigo: 'senha_igual');
+      }
       if (m.contains('password')) return const ErroIService('Senha fraca. Use 8 caracteres com letras e números.', codigo: 'senha');
       return ErroIService(e.message);
     }
@@ -108,6 +123,7 @@ class ContaRepo {
       _tentar(() => _db.auth.signUp(
             email: email.trim(),
             password: senha,
+            emailRedirectTo: ConfigIService.urlDoApp(app),
             data: {
               'nome': nome.trim(),
               'app': app.name,
@@ -115,9 +131,42 @@ class ContaRepo {
             },
           ));
 
-  Future<void> recuperarSenha(String email) => _tentar(() => _db.auth.resetPasswordForEmail(email.trim()));
+  /// O link do e-mail abre a versão web do app, que pede a nova senha.
+  Future<void> recuperarSenha(String email, {required AppIService app}) =>
+      _tentar(() => _db.auth.resetPasswordForEmail(email.trim(), redirectTo: ConfigIService.urlDoApp(app)));
 
-  Future<void> sair() => _tentar(() => _db.auth.signOut());
+  Future<void> reenviarConfirmacao(String email, {required AppIService app}) => _tentar(
+      () => _db.auth.resend(type: OtpType.signup, email: email.trim(), emailRedirectTo: ConfigIService.urlDoApp(app)));
+
+  Future<void> definirNovaSenha(String senha) => _tentar(() => _db.auth.updateUser(UserAttributes(password: senha)));
+
+  /// Sai da conta e tira este aparelho da lista de push.
+  Future<void> sair({String? tokenPush}) => _tentar(() async {
+        if (tokenPush != null) {
+          try {
+            await _db.rpc('remover_dispositivo', params: {'p_token': tokenPush});
+          } catch (_) {}
+        }
+        await _db.auth.signOut();
+      });
+
+  Future<void> registrarDispositivo({required String token, required String app, required String plataforma}) => _tentar(
+      () => _db.rpc('registrar_dispositivo', params: {'p_token': token, 'p_app': app, 'p_plataforma': plataforma}));
+
+  /// Manda o código por SMS para confirmar o celular (DDD + número, só dígitos).
+  Future<void> enviarCodigoCelular(String telefone) =>
+      _tentar(() => _db.auth.updateUser(UserAttributes(phone: '+55${telefone.replaceAll(RegExp(r'\D'), '')}')));
+
+  /// Confere o código do SMS e marca o celular como confirmado no perfil.
+  Future<void> confirmarCodigoCelular(String telefone, String codigo) => _tentar(() async {
+        await _db.auth.verifyOTP(
+          type: OtpType.phoneChange,
+          phone: '+55${telefone.replaceAll(RegExp(r'\D'), '')}',
+          token: codigo.trim(),
+        );
+        final ok = await _db.rpc('confirmar_celular');
+        if (ok != true) throw const ErroIService('Não foi possível confirmar o celular. Tente de novo.');
+      });
 
   /// Pede a exclusão da conta. Confere a senha antes; a conta sai do ar na hora
   /// e os dados são apagados em até 30 dias. Devolve a data prevista.
@@ -326,6 +375,16 @@ class PedidosRepo {
       .eq('id', base.id)
       .where((l) => l.isNotEmpty)
       .map((l) => Pedido.daTabela(l.first, base: base));
+
+  /// Posição do profissional a caminho (some quando ele chega).
+  Stream<PosicaoAoVivo?> posicaoAoVivo(String pedidoId) => _db
+      .from('posicoes_pedido')
+      .stream(primaryKey: ['pedido_id'])
+      .eq('pedido_id', pedidoId)
+      .map((linhas) => linhas.isEmpty ? null : PosicaoAoVivo.fromJson(linhas.first));
+
+  Future<void> enviarPosicao(String pedidoId, {required double lat, required double lng, double? precisao}) => _tentar(
+      () => _db.rpc('enviar_posicao', params: {'p_pedido': pedidoId, 'p_lat': lat, 'p_lng': lng, 'p_precisao': precisao}));
 
   /// Avisa quando a lista de pedidos do usuário muda (novo pedido, mudança de status).
   Stream<void> mudancas(String papel) {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 // Modelos dos dados que vêm do backend (tabelas e funções do Supabase).
 
 double _d(Object? v) => v == null ? 0 : (v as num).toDouble();
@@ -218,6 +220,7 @@ class MeuPerfil {
     this.codigoIndicacao,
     this.profissional,
     this.exclusaoSolicitadaEm,
+    this.telefoneVerificado = false,
   });
   final String id;
   final String nome;
@@ -226,6 +229,9 @@ class MeuPerfil {
   /// Quando o usuário pediu para excluir a conta (null = conta ativa).
   final DateTime? exclusaoSolicitadaEm;
   final String? telefone;
+
+  /// Celular confirmado por SMS.
+  final bool telefoneVerificado;
   final String? cpf;
   final DateTime? nascimento;
   final String? fotoUrl;
@@ -248,6 +254,7 @@ class MeuPerfil {
       nome: p['nome'] ?? '',
       email: p['email'],
       telefone: p['telefone'],
+      telefoneVerificado: p['telefone_verificado'] ?? false,
       cpf: p['cpf'],
       nascimento: p['nascimento'] == null ? null : DateTime.parse(p['nascimento']),
       fotoUrl: p['foto_url'],
@@ -635,6 +642,46 @@ class Mensagem {
         criadaEm: DateTime.parse(j['criada_em']),
         lidaEm: _data(j['lida_em']),
       );
+}
+
+/// Onde está o profissional a caminho e para onde ele vai.
+class PosicaoAoVivo {
+  const PosicaoAoVivo({
+    required this.lat,
+    required this.lng,
+    required this.destinoLat,
+    required this.destinoLng,
+    required this.atualizadoEm,
+    this.precisaoM,
+  });
+  final double lat;
+  final double lng;
+  final double destinoLat;
+  final double destinoLng;
+  final double? precisaoM;
+  final DateTime atualizadoEm;
+
+  factory PosicaoAoVivo.fromJson(Map<String, dynamic> j) => PosicaoAoVivo(
+        lat: (j['lat'] as num).toDouble(),
+        lng: (j['lng'] as num).toDouble(),
+        destinoLat: (j['destino_lat'] as num).toDouble(),
+        destinoLng: (j['destino_lng'] as num).toDouble(),
+        precisaoM: (j['precisao_m'] as num?)?.toDouble(),
+        atualizadoEm: DateTime.parse(j['atualizado_em']),
+      );
+
+  /// Distância em linha reta até o local do serviço, em km.
+  double get distanciaKm {
+    const r = 6371.0;
+    double rad(double g) => g * math.pi / 180;
+    final dLat = rad(destinoLat - lat);
+    final dLng = rad(destinoLng - lng);
+    final a = math.pow(math.sin(dLat / 2), 2) + math.cos(rad(lat)) * math.cos(rad(destinoLat)) * math.pow(math.sin(dLng / 2), 2);
+    return 2 * r * math.asin(math.sqrt(a));
+  }
+
+  /// Estimativa simples: trajeto ~1,4x a linha reta a 25 km/h, no mínimo 1 minuto.
+  int get minutosEstimados => math.max(1, (distanciaKm * 1.4 / 25 * 60).round());
 }
 
 class Notificacao {
