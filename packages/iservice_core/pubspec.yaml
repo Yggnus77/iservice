@@ -39,6 +39,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/fundo.jpg
+    - assets/fundo-cabecalho.jpg
 
   # To add assets to your package, add an assets section, like this:
   # assets:

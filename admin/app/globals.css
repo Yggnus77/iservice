@@ -335,7 +335,7 @@ table.tabela { width: 100%; border-collapse: collapse; }
 /* Login */
 .entrar { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
 .entrar .arte {
-  background: linear-gradient(160deg, rgba(10, 31, 68, 0.86), rgba(13, 58, 140, 0.82)), url('/admin/fundo.jpg') center / cover;
+  background: linear-gradient(160deg, rgba(10, 31, 68, 0.86), rgba(13, 58, 140, 0.82)), url('/admin/fundo.jpg') left center / cover, #0a1f44;
   color: #fff; padding: 48px; display: flex; flex-direction: column; justify-content: space-between;
 }
 .entrar .arte .marca { display: flex; align-items: center; gap: 14px; }

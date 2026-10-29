@@ -495,7 +495,7 @@ Future<T?> escolherEmLista<T>(BuildContext context, {required String titulo, req
   );
 }
 
-/// Tela cheia com a imagem da marca: Brasília aparece no alto e vai escurecendo
+/// Tela cheia com a imagem da marca: o profissional aparece no alto e vai escurecendo
 /// até o azul da marca, onde ficam os textos.
 class FundoMarca extends StatelessWidget {
   const FundoMarca({super.key, required this.child});
@@ -503,7 +503,7 @@ class FundoMarca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: Cores.fundoMarca(escurecer: .35, alinhamento: Alignment.topCenter),
+        decoration: Cores.fundoMarca(escurecer: .35, alinhamento: Cores.focoFundo, imagem: Cores.imagemFundo),
         child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
