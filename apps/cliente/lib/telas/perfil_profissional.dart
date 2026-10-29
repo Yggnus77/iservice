@@ -68,6 +68,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
               onPressed: () => _alternarFavorito(favorito),
               icon: Icon(Symbols.favorite_rounded, fill: favorito ? 1 : 0, color: favorito ? const Color(0xFFFF5A6A) : Colors.white),
             ),
+            BotaoDenunciar(alvoId: p.id, alvoNome: p.nome, corIcone: Colors.white),
           ],
           flexibleSpace: FlexibleSpaceBar(
             background: DecoratedBox(

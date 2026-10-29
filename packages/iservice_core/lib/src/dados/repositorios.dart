@@ -26,6 +26,7 @@ class ErroIService implements Exception {
     }
     if (e is AuthException) {
       final m = e.message.toLowerCase();
+      if (m.contains('banned')) return const ErroIService('Sua conta está suspensa. Fale com o suporte.', codigo: 'conta_suspensa');
       if (m.contains('invalid login')) return const ErroIService('E-mail ou senha incorretos.', codigo: 'login');
       if (m.contains('already registered')) return const ErroIService('Este e-mail já tem conta. Entre com ele.', codigo: 'email_existe');
       if (m.contains('email not confirmed')) return const ErroIService('Confirme seu e-mail pelo link que enviamos.', codigo: 'email_nao_confirmado');
@@ -149,6 +150,10 @@ class ContaRepo {
         }
         await _db.auth.signOut();
       });
+
+  /// Denúncia para a equipe iService (limite de 10 por dia).
+  Future<void> denunciar({required String alvoId, required String motivo, String descricao = '', String? pedidoId}) => _tentar(
+      () => _db.rpc('denunciar', params: {'p_alvo': alvoId, 'p_motivo': motivo, 'p_descricao': descricao.trim(), 'p_pedido': pedidoId}));
 
   Future<void> registrarDispositivo({required String token, required String app, required String plataforma}) => _tentar(
       () => _db.rpc('registrar_dispositivo', params: {'p_token': token, 'p_app': app, 'p_plataforma': plataforma}));
