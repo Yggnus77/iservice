@@ -117,7 +117,9 @@ class ProfissionalRepo {
         String? caminho;
         if (arquivo != null) {
           caminho = '$_uid/certificado-${DateTime.now().millisecondsSinceEpoch}.$extensao';
-          await _db.storage.from('documentos').uploadBinary(caminho, arquivo);
+          // O bucket só aceita imagem ou PDF, então o tipo vai explícito.
+          final tipo = extensao.toLowerCase() == 'pdf' ? 'application/pdf' : 'image/jpeg';
+          await _db.storage.from('documentos').uploadBinary(caminho, arquivo, fileOptions: FileOptions(contentType: tipo));
         }
         await _db.from('certificacoes').insert({'profissional_id': _uid, 'nome': nome, 'profissao_id': profissaoId, 'arquivo_path': caminho});
       });
