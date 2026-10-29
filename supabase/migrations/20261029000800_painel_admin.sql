@@ -56,6 +56,8 @@ revoke all on function public.exigir_admin(), public.registrar_acao(text, text, 
 alter table public.perfis add column if not exists suspenso_em timestamptz;
 alter table public.perfis add column if not exists motivo_suspensao text;
 alter table public.regioes add column if not exists ativa boolean not null default true;
+-- Especialidade sugerida por profissional que a equipe já olhou (aprovada ou não).
+alter table public.especialidades add column if not exists revisada boolean not null default false;
 alter table public.avaliacoes add column if not exists oculta boolean not null default false;
 alter table public.avaliacoes add column if not exists motivo_ocultacao text;
 alter table public.emergencias add column if not exists atendida_por uuid references public.perfis (id) on delete set null;
@@ -527,7 +529,7 @@ begin
     'reclamacoes_abertas', (select count(*) from public.reclamacoes where status in ('aberta', 'em_mediacao')),
     'denuncias_abertas', (select count(*) from public.denuncias where status in ('aberta', 'em_analise')),
     'emergencias_abertas', (select count(*) from public.emergencias where atendida_em is null),
-    'especialidades_sugeridas', (select count(*) from public.especialidades where not aprovada),
+    'especialidades_sugeridas', (select count(*) from public.especialidades where not aprovada and not revisada),
     'profissionais_aprovados', (select count(*) from public.profissionais where status = 'aprovado'),
     'profissionais_disponiveis', (select count(*) from public.profissionais where status = 'aprovado' and disponivel),
     'clientes', (select count(*) from public.perfis where e_cliente and excluido_em is null),
@@ -1135,7 +1137,7 @@ begin
         case when (select count(*) from public.avaliacoes x where x.cliente_id = a.cliente_id
                    and x.criada_em between a.criada_em - interval '1 day' and a.criada_em) >= 4
           then 'Cliente fez 4+ avaliações em 24 h' end,
-        case when a.criada_em - c.criado_em < interval '1 day' then 'Conta do cliente criada há menos de 1 dia' end,
+        case when a.criada_em - c.criado_em between interval '0' and interval '1 day' then 'Conta do cliente criada há menos de 1 dia' end,
         case when a.comentario ~* '(whats|zap|wpp|insta|@[a-z0-9_.]{3,}|https?://|www\.|\d{4}[ .-]?\d{4})' then 'Comentário com contato ou link' end,
         case when exists (select 1 from public.denuncias d where d.pedido_id = a.pedido_id) then 'Pedido com denúncia' end
       ], null) as s
@@ -1299,7 +1301,7 @@ begin
   from public.especialidades e
   join public.profissoes f on f.id = e.profissao_id
   left join public.perfis pe on pe.id = e.criada_por
-  where not e.aprovada
+  where not e.aprovada and not e.revisada
   order by f.ordem, e.nome;
 end;
 $$;
