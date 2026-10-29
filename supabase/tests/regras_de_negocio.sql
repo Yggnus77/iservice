@@ -45,7 +45,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
 select pg_temp.ok((select count(*) from public.perfis) = 7, 'perfil criado junto com o usuário');
 select pg_temp.ok((select count(*) from public.profissionais) = 6, 'cadastro de profissional criado pelo app Profissional');
 
-update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'fotos/' || id || '/perfil.jpg',
+update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'https://exemplo.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
   cpf = pg_temp.cpf(lpad((row_number_cpf)::text, 9, '1'))
 from (select id as pid, row_number() over (order by id) + 100000000 as row_number_cpf from public.perfis) n where n.pid = perfis.id;
 
@@ -108,6 +108,29 @@ select public.admin_decidir_cadastro(id, true) from public.profissionais;
 select pg_temp.admin();
 update public.perfis set e_admin = false where id = '00000000-0000-0000-0000-0000000000c1';
 update public.profissionais set disponivel = true;
+-- ------------------------------------------------ revisão de segurança
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+-- André (a5) mora em -15.799, -47.925: buscando exatamente da casa dele, a distância não pode dar zero.
+select pg_temp.ok((select distancia_km from public.buscar_profissionais('eletricista', -15.799, -47.925) where profissional_id = '00000000-0000-0000-0000-0000000000a5') >= 0.3,
+  'distância usa o centro aproximado e não revela a casa do profissional');
+select pg_temp.ok((select count(*) from public.perfis where id = '00000000-0000-0000-0000-0000000000a1') = 1, 'cliente vê nome e foto de profissionais');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.ok((select count(*) from public.perfis where id = '00000000-0000-0000-0000-0000000000c1') = 0, 'nome de cliente sem pedido em comum não aparece');
+select pg_temp.ok(cardinality(public.pendencias_profissional(auth.uid())) = 0, 'profissional consulta as próprias pendências');
+select pg_temp.ok(public.pendencias_profissional('00000000-0000-0000-0000-0000000000a2') is null, 'e não as de outro profissional');
+do $$ begin
+  insert into public.profissional_profissoes (profissional_id, profissao_id) values (auth.uid(), 'baba');
+  raise exception 'FALHOU: aprovado virou babá sem antecedentes';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - aprovado não vira babá sem certidão de antecedentes aprovada';
+end $$;
+do $$ begin
+  update public.perfis set foto_url = 'https://exemplo.com/rastreio.gif' where id = auth.uid();
+  raise exception 'FALHOU: foto externa aceita';
+exception when check_violation then raise notice 'ok - foto de perfil só pode ser arquivo do iService';
+end $$;
+select pg_temp.admin();
+
 
 -- --------------------------------------------- busca e visibilidade justa
 -- Ninguém com 5+ avaliações: fase de lançamento, todos em rodízio.
@@ -277,6 +300,7 @@ select pg_temp.ok(public.excluir_contas_vencidas() = 0, 'nada é apagado antes d
 update public.perfis set exclusao_solicitada_em = now() - interval '31 days'
 where id in ('00000000-0000-0000-0000-0000000000c9', '00000000-0000-0000-0000-0000000000a2');
 select pg_temp.ok(public.excluir_contas_vencidas() = 2, 'contas vencidas são processadas');
+select pg_temp.ok((select count(*) from public.arquivos_a_apagar) = 2, 'arquivos das contas excluídas entram na fila de limpeza');
 select pg_temp.ok(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000c9')
   and not exists (select 1 from public.perfis where id = '00000000-0000-0000-0000-0000000000c9'), 'conta sem histórico é apagada por inteiro');
 select pg_temp.ok((select nome = 'Conta excluída' and cpf is null and telefone is null and foto_url is null and email is null and excluido_em is not null
