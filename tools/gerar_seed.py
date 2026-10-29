@@ -19,6 +19,7 @@ PROFISSOES = [
   ('montador', 'Montador de móveis', 'chair', 90, '#6f8695', '#45596a', ['Guarda-roupa', 'Cozinha planejada', 'Escritório', 'Cama e berço', 'Desmontagem', 'Painel de TV'], ['móvel', 'montar', 'guarda-roupa', 'armário']),
   ('estofados', 'Limpeza de estofados', 'weekend', 150, '#a678ff', '#7c4ddb', ['Sofá', 'Colchão', 'Cadeiras', 'Tapetes', 'Bancos de carro', 'Impermeabilização de estofado'], ['sofá', 'colchão', 'tapete', 'estofado']),
   ('maquiadora', 'Maquiadora', 'face_retouching_natural', 120, '#e46be8', '#b02db8', ['Social', 'Noiva', 'Formatura', 'Penteado', 'Debutante', 'Maquiagem artística'], ['maquiagem', 'noiva', 'penteado', 'festa']),
+  ('dedetizador', 'Dedetizador', 'pest_control', 180, '#8bc34a', '#4e8a1e', ['Baratas e formigas', 'Cupins', 'Ratos', 'Escorpiões', 'Pulgas e carrapatos', 'Mosquitos e pernilongos', 'Percevejos', 'Pombos e morcegos'], ['barata', 'cupim', 'rato', 'escorpião', 'formiga', 'inseto', 'praga', 'dedetização', 'pulga', 'mosquito']),
 ]
 EXIGE_ANTECEDENTES = {'baba'}
 CERTIFICACOES = {
@@ -30,6 +31,7 @@ CERTIFICACOES = {
   'fretes': ['CNH categoria B ou C'],
   'maquiadora': ['Curso de maquiagem profissional'],
   'pets': ['Curso de banho e tosa'],
+  'dedetizador': ['Licença da Vigilância Sanitária', 'Curso de controle de pragas'],
 }
 # (id, nome, uf, faixa de preço 1..5, lat, lng)
 REGIOES = [
