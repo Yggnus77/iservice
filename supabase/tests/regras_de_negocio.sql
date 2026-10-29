@@ -45,7 +45,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
 select pg_temp.ok((select count(*) from public.perfis) = 7, 'perfil criado junto com o usuário');
 select pg_temp.ok((select count(*) from public.profissionais) = 6, 'cadastro de profissional criado pelo app Profissional');
 
-update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'fotos/' || id || '/perfil.jpg',
+update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'https://exemplo.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
   cpf = pg_temp.cpf(lpad((row_number_cpf)::text, 9, '1'))
 from (select id as pid, row_number() over (order by id) + 100000000 as row_number_cpf from public.perfis) n where n.pid = perfis.id;
 
@@ -108,6 +108,29 @@ select public.admin_decidir_cadastro(id, true) from public.profissionais;
 select pg_temp.admin();
 update public.perfis set e_admin = false where id = '00000000-0000-0000-0000-0000000000c1';
 update public.profissionais set disponivel = true;
+-- ------------------------------------------------ revisão de segurança
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+-- André (a5) mora em -15.799, -47.925: buscando exatamente da casa dele, a distância não pode dar zero.
+select pg_temp.ok((select distancia_km from public.buscar_profissionais('eletricista', -15.799, -47.925) where profissional_id = '00000000-0000-0000-0000-0000000000a5') >= 0.3,
+  'distância usa o centro aproximado e não revela a casa do profissional');
+select pg_temp.ok((select count(*) from public.perfis where id = '00000000-0000-0000-0000-0000000000a1') = 1, 'cliente vê nome e foto de profissionais');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.ok((select count(*) from public.perfis where id = '00000000-0000-0000-0000-0000000000c1') = 0, 'nome de cliente sem pedido em comum não aparece');
+select pg_temp.ok(cardinality(public.pendencias_profissional(auth.uid())) = 0, 'profissional consulta as próprias pendências');
+select pg_temp.ok(public.pendencias_profissional('00000000-0000-0000-0000-0000000000a2') is null, 'e não as de outro profissional');
+do $$ begin
+  insert into public.profissional_profissoes (profissional_id, profissao_id) values (auth.uid(), 'baba');
+  raise exception 'FALHOU: aprovado virou babá sem antecedentes';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - aprovado não vira babá sem certidão de antecedentes aprovada';
+end $$;
+do $$ begin
+  update public.perfis set foto_url = 'https://exemplo.com/rastreio.gif' where id = auth.uid();
+  raise exception 'FALHOU: foto externa aceita';
+exception when check_violation then raise notice 'ok - foto de perfil só pode ser arquivo do iService';
+end $$;
+select pg_temp.admin();
+
 
 -- --------------------------------------------- busca e visibilidade justa
 -- Ninguém com 5+ avaliações: fase de lançamento, todos em rodízio.
@@ -277,6 +300,7 @@ select pg_temp.ok(public.excluir_contas_vencidas() = 0, 'nada é apagado antes d
 update public.perfis set exclusao_solicitada_em = now() - interval '31 days'
 where id in ('00000000-0000-0000-0000-0000000000c9', '00000000-0000-0000-0000-0000000000a2');
 select pg_temp.ok(public.excluir_contas_vencidas() = 2, 'contas vencidas são processadas');
+select pg_temp.ok((select count(*) from public.arquivos_a_apagar) = 2, 'arquivos das contas excluídas entram na fila de limpeza');
 select pg_temp.ok(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000c9')
   and not exists (select 1 from public.perfis where id = '00000000-0000-0000-0000-0000000000c9'), 'conta sem histórico é apagada por inteiro');
 select pg_temp.ok((select nome = 'Conta excluída' and cpf is null and telefone is null and foto_url is null and email is null and excluido_em is not null
@@ -284,5 +308,69 @@ select pg_temp.ok((select nome = 'Conta excluída' and cpf is null and telefone 
 select pg_temp.ok((select email is null and encrypted_password = '' from auth.users where id = '00000000-0000-0000-0000-0000000000a2'), 'conta excluída não consegue mais entrar');
 select pg_temp.ok(exists (select 1 from public.pedidos where profissional_id = '00000000-0000-0000-0000-0000000000a2' and status = 'concluido'),
   'pedidos concluídos ficam guardados sem os dados pessoais');
+
+
+-- Mapa ao vivo: só o profissional do pedido envia, só os dois veem, some ao chegar.
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
+select public.enviar_posicao((select pedido from t), -15.80, -47.90, 12);
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'antes de sair para o local a posição não é enviada');
+select public.avancar_pedido((select pedido from t), 'a_caminho');
+select public.enviar_posicao((select pedido from t), -15.80, -47.90, 12);
+select pg_temp.ok((select count(*) from public.posicoes_pedido where pedido_id = (select pedido from t)) = 1, 'profissional a caminho envia a posição');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select destino_lat between -16 and -15 from public.posicoes_pedido where pedido_id = (select pedido from t)), 'cliente vê a posição e o destino');
+do $$ begin
+  perform public.enviar_posicao((select pedido from t), -15.0, -47.0);
+  raise exception 'FALHOU: cliente enviou posição';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - só o profissional do pedido envia a posição';
+end $$;
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'outro profissional não vê a posição');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
+select public.avancar_pedido((select pedido from t), 'em_atendimento');
+select pg_temp.admin();
+select pg_temp.ok((select count(*) from public.posicoes_pedido) = 0, 'a posição some quando o profissional chega');
+
+-- Celular confirmado por SMS.
+-- (o banco local antigo não tem auth.users.phone: tools/testar_banco.sh cria a coluna pelo container)
+update auth.users set phone = '5561999990000', phone_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  update public.perfis set telefone_verificado = true where id = auth.uid();
+  raise exception 'FALHOU: marcou sozinho';
+exception when insufficient_privilege then raise notice 'ok - usuário não marca o celular como confirmado sozinho';
+end $$;
+select pg_temp.ok(public.confirmar_celular(), 'celular confirmado pelo SMS');
+select pg_temp.admin();
+select pg_temp.ok((select telefone = '61999990000' and telefone_verificado from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'), 'número confirmado vai para o perfil');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+update public.perfis set telefone = '61988887777' where id = auth.uid();
+select pg_temp.admin();
+select pg_temp.ok((select not telefone_verificado from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'), 'trocar o número desfaz a confirmação');
+update public.app_config set valor = 'true' where chave = 'exigir_celular_verificado';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  perform public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora');
+  raise exception 'FALHOU: pediu sem celular confirmado';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if;
+  if sqlerrm not like '%celular%' then raise exception 'FALHOU: erro inesperado %', sqlerrm; end if;
+  raise notice 'ok - com a exigência ligada, só pede quem confirmou o celular';
+end $$;
+select pg_temp.admin();
+update public.app_config set valor = 'false' where chave = 'exigir_celular_verificado';
+
+-- Push: aparelho registrado e notificação nova não quebram nada sem o Vault.
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select public.registrar_dispositivo('token-teste', 'cliente', 'android');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select public.registrar_dispositivo('token-teste', 'profissional', 'android');
+select pg_temp.admin();
+select pg_temp.ok((select usuario_id from public.dispositivos where token = 'token-teste') = '00000000-0000-0000-0000-0000000000a1', 'aparelho passa para a conta que entrou por último');
+select public.notificar('00000000-0000-0000-0000-0000000000a1', 'teste', 'Teste', 'Corpo');
+select pg_temp.ok(exists (select 1 from public.notificacoes where tipo = 'teste'), 'notificação gravada mesmo sem o envio de push configurado');
 
 rollback;

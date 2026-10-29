@@ -4,6 +4,8 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../dados/modelos.dart';
 import '../estado/provedores.dart';
+import '../push.dart';
+import 'confirmar_celular.dart';
 import '../tema/cores.dart';
 import '../tema/tema.dart';
 import '../util/formatos.dart';
@@ -38,7 +40,20 @@ class TelaMeusDados extends ConsumerWidget {
               child: Column(children: [
                 _Dado(Symbols.person_rounded, 'Nome', p.nome),
                 _Dado(Symbols.mail_rounded, 'E-mail', p.email ?? '—'),
-                _Dado(Symbols.call_rounded, 'Celular', p.telefone == null ? '—' : telefoneFormatado(p.telefone!)),
+                ListTile(
+                  leading: Icon(Symbols.call_rounded, color: c.textoSuave),
+                  title: Text('Celular', style: t.bodySmall),
+                  subtitle: Row(children: [
+                    Flexible(child: Text(p.telefone == null ? '—' : telefoneFormatado(p.telefone!), style: t.bodyLarge)),
+                    if (p.telefoneVerificado) ...[
+                      const SizedBox(width: 6),
+                      Icon(Symbols.verified_rounded, size: 18, fill: 1, color: c.sucesso),
+                    ],
+                  ]),
+                  trailing: p.telefoneVerificado
+                      ? null
+                      : TextButton(onPressed: () => abrirConfirmacaoCelular(context), child: const Text('Confirmar')),
+                ),
                 // CPF mascarado: só os 3 primeiros e os 2 últimos dígitos.
                 _Dado(Symbols.badge_rounded, 'CPF', cpf == null || cpf.length != 11 ? '—' : '${cpf.substring(0, 3)}.***.***-${cpf.substring(9)}'),
                 _Dado(Symbols.cake_rounded, 'Nascimento', p.nascimento == null ? '—' : dataCurta(p.nascimento!)),
@@ -276,7 +291,7 @@ Future<void> perguntarSeMantemConta(BuildContext context, WidgetRef ref, MeuPerf
       if (context.mounted) mostrarErro(context, e);
     }
   } else if (manter == false) {
-    await ref.read(contaRepo).sair();
+    await sairDaConta(ref);
   }
 }
 

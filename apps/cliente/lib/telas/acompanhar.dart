@@ -119,10 +119,15 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         actions: [
           if (ativo)
             IconButton(tooltip: 'Emergência', onPressed: _emergencia, icon: const Icon(Symbols.emergency_rounded, color: Cores.perigo)),
+          if (p.outraParteId != null) BotaoDenunciar(alvoId: p.outraParteId!, alvoNome: nome, pedidoId: p.id),
         ],
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
         _Cabecalho(p: p, aoAcabarPrazo: () => ref.invalidate(pedidosClienteProvider)),
+        if (p.status == StatusPedido.aCaminho) ...[
+          const SizedBox(height: 16),
+          MapaAoVivo(pedidoId: p.id, nomeProfissional: nome, fotoProfissional: p.outraParteFoto),
+        ],
         const SizedBox(height: 16),
         Card(
           child: Padding(

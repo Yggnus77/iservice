@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../dados/modelos.dart';
 import '../dados/repositorios.dart';
+import '../telas/confirmar_celular.dart';
 import '../tema/cores.dart';
 import '../tema/tema.dart';
 import '../util/formatos.dart';
@@ -307,8 +308,9 @@ class BotaoPrincipal extends StatelessWidget {
 }
 
 class EstadoVazio extends StatelessWidget {
-  const EstadoVazio({super.key, required this.icone, required this.titulo, this.texto, this.acao, this.aoTocarAcao});
+  const EstadoVazio({super.key, required this.icone, required this.titulo, this.texto, this.acao, this.aoTocarAcao, this.rodape});
   final IconData icone;
+  final Widget? rodape;
   final String titulo;
   final String? texto;
   final String? acao;
@@ -332,6 +334,7 @@ class EstadoVazio extends StatelessWidget {
           Text(titulo, style: t.titleMedium, textAlign: TextAlign.center),
           if (texto != null) ...[const SizedBox(height: 6), Text(texto!, style: t.bodySmall, textAlign: TextAlign.center)],
           if (acao != null) ...[const SizedBox(height: 20), SizedBox(width: 220, child: BotaoPrincipal(rotulo: acao!, aoTocar: aoTocarAcao))],
+          if (rodape != null) ...[const SizedBox(height: 8), rodape!],
         ]),
       ),
     );
@@ -366,7 +369,20 @@ void mostrarMensagem(BuildContext context, String texto) {
     ..showSnackBar(SnackBar(content: Text(texto)));
 }
 
-void mostrarErro(BuildContext context, Object erro) => mostrarMensagem(context, ErroIService.de(erro).mensagem);
+/// Mostra o erro. Se faltar confirmar o celular, oferece o atalho para a confirmação.
+void mostrarErro(BuildContext context, Object erro) {
+  final e = ErroIService.de(erro);
+  if (e.codigo == 'celular_nao_verificado') {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(e.mensagem),
+        action: SnackBarAction(label: 'Confirmar', onPressed: () => abrirConfirmacaoCelular(context)),
+      ));
+    return;
+  }
+  mostrarMensagem(context, e.mensagem);
+}
 
 /// Título de seção com link opcional ("Ver todos").
 class TituloSecao extends StatelessWidget {
