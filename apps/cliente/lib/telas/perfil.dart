@@ -130,7 +130,7 @@ class TelaPerfil extends ConsumerWidget {
             const SizedBox(height: 24),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(foregroundColor: c.perigo),
-              onPressed: () => ref.read(contaRepo).sair(),
+              onPressed: () => sairDaConta(ref),
               icon: const Icon(Symbols.logout_rounded),
               label: const Text('Sair'),
             ),

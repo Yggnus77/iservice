@@ -18,7 +18,10 @@ class ShellCliente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: VigiaExclusaoConta(child: nav),
+        body: RegistroPush(
+          aoAbrirPedido: (id) => context.push('/pedido/$id'),
+          child: VigiaExclusaoConta(child: nav),
+        ),
         bottomNavigationBar: DecoratedBox(
           decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).dividerTheme.color!))),
           child: NavigationBar(

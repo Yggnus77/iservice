@@ -142,10 +142,12 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         title: Text('Pedido ${p.codigo}'),
         actions: [
           if (ativo) IconButton(tooltip: 'Emergência', onPressed: _emergencia, icon: const Icon(Symbols.emergency_rounded, color: Cores.perigo)),
+          if (p.outraParteId != null) BotaoDenunciar(alvoId: p.outraParteId!, alvoNome: p.outraParteNome ?? 'cliente', pedidoId: p.id),
         ],
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
         _Etapas(status: p.status),
+        TransmissorPosicao(pedidoId: p.id, ativo: p.status == StatusPedido.aCaminho),
         const SizedBox(height: 16),
         Card(
           child: Padding(

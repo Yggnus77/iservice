@@ -67,7 +67,7 @@ class TelaAnalise extends ConsumerWidget {
               ),
             const SizedBox(height: 20),
             if (recusado) BotaoPrincipal(rotulo: 'Corrigir cadastro', aoTocar: () => context.go('/cadastro/5')),
-            TextButton(onPressed: () => ref.read(contaRepo).sair(), child: const Text('Sair')),
+            TextButton(onPressed: () => sairDaConta(ref), child: const Text('Sair')),
           ]),
         ),
       ),
