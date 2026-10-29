@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 124" role="img" aria-label="iService">
+  <defs>
+    <clipPath id="pin"><path d="M50 121C40 104 6 84 6 48a44 44 0 0 1 88 0c0 36-34 56-44 73z"/></clipPath>
+  </defs>
+  <g clip-path="url(#pin)">
+    <path fill="#0052CC" d="M0 0h50v52L0 70z"/>
+    <path fill="#FF8A00" d="M50 0h50v70L50 52z"/>
+    <path fill="#00A846" d="M0 70l50-18 50 18v60H0z"/>
+    <path fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round" d="M50 -2v54L-2 71M50 52l52 19"/>
+  </g>
+  <!-- chave inglesa -->
+  <g transform="translate(28 33) rotate(45)" fill="#fff">
+    <path d="M-3.4 -2v16a3.4 3.4 0 0 0 6.8 0V-2z"/>
+    <path d="M-9-10a9 9 0 0 0 5.6 12.4h6.8A9 9 0 0 0 9-10L4.2-6.6V-2h-8.4v-4.6z"/>
+  </g>
+  <!-- casa -->
+  <g fill="#fff">
+    <path d="M71 17.5 57 30h4v13h7v-8h6v8h7V30h4z"/>
+  </g>
+  <!-- pessoa -->
+  <g fill="#fff">
+    <circle cx="50" cy="73" r="8"/>
+    <path d="M35 97c0-9 6.7-14 15-14s15 5 15 14z"/>
+  </g>
+</svg>

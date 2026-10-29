@@ -1,18 +1,485 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iService</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0A1F44">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%}
-body{font-family:Montserrat,system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;flex-direction:column;background:#0A1F44}
-.arte{position:relative;width:100%;aspect-ratio:3/2;background:url(fundo.jpg) center/cover no-repeat}
-.arte::after{content:"";position:absolute;inset:auto 0 0 0;height:35%;background:linear-gradient(180deg,rgba(10,31,68,0),#0A1F44)}
-main{padding:20px 20px 40px;text-align:center;max-width:460px;width:100%;align-self:center;margin-top:auto;margin-bottom:auto}
-h1,p{text-shadow:0 2px 12px rgba(10,31,68,.9)}h1{font-size:22px;margin:0 0 6px}p{margin:0 0 22px;opacity:.9;font-weight:500}
-a{display:block;margin:12px 0;padding:16px 20px;border-radius:14px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.c{background:#0052CC;color:#fff}.p{background:#FF8A00;color:#0A1F44}
-small{display:block;margin-top:14px;opacity:.75}
-@media (min-width:900px){
- body{background:linear-gradient(180deg,rgba(10,31,68,0) 0%,rgba(10,31,68,0) 55%,rgba(10,31,68,.85) 78%,#0A1F44 100%),url(fundo.jpg) center top/cover no-repeat #0A1F44}
- .arte{display:none}main{margin-top:auto;margin-bottom:0}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iService | Serviços perto de você em Brasília e Entorno</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Chaveiro, eletricista, encanador, diarista e mais 12 profissões em Brasília e no Entorno. Escolha o profissional mais bem avaliado perto de você e seja atendido hoje mesmo.">
+<meta name="theme-color" content="#0052CC">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="iService">
+<meta property="og:title" content="iService | Serviços perto de você">
+<meta property="og:description" content="O profissional certo, perto de você, hoje. Brasília e Entorno.">
+<meta property="og:image" content="og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=ac_unit,arrow_forward,badge,bar_chart,battery_full,bolt,calendar_today,car_repair,chair,chat,check_circle,child_care,cleaning_services,close,construction,emoji_events,expand_more,face_retouching_natural,favorite,format_paint,gpp_good,handyman,home,how_to_reg,inbox,info,key,local_shipping,location_on,mail,menu,more_horiz,near_me,notifications,payments,person,person_check,pets,photo_library,plumbing,receipt_long,reviews,schedule,search,sell,share_location,signal_cellular_alt,sos,star,toggle_on,touch_app,verified,verified_user,weekend,wifi,workspace_premium,yard&display=block">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "iService",
+  "slogan": "Serviços perto de você!",
+  "description": "Aplicativo que conecta pessoas a profissionais de confiança perto delas, com atendimento no mesmo dia.",
+  "areaServed": ["Brasília, DF", "Entorno do Distrito Federal"],
+  "logo": "assets/img/icon-512.png"
 }
-</style></head>
-<body><div class="arte" role="img" aria-label="iService: conectando pessoas a profissionais de confiança"></div><main><h1>Conectando pessoas a profissionais de confiança</h1><p>Versão de teste</p><a class="c" href="cliente/">Sou cliente</a><a class="p" href="profissional/">Sou profissional</a><small>Brasília e Entorno</small></main></body></html>
+</script>
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="topo sobre-heroi">
+  <div class="envolve barra">
+    <a class="marca" href="#inicio" aria-label="iService, página inicial">
+      <img src="assets/img/simbolo.svg" alt="" width="31" height="38">
+      <span class="palavra">iServi<b>ce</b><svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M2 2.5Q48 12 90 3" fill="none" stroke="#FF8A00" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M84 0.5L97 2.2L88.5 9z" fill="#FF8A00"/></svg></span>
+    </a>
+    <nav class="menu" aria-label="Principal">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#seguranca">Segurança</a>
+      <a href="#profissionais">Para profissionais</a>
+      <a href="#duvidas">Dúvidas</a>
+    </nav>
+    <div class="acoes">
+      <a class="btn btn-azul" href="#baixar">Baixar o app</a>
+      <button class="abrir-menu" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="gaveta"><span class="ms">menu</span></button>
+    </div>
+  </div>
+</header>
+<div class="gaveta" id="gaveta">
+  <div class="envolve">
+    <nav aria-label="Menu do celular">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#seguranca">Segurança</a>
+      <a href="#profissionais">Para profissionais</a>
+      <a href="#duvidas">Dúvidas</a>
+    </nav>
+    <a class="btn btn-azul" href="#baixar">Baixar o app</a>
+  </div>
+</div>
+
+<main id="conteudo">
+
+<section class="heroi" id="inicio">
+  <div class="envolve grade">
+    <div class="texto">
+      <span class="etiqueta"><i></i>Brasília e Entorno · Lançamento em 2027</span>
+      <h1>O profissional certo, perto de você. <em>Hoje.<svg viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 9Q50 1 98 7" fill="none" stroke="#FF8A00" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></em></h1>
+      <p class="lead">Chaveiro, eletricista, encanador, diarista e mais 12 profissões. Você vê quem está perto, compara avaliações, escolhe quem vai atender e acompanha tudo pelo celular.</p>
+      <div class="chamadas">
+        <div class="lojas">
+          <a class="loja" data-loja="ios" aria-disabled="true" aria-label="App Store, em breve">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            <span><small>Em breve na</small><strong>App Store</strong></span>
+            <em class="breve">Em breve</em>
+          </a>
+          <a class="loja" data-loja="android" aria-disabled="true" aria-label="Google Play, em breve">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg>
+            <span><small>Em breve no</small><strong>Google Play</strong></span>
+            <em class="breve">Em breve</em>
+          </a>
+        </div>
+        <a class="link-pro" href="#profissionais">Sou profissional <span class="ms">arrow_forward</span></a>
+      </div>
+      <ul class="confianca">
+        <li><span class="ms cheio">verified</span>Profissionais verificados</li>
+        <li><span class="ms cheio">star</span>Os mais bem avaliados primeiro</li>
+        <li><span class="ms cheio">check_circle</span>Grátis no lançamento</li>
+      </ul>
+    </div>
+
+    <div class="palco" aria-hidden="true">
+      <svg class="radar" viewBox="0 0 640 640">
+        <circle class="anel" cx="320" cy="320" r="150"/>
+        <circle class="anel" cx="320" cy="320" r="225"/>
+        <circle class="anel" cx="320" cy="320" r="300"/>
+        <circle class="onda" cx="320" cy="320" r="300"/>
+        <circle class="onda d2" cx="320" cy="320" r="300"/>
+      </svg>
+      <div class="celular">
+        <div class="tela">
+          <div class="ilha"></div>
+          <div class="app-topo">
+            <div class="status"><span>9:41</span><span><span class="ms">signal_cellular_alt</span> <span class="ms">wifi</span> <span class="ms">battery_full</span></span></div>
+            <div class="linha1">
+              <span class="marca"><img src="assets/img/simbolo.svg" alt="" width="20" height="24"><span class="palavra">iServi<b>ce</b><svg viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2 2.5Q48 12 90 3" fill="none" stroke="#FF8A00" stroke-width="1.8" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M84 0.5L97 2.2L88.5 9z" fill="#FF8A00"/></svg></span></span>
+              <span class="ms">notifications</span>
+            </div>
+            <h4>O profissional certo, mais perto de você.</h4>
+            <span class="local"><span class="ms cheio">location_on</span>Asa Norte, Brasília</span>
+            <div class="busca"><span class="ms">search</span>Qual serviço você precisa?</div>
+          </div>
+          <div class="cats">
+            <div><span class="ic esc" style="background:#FFB020"><span class="ms cheio">bolt</span></span>Eletricista</div>
+            <div><span class="ic" style="background:#0052CC"><span class="ms">plumbing</span></span>Encanador</div>
+            <div><span class="ic esc" style="background:#FF8A00"><span class="ms">key</span></span>Chaveiro</div>
+            <div><span class="ic" style="background:#00873A"><span class="ms">cleaning_services</span></span>Diarista</div>
+            <div><span class="ic" style="background:#7B3FE4"><span class="ms">handyman</span></span>Marido de aluguel</div>
+            <div><span class="ic" style="background:#E5484D"><span class="ms">format_paint</span></span>Pintor</div>
+            <div><span class="ic" style="background:#0A7CC2"><span class="ms">ac_unit</span></span>Ar-condicionado</div>
+            <div><span class="ic" style="background:#0A1F44"><span class="ms">more_horiz</span></span>Mais</div>
+          </div>
+          <div class="secao-app">
+            <div class="tit">Top da sua região <span>Ver todos</span></div>
+            <div class="pro">
+              <span class="avatar" style="background:linear-gradient(135deg,#2D6CDF,#0A1F44)">CS<span class="ok"><span class="ms cheio">verified</span></span></span>
+              <div><b>Carlos Silva</b><div class="meta"><span class="estrela">★ 4,9</span><span>(248)</span><span>1,2 km</span></div><span class="disp">Disponível agora</span></div>
+              <div class="preco">a partir de<strong>R$ 80</strong></div>
+            </div>
+            <div class="pro">
+              <span class="avatar" style="background:linear-gradient(135deg,#FF9F2E,#D96800)">AS<span class="ok"><span class="ms cheio">verified</span></span></span>
+              <div><b>Ana Souza</b><div class="meta"><span class="estrela">★ 4,9</span><span>(176)</span><span>2,3 km</span></div><span class="disp">Disponível agora</span></div>
+              <div class="preco">a partir de<strong>R$ 120</strong></div>
+            </div>
+          </div>
+          <div class="nav-app">
+            <div class="ativo"><span class="ms cheio">home</span>Início</div>
+            <div><span class="ms">search</span>Explorar</div>
+            <div><span class="ms">receipt_long</span>Pedidos</div>
+            <div><span class="ms">favorite</span>Favoritos</div>
+            <div><span class="ms">person</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+      <div class="flutua f1"><span class="ico"><span class="ms">check_circle</span></span><div><b>Carlos aceitou seu pedido</b><small>Chega em cerca de 25 min</small></div></div>
+      <div class="flutua f2"><span class="ico"><span class="ms cheio">star</span></span><div><b>4,9 de 5</b><small>248 avaliações de clientes</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="numeros" aria-label="O iService em números">
+  <div class="envolve">
+    <ul>
+      <li><strong>16</strong><span>profissões já no lançamento</span></li>
+      <li><strong>Hoje</strong><span>atendimento no mesmo dia, sem fila de orçamentos</span></li>
+      <li><strong>1 <small>pedido, 1 profissional</small></strong><span>quem atende é quem você escolheu</span></li>
+      <li><strong>R$ 0</strong><span>para usar no lançamento, para clientes e profissionais</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="secao" id="como-funciona">
+  <div class="envolve">
+    <div class="cabeca centro">
+      <span class="etiqueta">Como funciona</span>
+      <h2>Do problema resolvido em quatro passos</h2>
+      <p>Sem ligar para dez pessoas, sem esperar orçamento. Você escolhe e o profissional vai até você.</p>
+    </div>
+    <ol class="passos">
+      <li class="passo"><span class="bola"><span class="ms">search</span></span><div><h3>Encontre</h3><p>Diga o que precisa. O app mostra os profissionais disponíveis perto do seu endereço.</p></div></li>
+      <li class="passo"><span class="bola"><span class="ms">person_check</span></span><div><h3>Escolha</h3><p>Compare avaliações, fotos de trabalhos, distância e o preço que cada um cobra.</p></div></li>
+      <li class="passo"><span class="bola"><span class="ms">near_me</span></span><div><h3>Contrate</h3><p>O pedido vai só para quem você escolheu. Converse pelo chat e acompanhe a chegada.</p></div></li>
+      <li class="passo"><span class="bola"><span class="ms">star</span></span><div><h3>Avalie</h3><p>Conte como foi, com nota e foto. Sua avaliação ajuda os melhores a aparecerem primeiro.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="secao cinza" id="servicos">
+  <div class="envolve">
+    <div class="cabeca centro">
+      <span class="etiqueta">Serviços</span>
+      <h2>16 profissões para o dia a dia da sua casa</h2>
+      <p>Cada profissional informa as especialidades que domina. Você pede exatamente o que precisa.</p>
+    </div>
+    <ul class="categorias">
+      <li class="cat"><span class="ic"><span class="ms">bolt</span></span><div><b>Eletricista</b><small>Tomadas, chuveiro, disjuntor</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">plumbing</span></span><div><b>Encanador</b><small>Vazamentos, desentupimento</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">key</span></span><div><b>Chaveiro</b><small>Abertura, cópia, troca de fechadura</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">car_repair</span></span><div><b>Chaveiro automotivo</b><small>Chave codificada, abertura</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">child_care</span></span><div><b>Babá</b><small>Com certidão de antecedentes</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">cleaning_services</span></span><div><b>Diarista</b><small>Limpeza da casa e pós-obra</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">format_paint</span></span><div><b>Pintor</b><small>Paredes, retoques, textura</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">handyman</span></span><div><b>Marido de aluguel</b><small>Pequenos reparos e instalações</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">yard</span></span><div><b>Jardinagem</b><small>Poda, grama, manutenção</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">construction</span></span><div><b>Pedreiro</b><small>Reparos, reboco, piso</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">pets</span></span><div><b>Animais de estimação</b><small>Passeio, banho, cuidados</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">ac_unit</span></span><div><b>Ar-condicionado</b><small>Instalação e manutenção</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">local_shipping</span></span><div><b>Fretes</b><small>Pequenas mudanças e entregas</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">chair</span></span><div><b>Montador de móveis</b><small>Montagem e desmontagem</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">weekend</span></span><div><b>Limpeza de estofados</b><small>Sofá, colchão, cadeiras</small></div></li>
+      <li class="cat"><span class="ic"><span class="ms">face_retouching_natural</span></span><div><b>Maquiadora</b><small>Eventos e ocasiões especiais</small></div></li>
+    </ul>
+    <p class="nota-cat">Novas profissões entram conforme a demanda da região.</p>
+  </div>
+</section>
+
+<section class="secao" id="diferenciais">
+  <div class="envolve">
+    <div class="cabeca">
+      <span class="etiqueta">Por que o iService</span>
+      <h2>Feito para quando você precisa de alguém agora</h2>
+    </div>
+    <div class="difs">
+      <article class="dif destaque">
+        <span class="ms">schedule</span>
+        <h3>Atendimento no mesmo dia</h3>
+        <p>O iService é para o que não pode esperar: a porta trancada, o chuveiro queimado, o cano vazando. Você pede para agora ou para mais tarde, sempre hoje.</p>
+        <div class="relogio">
+          <div><span>Agora</span><span>chega em minutos</span></div>
+          <div><span>Hoje à tarde</span><span>15:00</span></div>
+          <div><span>Hoje à noite</span><span>19:30</span></div>
+          <div class="nao"><span>Semana que vem</span><span>não</span></div>
+        </div>
+      </article>
+      <article class="dif">
+        <span class="ms">touch_app</span>
+        <h3>Você escolhe quem vai</h3>
+        <p>Seu pedido não é jogado para todo mundo. Ele vai só para o profissional que você escolheu.</p>
+      </article>
+      <article class="dif">
+        <span class="ms">workspace_premium</span>
+        <h3>Os melhores aparecem primeiro</h3>
+        <p>A ordem segue a qualidade: avaliações, serviços concluídos, pontualidade e distância. Ninguém compra o primeiro lugar.</p>
+      </article>
+      <article class="dif">
+        <span class="ms">sell</span>
+        <h3>Preço antes de confirmar</h3>
+        <p>Cada profissional define o próprio valor, e o app mostra a faixa de preço comum na sua região para você comparar.</p>
+      </article>
+      <article class="dif">
+        <span class="ms">share_location</span>
+        <h3>Acompanhe ao vivo</h3>
+        <p>Veja quando o profissional aceitou, quando saiu e quando chega. Converse pelo chat sem passar seu número.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="secao seguranca" id="seguranca">
+  <div class="envolve">
+    <div class="cabeca">
+      <span class="etiqueta">Segurança</span>
+      <h2>Quem entra na sua casa precisa ser de confiança</h2>
+      <p>Por isso cada profissional passa por verificação antes de aparecer no app, e você tem ferramentas de proteção em todo o atendimento.</p>
+    </div>
+    <div class="seg-grade">
+      <div class="seg"><span class="ms">badge</span><h3>Identidade verificada</h3><p>Documento com foto, CPF e selfie conferidos antes da aprovação. Quem passa ganha o selo de verificado.</p></div>
+      <div class="seg"><span class="ms">gpp_good</span><h3>Antecedentes para babás</h3><p>Para cuidar de crianças, a certidão de antecedentes criminais é obrigatória.</p></div>
+      <div class="seg"><span class="ms">reviews</span><h3>Avaliações reais</h3><p>Só quem contratou pelo app pode avaliar, com nota, comentário e foto do serviço.</p></div>
+      <div class="seg"><span class="ms">sos</span><h3>Botão de emergência</h3><p>Durante o atendimento, um toque mostra o caminho rápido para pedir ajuda.</p></div>
+      <div class="seg"><span class="ms">share_location</span><h3>Compartilhe o atendimento</h3><p>Envie para alguém da família o link para acompanhar o serviço em tempo real.</p></div>
+      <div class="seg"><span class="ms">verified_user</span><h3>Garantia iService</h3><p>Se algo der errado, nossa equipe faz a mediação entre você e o profissional até resolver.</p></div>
+    </div>
+    <p class="seg-aviso"><span class="ms">info</span>Em situações de perigo, ligue para a Polícia Militar (190), o SAMU (192) ou os Bombeiros (193).</p>
+  </div>
+</section>
+
+<section class="secao profissionais" id="profissionais">
+  <div class="envolve pro-grade">
+    <div>
+      <div class="cabeca">
+        <span class="etiqueta">Para profissionais</span>
+        <h2>Mais clientes perto de você, sem pagar nada no lançamento</h2>
+        <p>Se você é autônomo em Brasília ou no Entorno, o iService leva até você quem precisa do seu serviço hoje.</p>
+      </div>
+      <ul class="beneficios">
+        <li><span class="ms">payments</span><div><b>Você define o preço</b><span>O valor de cada serviço é seu. O app só mostra a média da região como referência.</span></div></li>
+        <li><span class="ms">how_to_reg</span><div><b>Pedidos feitos para você</b><span>O cliente escolheu você pelo seu perfil. Aceite ou recuse, sem disputa.</span></div></li>
+        <li><span class="ms">toggle_on</span><div><b>Trabalhe quando quiser</b><span>Ligue o modo disponível e defina no mapa a área onde você atende.</span></div></li>
+        <li><span class="ms">photo_library</span><div><b>Mostre seu trabalho</b><span>Portfólio com fotos de antes e depois, especialidades e certificados.</span></div></li>
+        <li><span class="ms">bar_chart</span><div><b>Controle seus ganhos</b><span>Relatório por dia e por mês, pronto para quem é MEI.</span></div></li>
+        <li><span class="ms">emoji_events</span><div><b>Cresça com boas notas</b><span>Metas e conquistas. Quem atende bem sobe no ranking da região.</span></div></li>
+      </ul>
+      <div class="pro-acoes">
+        <a class="btn btn-laranja" href="profissional/">Quero me cadastrar <span class="ms">arrow_forward</span></a>
+        <a class="btn btn-contorno-escuro" data-contato="whatsapp" data-manter-texto data-se-contato="whatsapp"><span class="ms">chat</span> Falar no WhatsApp</a>
+        <small>Para o cadastro: foto de perfil, documento com foto, CPF, endereço, as profissões que você exerce e suas especialidades.</small>
+      </div>
+    </div>
+    <div class="palco-pro" aria-hidden="true">
+      <div class="celular pro-app">
+        <div class="tela">
+          <div class="ilha"></div>
+          <div class="pro-topo">
+            <div class="status"><span>9:41</span><span><span class="ms">signal_cellular_alt</span> <span class="ms">wifi</span> <span class="ms">battery_full</span></span></div>
+            <div class="ola"><div><small>Bom dia,</small><b>Ricardo Lima</b></div><span class="chave"><i></i>Disponível</span></div>
+            <div class="kpis">
+              <div><small>Ganhos hoje</small><b>R$ 360</b></div>
+              <div><small>Avaliação</small><b>★ 4,9</b></div>
+              <div><small>Serviços</small><b>128</b></div>
+            </div>
+          </div>
+          <div class="pedido">
+            <div class="faixa"><span class="novo">Novo pedido</span><span class="tempo">responda em 04:52</span></div>
+            <h5>Troca de chuveiro elétrico</h5>
+            <div class="linha"><span class="ms">person</span>Mariana C. · ★ 4,8 como cliente</div>
+            <div class="linha"><span class="ms">location_on</span>Asa Sul, SQS 308 · 2,3 km</div>
+            <div class="linha"><span class="ms">schedule</span>Hoje, agora</div>
+            <div class="valor"><small>Seu preço</small><b>R$ 120</b></div>
+            <div class="botoes"><span class="rec">Recusar</span><span class="ace">Aceitar pedido</span></div>
+          </div>
+          <div class="agenda-app">
+            <div><span class="ms">check_circle</span>Tomada nova · Sudoeste<small>08:30</small></div>
+            <div><span class="ms">check_circle</span>Disjuntor · Guará II<small>10:15</small></div>
+          </div>
+          <div class="nav-app laranja" style="margin-top:auto">
+            <div class="ativo"><span class="ms cheio">home</span>Início</div>
+            <div><span class="ms">inbox</span>Pedidos</div>
+            <div><span class="ms">calendar_today</span>Agenda</div>
+            <div><span class="ms">payments</span>Ganhos</div>
+            <div><span class="ms">person</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="secao" id="regiao">
+  <div class="envolve regiao-grade">
+    <figure class="foto-regiao" style="margin:0">
+      <img src="assets/img/brasilia.jpg" alt="Arte do iService com o Congresso Nacional ao fundo, um profissional uniformizado e o app mostrando profissionais no mapa" width="1536" height="1024">
+    </figure>
+    <div>
+      <div class="cabeca">
+        <span class="etiqueta">Onde atendemos</span>
+        <h2>Começando por Brasília e todo o Entorno</h2>
+        <p>Endereço com quadra, bloco e conjunto funciona do jeito que você já escreve. E quem mora em Goiás e trabalha no DF também está coberto.</p>
+      </div>
+      <div class="locais">
+        <h3>Distrito Federal</h3>
+        <ul>
+          <li>Plano Piloto</li><li>Asa Sul</li><li>Asa Norte</li><li>Sudoeste</li><li>Lago Sul</li><li>Lago Norte</li><li>Guará</li><li>Águas Claras</li><li>Taguatinga</li><li>Ceilândia</li><li>Samambaia</li><li>Gama</li><li>Sobradinho</li><li>Planaltina</li><li>e todas as regiões administrativas</li>
+        </ul>
+        <h3>Entorno</h3>
+        <ul>
+          <li>Valparaíso de Goiás</li><li>Luziânia</li><li>Águas Lindas</li><li>Novo Gama</li><li>Cidade Ocidental</li><li>Formosa</li><li>Santo Antônio do Descoberto</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="secao cinza" id="duvidas">
+  <div class="envolve faq-grade">
+    <div class="cabeca">
+      <span class="etiqueta">Dúvidas</span>
+      <h2>Perguntas frequentes</h2>
+      <p>Não achou sua resposta? Fale com a gente.</p>
+      <a class="btn btn-azul" data-contato="whatsapp" data-manter-texto data-se-contato="whatsapp"><span class="ms">chat</span> Atendimento pelo WhatsApp</a>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>Quanto custa usar o iService?<span class="ms">expand_more</span></summary>
+        <p>Baixar e usar o app é grátis. Você paga apenas o valor do serviço, que o profissional informa antes de você confirmar. No lançamento, os profissionais também não pagam nada para usar o iService.</p>
+      </details>
+      <details>
+        <summary>Quando o app vai estar disponível?<span class="ms">expand_more</span></summary>
+        <p>O lançamento está previsto para o primeiro semestre de 2027, na App Store e no Google Play. Profissionais já podem fazer o cadastro para estarem aprovados no dia da estreia.</p>
+      </details>
+      <details>
+        <summary>Posso marcar um serviço para outro dia?<span class="ms">expand_more</span></summary>
+        <p>Não. O iService é feito para atendimentos no mesmo dia: agora ou em um horário mais tarde, hoje. É isso que garante resposta rápida para quem precisa.</p>
+      </details>
+      <details>
+        <summary>Como escolho o profissional?<span class="ms">expand_more</span></summary>
+        <p>Você vê os profissionais disponíveis perto do seu endereço, com nota, número de avaliações, fotos de trabalhos, distância e preço. Os mais bem avaliados aparecem primeiro. Seu pedido vai só para quem você escolher.</p>
+      </details>
+      <details>
+        <summary>Como sei que o profissional é de confiança?<span class="ms">expand_more</span></summary>
+        <p>Todo profissional passa por conferência de documento com foto, CPF e selfie antes de ser aprovado. Babás também apresentam certidão de antecedentes criminais. Durante o atendimento você tem chat, compartilhamento ao vivo e botão de emergência.</p>
+      </details>
+      <details>
+        <summary>E se o serviço não ficar bom?<span class="ms">expand_more</span></summary>
+        <p>Abra uma reclamação pelo app. Com a Garantia iService, nossa equipe faz a mediação entre você e o profissional para chegar a uma solução. Sua avaliação também fica registrada no perfil dele.</p>
+      </details>
+      <details>
+        <summary>Como me cadastro como profissional?<span class="ms">expand_more</span></summary>
+        <p>Faça o cadastro com foto de perfil, nome, data de nascimento, CPF, telefone, endereço e e-mail. Depois informe as profissões que você exerce, suas especialidades e certificados. Nossa equipe analisa e avisa quando você for aprovado.</p>
+      </details>
+      <details>
+        <summary>O que vocês fazem com os meus dados?<span class="ms">expand_more</span></summary>
+        <p>Usamos seus dados só para fazer o app funcionar e manter todos seguros, seguindo a Lei Geral de Proteção de Dados. Sua localização é usada apenas com sua autorização. Veja os detalhes na <a href="privacidade.html">Política de Privacidade</a>.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="baixar">
+  <div class="envolve">
+    <div class="caixa">
+      <div>
+        <h2>Precisa de alguém hoje? Em breve, é só abrir o iService.</h2>
+        <p>Estamos chegando à App Store e ao Google Play, primeiro em Brasília e no Entorno.</p>
+        <div class="lojas">
+          <a class="loja" data-loja="ios" aria-disabled="true" aria-label="App Store, em breve">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+            <span><small>Em breve na</small><strong>App Store</strong></span>
+            <em class="breve">Em breve</em>
+          </a>
+          <a class="loja" data-loja="android" aria-disabled="true" aria-label="Google Play, em breve">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg>
+            <span><small>Em breve no</small><strong>Google Play</strong></span>
+            <em class="breve">Em breve</em>
+          </a>
+        </div>
+      </div>
+      <div class="lado">
+        <img src="assets/img/simbolo.svg" alt="" width="150" height="186">
+        <small>Serviços perto de você!</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="rodape">
+  <div class="envolve">
+    <div class="colunas">
+      <div class="sobre">
+        <a class="marca clara" href="#inicio" aria-label="iService, página inicial">
+          <img src="assets/img/simbolo.svg" alt="" width="31" height="38">
+          <span class="palavra">iServi<b>ce</b><svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M2 2.5Q48 12 90 3" fill="none" stroke="#FF8A00" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/><path d="M84 0.5L97 2.2L88.5 9z" fill="#FF8A00"/></svg></span>
+        </a>
+        <p>Conectando pessoas a profissionais de confiança em Brasília e no Entorno.</p>
+      </div>
+      <div>
+        <h4>iService</h4>
+        <ul>
+          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a href="#servicos">Serviços</a></li>
+          <li><a href="#seguranca">Segurança</a></li>
+          <li><a href="#duvidas">Dúvidas</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="termos.html">Termos de Uso</a></li>
+          <li><a href="privacidade.html">Política de Privacidade</a></li>
+          <li><a href="excluir-conta.html">Excluir minha conta</a></li>
+          <li><a href="#profissionais">Seja um profissional</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        <ul class="contato">
+          <li><span class="ms">chat</span><a data-contato="whatsapp"><span data-texto>WhatsApp</span></a></li>
+          <li><span class="ms">mail</span><a data-contato="email"><span data-texto>E-mail</span></a></li>
+          <li><svg viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg><a data-contato="instagram"><span data-texto>Instagram</span></a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="base">
+      <span>© <span id="ano">2026</span> iService · <span data-cnpj>CNPJ em registro</span> · Brasília, DF</span>
+      <span>Feito em Brasília para quem precisa de serviço hoje.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/site.js"></script>
+</body>
+</html>
