@@ -2,13 +2,21 @@
 // O banco chama esta função a cada linha nova em public.notificacoes
 // (gatilho notificacao_push -> chamar_funcao('enviar-push')).
 //
-// Publicar:  supabase functions deploy enviar-push
+// Publicar:  supabase functions deploy enviar-push --no-verify-jwt
 // Segredo:   FCM_CONTA_SERVICO = conteúdo do JSON da conta de serviço do Firebase
 //            (Firebase > Configurações do projeto > Contas de serviço > Gerar nova chave privada).
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const url = Deno.env.get("SUPABASE_URL")!;
-const chave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Chave secreta nova (sb_secret_...); a service_role antiga só como reserva.
+const chave = (() => {
+  const novas = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (novas) {
+    const k = JSON.parse(novas) as Record<string, string>;
+    if (k["default"]) return k["default"];
+  }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+})();
 const db = createClient(url, chave, { auth: { persistSession: false } });
 
 type ContaServico = { project_id: string; client_email: string; private_key: string; token_uri?: string };
@@ -53,9 +61,21 @@ async function tokenGoogle(conta: ContaServico): Promise<string> {
   return acesso.token;
 }
 
+// Só o banco pode chamar: ele manda a senha interna do Vault (public.chamar_funcao).
+let segredo: string | null = null;
+async function autorizado(req: Request): Promise<boolean> {
+  const recebido = req.headers.get("x-iservice-segredo");
+  if (!recebido) return false;
+  if (!segredo) {
+    const { data, error } = await db.rpc("segredo_funcoes");
+    if (error || !data) return false;
+    segredo = data as string;
+  }
+  return recebido === segredo;
+}
+
 Deno.serve(async (req) => {
-  // Só o banco (com a chave service_role) pode chamar.
-  if (req.headers.get("Authorization") !== `Bearer ${chave}`) {
+  if (!(await autorizado(req))) {
     return new Response("Não autorizado", { status: 401 });
   }
   const bruto = Deno.env.get("FCM_CONTA_SERVICO");
