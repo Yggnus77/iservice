@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Confirme seu novo e-mail no iService</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;padding:0;background:#F4F6FB;-webkit-text-size-adjust:100%;}
+  a{color:#0052CC;}
+  @media (max-width:620px){
+    .cartao{border-radius:0 !important;}
+    .miolo{padding:28px 22px 30px 22px !important;}
+    .topo{padding:20px 22px 0 22px !important;}
+    h1{font-size:23px !important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#F4F6FB;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F4F6FB;font-size:1px;line-height:1px;">Confirme a troca do e-mail da sua conta.&#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; </div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F6FB" style="background:#F4F6FB;">
+<tr><td align="center" style="padding:28px 12px 32px 12px;">
+<table role="presentation" class="cartao" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(10,31,68,.06);">
+<tr><td>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td height="5" style="height:5px;line-height:5px;font-size:0;background:#0052CC;" width="34%">&nbsp;</td>
+<td height="5" style="height:5px;line-height:5px;font-size:0;background:#FF8A00;" width="33%">&nbsp;</td>
+<td height="5" style="height:5px;line-height:5px;font-size:0;background:#00A846;" width="33%">&nbsp;</td>
+</tr></table>
+</td></tr>
+<tr><td class="topo" style="padding:24px 40px 0 40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td valign="middle">
+<a href="https://iservice.app.br" target="_blank" style="text-decoration:none;">
+<img src="https://iservice.app.br/assets/img/icon-192.png" width="40" height="40" alt="" style="display:inline-block;vertical-align:middle;border:0;width:40px;height:40px;">
+<span style="display:inline-block;vertical-align:middle;margin-left:8px;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:22px;font-weight:800;letter-spacing:-.4px;color:#0A1F44;">i<span style="color:#0052CC;">Service</span></span>
+</a>
+</td>
+
+</tr></table>
+</td></tr>
+<tr><td class="miolo" style="padding:30px 40px 36px 40px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;"><tr>
+<td style="background:#E8F0FC;border-radius:999px;padding:6px 12px;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;color:#0052CC;text-transform:uppercase;">
+<span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#0052CC;margin-right:6px;vertical-align:1px;"></span>Segurança</td>
+</tr></table>
+<h1 style="margin:0 0 18px 0;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:26px;line-height:1.25;font-weight:800;color:#0A1F44;letter-spacing:-.3px;">Confirme seu novo e-mail</h1>
+<p style="margin:0 0 18px 0;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.6;color:#4A5B78;"><b style="color:#0A1F44;">Olá!</b></p>
+<p style="margin:0 0 18px 0;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.6;color:#4A5B78;">Recebemos um pedido para trocar o e-mail da sua conta de <b>{{ .Email }}</b> para <b>{{ .NewEmail }}</b>. Toque no botão para confirmar.</p>
+
+
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 8px 0;"><tr>
+<td align="center" bgcolor="#0052CC" style="border-radius:12px;background:#0052CC;">
+<a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:15px 28px;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">Confirmar novo e-mail</a>
+</td></tr></table>
+<p style="margin:14px 0 0 0;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;line-height:1.5;color:#8A97AD;">Se o botão não funcionar, copie e cole este endereço no navegador:<br><a href="{{ .ConfirmationURL }}" style="color:#0052CC;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 0 0;"><tr><td style="border-top:1px solid #E1E6EF;padding-top:18px;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.55;color:#4A5B78;">Se você não pediu essa troca, não toque no botão e fale com o suporte.</td></tr></table>
+<p style="margin:28px 0 0 0;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:15px;line-height:1.5;color:#0A1F44;">Abraço,<br><b>Equipe iService</b></p>
+</td></tr>
+<tr><td style="background:#011031;padding:22px 40px;" class="topo">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:14px;line-height:1.6;color:#ffffff;">
+<b>Precisa de ajuda?</b><br>
+<span style="color:#A6B3CC;">WhatsApp</span> <a href="https://wa.me/5598985516037" style="color:#ffffff;text-decoration:none;font-weight:700;">(98) 98551-6037</a>
+<span style="color:#55678A;">&nbsp;·&nbsp;</span>
+<span style="color:#A6B3CC;">E-mail</span> <a href="mailto:iservice86@gmail.com" style="color:#ffffff;text-decoration:none;font-weight:700;">iservice86@gmail.com</a>
+</td></tr></table>
+</td></tr>
+</table>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+<tr><td align="center" style="padding:22px 24px 0 24px;font-family:Montserrat, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;line-height:1.6;color:#8A97AD;">
+iService · Profissionais para o que você precisa, ainda hoje.<br>
+Você recebeu este e-mail porque tem uma conta no iService. Avisos sobre a sua conta são enviados mesmo com as notificações desligadas.<br>
+<a href="https://iservice.app.br" style="color:#8A97AD;">iservice.app.br</a> &nbsp;·&nbsp; <a href="https://iservice.app.br/termos.html" style="color:#8A97AD;">Termos de uso</a> &nbsp;·&nbsp; <a href="https://iservice.app.br/privacidade.html" style="color:#8A97AD;">Privacidade</a> &nbsp;·&nbsp; <a href="https://instagram.com/iservice.app" style="color:#8A97AD;">Instagram</a>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
