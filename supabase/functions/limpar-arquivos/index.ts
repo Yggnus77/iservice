@@ -4,8 +4,7 @@
 // e esta função esvazia a fila pela API do Storage.
 //
 // Publicar:  supabase functions deploy limpar-arquivos
-// Agendar:   Supabase > Integrations > Cron, todo dia às 07:00, chamando esta função
-//            com o cabeçalho Authorization: Bearer <chave service_role>.
+// Agendar:   cron iservice-limpar-arquivos (migração 20261029000900), todo dia às 07:00.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const BUCKETS = ["fotos", "portfolio", "avaliacoes", "pedidos", "documentos"];
