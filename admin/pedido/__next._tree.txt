@@ -2,4 +2,4 @@
 :HL["/admin/_next/static/media/65341aea9fb91af5-s.p.1dqa_6e_ad4sj.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"pedido","h":96,"c":"$Q2"}]]
-0:{"b":"IMhTDHVPwHH-J5X3OrYpK","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"S9x8nAmoF7sAKj-NCb8hM","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
