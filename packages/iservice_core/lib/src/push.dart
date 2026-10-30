@@ -40,7 +40,7 @@ class ConfigFirebase {
       appId: appId,
       messagingSenderId: senderId,
       projectId: projectId,
-      iosBundleId: ios ? (app == AppIService.cliente ? 'br.com.iservice.iserviceCliente' : 'br.com.iservice.iserviceProfissional') : null,
+      iosBundleId: ios ? (app == AppIService.cliente ? 'br.app.iservice.cliente' : 'br.app.iservice.profissional') : null,
     );
   }
 }

@@ -1,4 +1,4 @@
-package br.com.iservice.iservice_cliente
+package br.app.iservice.profissional
 
 import io.flutter.embedding.android.FlutterActivity
 
