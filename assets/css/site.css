@@ -466,7 +466,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 }
 .final h2 { color: #fff; font-size: clamp(30px, 3.6vw, 44px); font-weight: 800; letter-spacing: -.03em; }
 .final p { margin-top: 14px; font-size: 18px; }
-.final .lojas { margin-top: 30px; }
+.final .caixa > div > .btn { margin-top: 28px; }
+.final .lojas { margin-top: 18px; }
 .final .lado { justify-self: end; display: grid; justify-items: center; gap: 14px; text-align: center; }
 .final .lado img { width: 150px; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, .35)); }
 .final .lado small { font-weight: 600; color: #fff; font-size: 15px; }
@@ -515,3 +516,31 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Janela "Baixar o iService": escolhe entre o app Cliente e o Profissional */
+.janela-baixar {
+  width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto;
+  border: 0; border-radius: var(--raio); padding: 28px 24px 22px; color: var(--texto);
+  box-shadow: var(--sombra); font-family: var(--fonte);
+}
+.janela-baixar::backdrop { background: rgba(10, 31, 68, .55); }
+.janela-baixar h3 { margin: 0; color: var(--tinta); font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.janela-baixar > p { margin: 4px 0 18px; }
+.janela-baixar .fechar {
+  position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border: 0; border-radius: 50%;
+  background: var(--fundo-2); color: var(--tinta); cursor: pointer; display: grid; place-items: center;
+}
+.janela-baixar .escolha {
+  display: flex; gap: 14px; padding: 16px; border: 2px solid var(--linha); border-radius: 16px; margin-bottom: 12px;
+}
+.janela-baixar .escolha > .ms { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; }
+.janela-baixar .escolha.azul > .ms { background: var(--azul-claro); color: var(--azul); }
+.janela-baixar .escolha.laranja > .ms { background: var(--laranja-claro); color: #B85F00; }
+.janela-baixar .escolha.destaque.azul { border-color: var(--azul); }
+.janela-baixar .escolha.destaque.laranja { border-color: var(--laranja); }
+.janela-baixar .escolha b { display: block; color: var(--tinta); font-size: 17px; }
+.janela-baixar .escolha div > span { display: block; font-size: 14px; }
+.janela-baixar .escolha .btn { margin-top: 12px; min-height: 44px; padding: 0 16px; font-size: 14px; }
+.janela-baixar .escolha .outro { display: block; margin-top: 8px; font-size: 13px; font-weight: 600; }
+.janela-baixar > small { display: block; margin-top: 6px; font-size: 13px; color: var(--suave); }
+.janela-baixar .escolha > div { min-width: 0; }
