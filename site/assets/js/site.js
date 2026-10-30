@@ -16,7 +16,36 @@ const LOJAS = {
   android: ''     // link do Google Play quando o app for aprovado
 };
 
+// Contagem de visitas e cliques em "Baixar" (painel > Site e downloads). Sem cookies:
+// um código aleatório que muda todo dia, só para contar cada pessoa uma vez por dia.
+const METRICAS = {
+  url: 'https://aurjqwqqrxaexmwozezr.supabase.co/rest/v1/rpc/registrar_evento_site',
+  chave: 'sb_publishable_Gc3o5rwSwK-ID6cYTGPmZA_8NO1hqkW'
+};
+
 (function () {
+  const visitante = (() => {
+    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    try {
+      const salvo = JSON.parse(localStorage.getItem('iservice-visita') || 'null');
+      if (salvo && salvo.dia === hoje && /^[a-z0-9]{8,40}$/.test(salvo.id)) return salvo.id;
+    } catch (e) { /* sem armazenamento: código novo a cada página */ }
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join('');
+    try { localStorage.setItem('iservice-visita', JSON.stringify({ dia: hoje, id })); } catch (e) { /* ignora */ }
+    return id;
+  })();
+  const registrar = (dados) => {
+    if (/^(localhost|127\.)/.test(location.hostname)) return;
+    try {
+      fetch(METRICAS.url, {
+        method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json', apikey: METRICAS.chave },
+        body: JSON.stringify({ p_visitante: visitante, ...dados })
+      }).catch(() => {});
+    } catch (e) { /* contagem nunca atrapalha o site */ }
+  };
+  registrar({ p_tipo: 'visita', p_pagina: location.pathname.slice(0, 60) });
+
   const formatarFone = (n) => {
     const d = n.replace(/\D/g, '').replace(/^55/, '');
     return d.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : n;
@@ -86,6 +115,9 @@ const LOJAS = {
         ? 'No iPhone o iService funciona pelo navegador até chegar à App Store.'
         : 'Versão de teste. Se o celular pedir, permita instalar apps desta fonte.'}</small>`;
     document.body.appendChild(janela);
+    janela.querySelectorAll('.escolha a').forEach((a) => a.addEventListener('click', () => {
+      registrar({ p_tipo: 'baixar', p_app: a.closest('.escolha').dataset.tipo, p_plataforma: a.href.endsWith('.apk') ? 'android' : 'navegador' });
+    }));
     janela.querySelector('.fechar').addEventListener('click', () => janela.close());
     janela.addEventListener('click', (e) => { if (e.target === janela) janela.close(); });
     botoesBaixar.forEach((b) => b.addEventListener('click', (e) => {
