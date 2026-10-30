@@ -1,10 +1,15 @@
 /* Contatos e links das lojas: preencha aqui e o site inteiro se atualiza.
    Campo vazio mostra "Em breve". */
 const CONTATO = {
-  whatsapp: '',   // só números com DDI e DDD, ex.: '5561999999999'
-  email: '',      // ex.: 'contato@seudominio.com.br'
-  instagram: '',  // usuário sem @, ex.: 'iservice.oficial'
+  whatsapp: '5598985516037',   // só números com DDI e DDD, ex.: '5561999999999'
+  email: 'iservice86@gmail.com',      // ex.: 'contato@seudominio.com.br'
+  instagram: 'iservice.app',  // usuário sem @, ex.: 'iservice.oficial'
   cnpj: ''        // ex.: '00.000.000/0001-00'
+};
+// Versão de teste: Android baixa o APK; iPhone usa a versão web até sair na App Store.
+const APPS = {
+  cliente: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-cliente.apk', web: 'cliente/' },
+  profissional: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-profissional.apk', web: 'profissional/' }
 };
 const LOJAS = {
   ios: '',        // link da App Store quando o app for aprovado
@@ -51,6 +56,44 @@ const LOJAS = {
       el.querySelector('small').textContent = el.dataset.loja === 'ios' ? 'Baixar na' : 'Disponível no';
     }
   });
+
+  // "Baixar o app" e "Quero me cadastrar": pergunta se é cliente ou profissional
+  const botoesBaixar = document.querySelectorAll('[data-baixar]');
+  if (botoesBaixar.length) {
+    const iphone = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const opcao = (tipo, cor, icone, titulo, texto) => `
+      <div class="escolha ${cor}" data-tipo="${tipo}">
+        <span class="ms">${icone}</span>
+        <div>
+          <b>${titulo}</b>
+          <span>${texto}</span>
+          <a class="btn ${cor === 'azul' ? 'btn-azul' : 'btn-laranja'}" href="${iphone ? APPS[tipo].web : APPS[tipo].apk}"${iphone ? '' : ' download'}>
+            <span class="ms">${iphone ? 'open_in_browser' : 'download'}</span> ${iphone ? 'Abrir no navegador' : 'Baixar para Android'}
+          </a>
+          <a class="outro" href="${iphone ? APPS[tipo].apk : APPS[tipo].web}">${iphone ? 'Tem Android? Baixe o app' : 'Tem iPhone? Use pelo navegador'}</a>
+        </div>
+      </div>`;
+    const janela = document.createElement('dialog');
+    janela.className = 'janela-baixar';
+    janela.setAttribute('aria-labelledby', 'titulo-baixar');
+    janela.innerHTML = `
+      <button class="fechar" type="button" aria-label="Fechar"><span class="ms">close</span></button>
+      <h3 id="titulo-baixar">Baixar o iService</h3>
+      <p>Você quer contratar ou oferecer serviços?</p>
+      ${opcao('cliente', 'azul', 'person_search', 'Sou cliente', 'Quero contratar um profissional perto de mim.')}
+      ${opcao('profissional', 'laranja', 'construction', 'Sou profissional', 'Quero me cadastrar e receber pedidos.')}
+      <small>${iphone
+        ? 'No iPhone o iService funciona pelo navegador até chegar à App Store.'
+        : 'Versão de teste. Se o celular pedir, permita instalar apps desta fonte.'}</small>`;
+    document.body.appendChild(janela);
+    janela.querySelector('.fechar').addEventListener('click', () => janela.close());
+    janela.addEventListener('click', (e) => { if (e.target === janela) janela.close(); });
+    botoesBaixar.forEach((b) => b.addEventListener('click', (e) => {
+      e.preventDefault();
+      janela.querySelectorAll('.escolha').forEach((el) => el.classList.toggle('destaque', el.dataset.tipo === b.dataset.baixar));
+      janela.showModal();
+    }));
+  }
 
   const ano = document.getElementById('ano');
   if (ano) ano.textContent = new Date().getFullYear();
