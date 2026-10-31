@@ -2,7 +2,7 @@
    Campo vazio mostra "Em breve". */
 const CONTATO = {
   whatsapp: '5598985516037',   // só números com DDI e DDD, ex.: '5561999999999'
-  email: 'iservice86@gmail.com',      // ex.: 'contato@seudominio.com.br'
+  email: 'iserviceapp86@gmail.com',      // ex.: 'contato@seudominio.com.br'
   instagram: 'iservice.app',  // usuário sem @, ex.: 'iservice.oficial'
   cnpj: ''        // ex.: '00.000.000/0001-00'
 };

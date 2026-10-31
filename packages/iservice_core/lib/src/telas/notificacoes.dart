@@ -16,7 +16,12 @@ IconData _icone(String tipo) => switch (tipo) {
       'mensagem' => Symbols.chat_rounded,
       'avaliacao_nova' => Symbols.star_rounded,
       'cadastro_aprovado' => Symbols.verified_rounded,
-      'cadastro_recusado' => Symbols.error_rounded,
+      'cadastro_recusado' || 'documento_recusado' => Symbols.error_rounded,
+      'cadastro_recebido' => Symbols.hourglass_top_rounded,
+      'boas_vindas' => Symbols.waving_hand_rounded,
+      'reclamacao_aberta' || 'reclamacao_recebida' || 'garantia' => Symbols.shield_rounded,
+      'conta_suspensa' => Symbols.block_rounded,
+      'conta_reativada' => Symbols.check_circle_rounded,
       _ => Symbols.notifications_rounded,
     };
 

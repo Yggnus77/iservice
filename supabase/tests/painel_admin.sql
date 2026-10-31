@@ -255,4 +255,18 @@ select pg_temp.ok((public.admin_resumo() ->> 'emergencias_abertas')::int = 0, 'e
 select pg_temp.ok((select count(*) from public.admin_registro()) > 5, 'registro de ações da equipe');
 select pg_temp.admin();
 
+-- ---------------------------------------------------------------- e-mails de cada etapa
+select pg_temp.ok(exists (select 1 from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000b1' and tipo = 'cadastro_recebido'),
+  'cadastro enviado gera aviso de cadastro recebido');
+select pg_temp.ok(exists (select 1 from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000b1' and tipo = 'cadastro_recebido'
+  and (dados ->> 'reenvio')::boolean), 'cadastro reenviado também avisa');
+select pg_temp.ok(exists (select 1 from public.notificacoes where tipo = 'reclamacao_aberta')
+  and exists (select 1 from public.notificacoes where tipo = 'reclamacao_recebida'), 'reclamação avisa quem abriu e a outra parte');
+select pg_temp.ok(exists (select 1 from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000b1' and tipo = 'conta_suspensa'
+  and corpo = 'Documento falso'), 'suspensão avisa com o motivo');
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.ok(exists (select 1 from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000c1' and tipo = 'boas_vindas'),
+  'confirmar o e-mail gera boas-vindas');
+select pg_temp.ok(public.tipo_tem_email('cadastro_aprovado') and not public.tipo_tem_email('mensagem'), 'só avisos importantes vão por e-mail');
+
 rollback;
