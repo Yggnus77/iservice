@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>iService | Serviços perto de você em Brasília e Entorno</title>
+<title>iService App | Serviços perto de você em Brasília e Entorno</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Chaveiro, eletricista, encanador, diarista e mais 14 profissões em Brasília e no Entorno. Escolha o profissional mais bem avaliado perto de você e seja atendido hoje mesmo.">
+<meta name="description" content="iService é o app de serviços de Brasília e do Entorno: chaveiro, eletricista, encanador, diarista e mais 14 profissões. Escolha o profissional mais bem avaliado perto de você e seja atendido hoje mesmo.">
 <meta name="theme-color" content="#0052CC">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -20,6 +20,7 @@
 <meta property="og:url" content="https://iservice.app.br/">
 <link rel="canonical" href="https://iservice.app.br/">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap">
@@ -28,12 +29,41 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "iService",
-  "slogan": "Serviços perto de você!",
-  "description": "Aplicativo que conecta pessoas a profissionais de confiança perto delas, com atendimento no mesmo dia.",
-  "areaServed": ["Brasília, DF", "Entorno do Distrito Federal"],
-  "logo": "assets/img/icon-512.png"
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://iservice.app.br/#site",
+      "url": "https://iservice.app.br/",
+      "name": "iService",
+      "alternateName": ["iService App", "iservice.app.br"],
+      "inLanguage": "pt-BR",
+      "publisher": { "@id": "https://iservice.app.br/#empresa" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://iservice.app.br/#empresa",
+      "name": "iService",
+      "alternateName": "iService App",
+      "url": "https://iservice.app.br/",
+      "logo": "https://iservice.app.br/assets/img/icon-512.png",
+      "image": "https://iservice.app.br/og-image.jpg",
+      "slogan": "Serviços perto de você!",
+      "description": "Aplicativo que conecta pessoas a profissionais de confiança perto delas, com atendimento no mesmo dia, em Brasília e no Entorno.",
+      "email": "iserviceapp86@gmail.com",
+      "sameAs": ["https://www.instagram.com/iservice.app/"],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "telephone": "+55-98-98551-6037",
+        "email": "iserviceapp86@gmail.com",
+        "availableLanguage": "Portuguese"
+      },
+      "areaServed": [
+        { "@type": "City", "name": "Brasília" },
+        { "@type": "AdministrativeArea", "name": "Entorno do Distrito Federal" }
+      ]
+    }
+  ]
 }
 </script>
 </head>
@@ -79,7 +109,7 @@
     <div class="texto">
       <span class="etiqueta"><i></i>Brasília e Entorno · Lançamento em 2027</span>
       <h1>O profissional certo, perto de você. <em>Hoje.<svg viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true"><path d="M2 9Q50 1 98 7" fill="none" stroke="#FF8A00" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></em></h1>
-      <p class="lead">Chaveiro, eletricista, encanador, diarista e mais 14 profissões. Você vê quem está perto, compara avaliações, escolhe quem vai atender e acompanha tudo pelo celular.</p>
+      <p class="lead">O iService é o app para chamar chaveiro, eletricista, encanador, diarista e mais 14 profissões em Brasília e no Entorno. Você vê quem está perto, compara avaliações, escolhe quem vai atender e acompanha tudo pelo celular.</p>
       <div class="chamadas">
         <a class="btn btn-laranja" href="#baixar" data-baixar><span class="ms">download</span> Baixar versão de teste</a>
         <div class="lojas">
