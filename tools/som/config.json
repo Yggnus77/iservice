@@ -1,0 +1,13 @@
+{
+  "timbre": "caixinha",
+  "melodia": "iservice",
+  "tom": 1050,
+  "espaco": 130,
+  "batidas": 1,
+  "badalo": 90,
+  "suavidade": 0.7,
+  "duracao": 0.9,
+  "brilho": 0.1,
+  "eco": 0.3,
+  "tremor": 0
+}

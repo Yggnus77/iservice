@@ -110,8 +110,10 @@ Deno.serve(async (req) => {
           token: destino,
           notification: { title: n.titulo, body: n.corpo },
           data: dados,
-          android: { priority: "high", notification: { sound: "default" } },
-          apns: { payload: { aps: { sound: "default" } } },
+          // Som da marca (caixinha "i-ser-vice"), guardado em cada app com o nome iservice_som.
+          // Android: res/raw/iservice_som.ogg + canal iservice_avisos_v1 (MainActivity). iPhone: Runner/iservice_som.caf.
+          android: { priority: "high", notification: { sound: "iservice_som", channel_id: "iservice_avisos_v1" } },
+          apns: { payload: { aps: { sound: "iservice_som.caf" } } },
         },
       }),
     });
