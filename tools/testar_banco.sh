@@ -15,7 +15,7 @@ select cron.unschedule(jobid) from cron.job where jobname in ('iservice-expirar-
 SQL
 # O auth do container local é antigo e não tem as colunas de telefone do Supabase atual.
 docker exec ispg psql -q -U supabase_admin -d postgres -c \
-  'alter table auth.users add column if not exists phone text, add column if not exists phone_confirmed_at timestamptz' >/dev/null 2>&1 || true
+  'alter table auth.users add column if not exists phone text, add column if not exists phone_confirmed_at timestamptz, add column if not exists banned_until timestamptz' >/dev/null 2>&1 || true
 for f in supabase/migrations/*.sql; do
   psql "$DB" -q -v ON_ERROR_STOP=1 -f "$f" 2>&1 | grep -v 'already exists, skipping' || true
 done

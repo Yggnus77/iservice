@@ -20,6 +20,8 @@ PROFISSOES = [
   ('estofados', 'Limpeza de estofados', 'weekend', 150, '#a678ff', '#7c4ddb', ['Sofá', 'Colchão', 'Cadeiras', 'Tapetes', 'Bancos de carro', 'Impermeabilização de estofado'], ['sofá', 'colchão', 'tapete', 'estofado']),
   ('maquiadora', 'Maquiadora', 'face_retouching_natural', 120, '#e46be8', '#b02db8', ['Social', 'Noiva', 'Formatura', 'Penteado', 'Debutante', 'Maquiagem artística'], ['maquiagem', 'noiva', 'penteado', 'festa']),
   ('dedetizador', 'Dedetizador', 'pest_control', 180, '#8bc34a', '#4e8a1e', ['Baratas e formigas', 'Cupins', 'Ratos', 'Escorpiões', 'Pulgas e carrapatos', 'Mosquitos e pernilongos', 'Percevejos', 'Pombos e morcegos'], ['barata', 'cupim', 'rato', 'escorpião', 'formiga', 'inseto', 'praga', 'dedetização', 'pulga', 'mosquito']),
+  ('barbeiro', 'Barbeiro', 'content_cut', 60, '#8d6e63', '#5d4037', ['Corte masculino', 'Barba', 'Corte e barba', 'Corte infantil', 'Pezinho e acabamento', 'Sobrancelha', 'Pigmentação', 'Atendimento para idosos e acamados'], ['cabelo', 'barba', 'corte', 'barbearia', 'cabeleireiro', 'domicílio', 'bigode']),
+  ('borracheiro', 'Borracheiro', 'tire_repair', 50, '#607d8b', '#263238', ['Conserto de pneu furado', 'Troca pelo estepe', 'Calibragem e enchimento', 'Pneu de moto', 'Câmara de ar e válvula', 'Socorro na rua ou na estrada', 'Montagem e troca de pneus', 'Pneu de caminhonete e utilitário'], ['pneu', 'pneu furado', 'furo', 'estepe', 'roda', 'calibrar', 'borracharia', 'câmara de ar', 'socorro', 'moto']),
 ]
 EXIGE_ANTECEDENTES = {'baba'}
 CERTIFICACOES = {
@@ -32,6 +34,8 @@ CERTIFICACOES = {
   'maquiadora': ['Curso de maquiagem profissional'],
   'pets': ['Curso de banho e tosa'],
   'dedetizador': ['Licença da Vigilância Sanitária', 'Curso de controle de pragas'],
+  'barbeiro': ['Curso de barbeiro'],
+  'borracheiro': ['Curso de borracheiro'],
 }
 # (id, nome, uf, faixa de preço 1..5, lat, lng)
 REGIOES = [

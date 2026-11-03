@@ -1,0 +1,54 @@
+# Gera os APKs de teste dos dois apps e publica numa Release "teste-android",
+# para instalar direto no celular (Android). Roda sozinho a cada mudança no
+# main que mexe nos apps, ou pelo botão "Run workflow" na aba Actions.
+name: APKs de teste (Android)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, apk-android]
+    paths: ['apps/**', 'packages/**', 'config/firebase.json', '.github/workflows/android.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+      # Endereço do Supabase e chave publicável (pública por natureza; já vai nos apps web).
+      - name: Configuração
+        run: |
+          cat > config/dev.json <<'JSON'
+          {
+            "SUPABASE_URL": "https://aurjqwqqrxaexmwozezr.supabase.co",
+            "SUPABASE_ANON_KEY": "sb_publishable_Gc3o5rwSwK-ID6cYTGPmZA_8NO1hqkW"
+          }
+          JSON
+      - run: flutter pub get
+      - name: Compilar
+        run: |
+          for app in cliente profissional; do
+            (cd apps/$app && flutter build apk --release \
+              --dart-define-from-file=../../config/dev.json \
+              --dart-define-from-file=../../config/firebase.json)
+            cp apps/$app/build/app/outputs/flutter-apk/app-release.apk iservice-$app.apk
+          done
+      - name: Publicar na Release "teste-android"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete teste-android --yes --cleanup-tag || true
+          gh release create teste-android iservice-cliente.apk iservice-profissional.apk \
+            --title "APKs de teste" --prerelease \
+            --notes "Versão de teste para instalar no Android. Gerada a partir de ${GITHUB_SHA::7}."

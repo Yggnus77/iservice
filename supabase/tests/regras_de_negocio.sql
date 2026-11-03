@@ -373,4 +373,31 @@ select pg_temp.ok((select usuario_id from public.dispositivos where token = 'tok
 select public.notificar('00000000-0000-0000-0000-0000000000a1', 'teste', 'Teste', 'Corpo');
 select pg_temp.ok(exists (select 1 from public.notificacoes where tipo = 'teste'), 'notificação gravada mesmo sem o envio de push configurado');
 
+-- Visitas do site e cliques em "Baixar o app".
+set local role anon;
+select public.registrar_evento_site('visita', 'abc12345xyz', null, null, '/');
+select public.registrar_evento_site('visita', 'abc12345xyz', null, null, '/');
+select public.registrar_evento_site('baixar', 'abc12345xyz', 'cliente', 'android');
+select public.registrar_evento_site('baixar', 'abc12345xyz', 'hacker', 'android');
+select public.registrar_evento_site('visita', 'NÃO VALE', null, null, '/');
+do $$ begin
+  perform count(*) from public.site_eventos;
+  raise exception 'FALHOU: visitante leu a tabela';
+exception when insufficient_privilege then raise notice 'ok - visitante do site não lê os eventos';
+end $$;
+select pg_temp.admin();
+select pg_temp.ok((select count(*) from public.site_eventos) = 2, 'visita conta uma vez por dia e evento inválido é ignorado');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  perform public.admin_site(7);
+  raise exception 'FALHOU: cliente viu as métricas';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - só a equipe vê as métricas do site';
+end $$;
+select pg_temp.admin();
+update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select (public.admin_site(7)->'dias'->6->>'visitas')::int = 1 and (public.admin_site(7)->'por_plataforma'->>'cliente_android')::int = 1),
+  'painel mostra visitas e downloads do dia');
+select pg_temp.admin();
+
 rollback;

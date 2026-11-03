@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
-  BadgeCheck, BarChart3, ClipboardList, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
+  BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Tags, Users, Settings, Lock, Mail, CheckCircle2,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
@@ -48,6 +48,7 @@ const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; co
   { href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
+  { href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
   { href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
   { href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },
