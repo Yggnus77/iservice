@@ -22,6 +22,7 @@ const _icones = <String, IconData>{
   'face_retouching_natural': Symbols.face_retouching_natural_rounded,
   'pest_control': Symbols.pest_control_rounded,
   'content_cut': Symbols.content_cut_rounded,
+  'tire_repair': Symbols.tire_repair_rounded,
 };
 
 IconData iconeProfissao(String nome) => _icones[nome] ?? Symbols.home_repair_service_rounded;
