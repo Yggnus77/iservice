@@ -491,6 +491,13 @@ class FaixaPreco {
       FaixaPreco(minimo: _d(j['minimo']), maximo: _d(j['maximo']), estimada: j['estimada'] ?? true);
 }
 
+/// Preço de um profissional na lista da busca, com a forma de cobrança.
+class PrecoBusca {
+  const PrecoBusca(this.preco, this.cobranca);
+  final double preco;
+  final Cobranca cobranca;
+}
+
 enum QuandoPedido {
   agora('agora', 'Agora'),
   hoje('hoje', 'Hoje'),

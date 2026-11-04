@@ -93,6 +93,10 @@ class CatalogoRepo {
         return {for (final l in linhas) l['chave'] as String: l['valor']};
       });
 
+  /// Região mais próxima de um ponto (para quem busca pelo GPS, sem endereço salvo).
+  Future<String?> regiaoProxima(double lat, double lng) =>
+      _tentar(() async => await _db.rpc('regiao_proxima', params: {'p_lat': lat, 'p_lng': lng}) as String?);
+
   Future<FaixaPreco?> faixaPreco(int especialidadeId, String? regiaoId, [Cobranca cobranca = Cobranca.servico]) => _tentar(() async {
         final r = await _db.rpc('faixa_preco', params: {'p_especialidade': especialidadeId, 'p_regiao': regiaoId, 'p_cobranca': cobranca.valor});
         final l = r as List;
@@ -283,6 +287,15 @@ class BuscaRepo {
           'p_rodizio': rodizio,
         });
         return [for (final l in r as List) ProfissionalResumo.fromJson({...l, 'profissao_id': profissaoId})];
+      });
+
+  /// Preço de cada profissional da lista: o da especialidade escolhida ou o menor da profissão.
+  Future<Map<String, PrecoBusca>> precos(List<String> ids, String profissaoId, int? especialidadeId) => _tentar(() async {
+        if (ids.isEmpty) return const <String, PrecoBusca>{};
+        final r = await _db.rpc('precos_busca', params: {'p_ids': ids, 'p_profissao': profissaoId, 'p_especialidade': especialidadeId});
+        return {
+          for (final l in r as List) l['profissional_id'] as String: PrecoBusca((l['preco'] as num).toDouble(), Cobranca.de(l['cobranca'])),
+        };
       });
 
   Future<List<ProfissionalResumo>> topRegiao({required double lat, required double lng, String? profissaoId, int limite = 10, int rodizio = 0}) =>

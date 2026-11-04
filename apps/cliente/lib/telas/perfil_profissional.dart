@@ -138,7 +138,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
                 return Card(
                   child: ListTile(
                     title: Text(e.nome, style: t.titleSmall),
-                    subtitle: e.preco == null ? const Text('Valor combinado no local') : Text('Em média ${reais(e.preco)} ${e.cobranca.unidade}'),
+                    subtitle: e.preco == null ? const Text('Valor combinado no local') : _PrecoEFaixa(e),
                     trailing: Icon(Symbols.arrow_forward_rounded, color: c.acaoTexto),
                     onTap: p.disponivel && prof.id == profissao?.id ? () => solicitar(e.id) : null,
                   ),
@@ -336,6 +336,25 @@ class _ItemAvaliacao extends StatelessWidget {
           decoration: BoxDecoration(color: c.superficieSuave, borderRadius: BorderRadius.circular(10)),
           child: Text('Resposta do profissional: ${a.resposta}', style: t.bodySmall),
         ),
+    ]);
+  }
+}
+
+/// Preço médio do profissional e, embaixo, a faixa comum na região do cliente.
+class _PrecoEFaixa extends ConsumerWidget {
+  const _PrecoEFaixa(this.e);
+  final Especialidade e;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final regiaoId = ref.watch(regiaoLocalProvider).value;
+    final faixa = ref.watch(faixaPrecoProvider((e.id, regiaoId, e.cobranca))).value;
+    final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == regiaoId).firstOrNull;
+    final t = Theme.of(context).textTheme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Em média ${reais(e.preco)} ${e.cobranca.unidade}'),
+      if (faixa != null)
+        Text('Comum ${regiao == null ? 'na sua região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)}', style: t.bodySmall),
     ]);
   }
 }

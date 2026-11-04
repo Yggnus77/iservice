@@ -6,9 +6,6 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
 
-final _faixaProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
-    (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
-
 /// Pedido direcionado: vai só para o profissional escolhido.
 /// Só "agora" ou "hoje"; outro dia apenas se combinado com ele (até 7 dias).
 class TelaSolicitar extends ConsumerStatefulWidget {
@@ -111,7 +108,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         final diasMax = (config['dias_max_combinado'] as num?)?.toInt() ?? 7;
         final janelas = _janelasDeHoje(config);
         // Faixa comum na região do endereço, na mesma forma de cobrança do profissional.
-        final faixa = esp?.preco == null ? null : ref.watch(_faixaProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
+        final faixa = esp?.preco == null ? null : ref.watch(faixaPrecoProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
         final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
 
         return Scaffold(
