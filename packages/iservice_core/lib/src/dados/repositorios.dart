@@ -93,8 +93,8 @@ class CatalogoRepo {
         return {for (final l in linhas) l['chave'] as String: l['valor']};
       });
 
-  Future<FaixaPreco?> faixaPreco(int especialidadeId, String? regiaoId) => _tentar(() async {
-        final r = await _db.rpc('faixa_preco', params: {'p_especialidade': especialidadeId, 'p_regiao': regiaoId});
+  Future<FaixaPreco?> faixaPreco(int especialidadeId, String? regiaoId, [Cobranca cobranca = Cobranca.servico]) => _tentar(() async {
+        final r = await _db.rpc('faixa_preco', params: {'p_especialidade': especialidadeId, 'p_regiao': regiaoId, 'p_cobranca': cobranca.valor});
         final l = r as List;
         return l.isEmpty ? null : FaixaPreco.fromJson(l.first);
       });

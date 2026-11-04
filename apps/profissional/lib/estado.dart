@@ -62,7 +62,7 @@ const nomesPendencias = {
   'endereco': 'endereço',
   'area_atendimento': 'área de atendimento',
   'profissao': 'profissão',
-  'especialidades_e_precos': 'especialidades com preço',
+  'especialidades_e_precos': 'preço médio de cada especialidade',
   'documento': 'foto do documento',
   'selfie': 'selfie com o documento',
   'antecedentes': 'certidão de antecedentes',

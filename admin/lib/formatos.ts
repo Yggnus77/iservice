@@ -137,7 +137,7 @@ export const pendencia: Record<string, string> = {
   endereco: 'Endereço',
   area_atendimento: 'Área de atendimento',
   profissao: 'Profissão',
-  especialidades_e_precos: 'Especialidades e preços',
+  especialidades_e_precos: 'Preço médio de cada especialidade',
   documento: 'Foto do documento',
   selfie: 'Selfie com o documento',
   antecedentes: 'Certidão de antecedentes',

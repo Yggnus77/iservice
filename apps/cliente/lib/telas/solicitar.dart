@@ -6,6 +6,9 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
 
+final _faixaProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
+    (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
+
 /// Pedido direcionado: vai só para o profissional escolhido.
 /// Só "agora" ou "hoje"; outro dia apenas se combinado com ele (até 7 dias).
 class TelaSolicitar extends ConsumerStatefulWidget {
@@ -107,6 +110,9 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         final taxa = (config['taxa_urgencia'] as num?)?.toDouble() ?? 15;
         final diasMax = (config['dias_max_combinado'] as num?)?.toInt() ?? 7;
         final janelas = _janelasDeHoje(config);
+        // Faixa comum na região do endereço, na mesma forma de cobrança do profissional.
+        final faixa = esp?.preco == null ? null : ref.watch(_faixaProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
+        final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
 
         return Scaffold(
           appBar: AppBar(title: const Text('Solicitar serviço')),
@@ -197,7 +203,15 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
-                  _Linha('Preço de ${primeiroNome(p.nome)}', esp?.preco == null ? 'Combinado no local' : 'a partir de ${reais(esp!.preco)}'),
+                  _Linha('Preço de ${primeiroNome(p.nome)}', esp?.preco == null ? 'Combinado no local' : 'em média ${reais(esp!.preco)} ${esp.cobranca.unidade}'),
+                  if (faixa != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 4),
+                      child: Text(
+                        'Comum ${regiao == null ? 'na região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)} ${esp!.cobranca.unidade}',
+                        style: t.bodySmall,
+                      ),
+                    ),
                   if (_quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
                   const Divider(height: 20),
                   Row(children: [
