@@ -175,6 +175,10 @@ select pg_temp.ok((select estimada and amostras = 0
   'preço por diária não se mistura com preço por serviço');
 select pg_temp.ok((select (public.perfil_profissional('00000000-0000-0000-0000-0000000000a2') -> 'profissoes' -> 0 -> 'especialidades' -> 0 ->> 'cobranca') = 'servico'),
   'perfil mostra a forma de cobrança');
+select pg_temp.ok((select count(*) = 6 and bool_and(preco = 120 and cobranca = 'servico')
+  from public.precos_busca(array(select id from public.profissionais), 'eletricista')),
+  'busca traz o preço e a forma de cobrança de cada profissional');
+select pg_temp.ok(public.regiao_proxima(-15.816, -47.897) = 'asa-sul', 'GPS encontra a região mais próxima');
 select pg_temp.admin();
 insert into public.profissional_especialidades (profissional_id, especialidade_id)
 select '00000000-0000-0000-0000-0000000000a6', id from public.especialidades where profissao_id = 'eletricista' and ordem = 3;

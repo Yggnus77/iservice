@@ -505,9 +505,6 @@ class EditorPrecos extends ConsumerWidget {
   }
 }
 
-final _faixaProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
-    (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
-
 class _CampoPreco extends ConsumerStatefulWidget {
   const _CampoPreco(
       {super.key, required this.especialidade, required this.profissao, required this.preco, required this.cobranca, required this.regiaoId});
@@ -539,7 +536,7 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
 
   @override
   Widget build(BuildContext context) {
-    final faixa = ref.watch(_faixaProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
+    final faixa = ref.watch(faixaPrecoProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
     final aviso = faixa?.aviso(_num);
     final t = Theme.of(context).textTheme;
     final c = context.cores;

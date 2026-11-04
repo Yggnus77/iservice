@@ -79,6 +79,16 @@ final localBuscaProvider = Provider<Local>((ref) {
   return Local(e.lat, e.lng, e.linha1, enderecoId: e.id, regiaoId: e.regiaoId);
 });
 
+/// Região do local de busca: a do endereço ou, no GPS, a mais próxima.
+final regiaoLocalProvider = FutureProvider<String?>((ref) async {
+  final local = ref.watch(localBuscaProvider);
+  return local.regiaoId ?? await ref.read(catalogoRepo).regiaoProxima(local.lat, local.lng);
+});
+
+/// Faixa comum de preço de uma especialidade numa região, numa forma de cobrança.
+final faixaPrecoProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
+    (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
+
 /// Pede permissão e lê o GPS uma vez. Devolve null se o usuário negar.
 Future<Position?> lerLocalizacaoAtual() async {
   if (!await Geolocator.isLocationServiceEnabled()) return null;

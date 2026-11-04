@@ -244,8 +244,11 @@ class Selo extends StatelessWidget {
 
 /// Cartão de profissional usado na busca, no ranking e nos favoritos.
 class CartaoProfissional extends StatelessWidget {
-  const CartaoProfissional({super.key, required this.p, required this.aoTocar, this.profissaoNome, this.mostrarPosicao = false});
+  const CartaoProfissional({super.key, required this.p, required this.aoTocar, this.profissaoNome, this.mostrarPosicao = false, this.preco});
   final ProfissionalResumo p;
+
+  /// Preço com a forma de cobrança; sem ele, mostra o "a partir de" da busca.
+  final PrecoBusca? preco;
   final VoidCallback aoTocar;
   final String? profissaoNome;
   final bool mostrarPosicao;
@@ -286,7 +289,13 @@ class CartaoProfissional extends StatelessWidget {
                 ],
               ]),
             ),
-            if (p.precoAPartir != null)
+            if (preco != null)
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text('em média', style: t.bodySmall?.copyWith(fontSize: 11)),
+                Text(reais(preco!.preco), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
+                Text(preco!.cobranca.unidade, style: t.bodySmall?.copyWith(fontSize: 11)),
+              ])
+            else if (p.precoAPartir != null)
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text('a partir de', style: t.bodySmall?.copyWith(fontSize: 11)),
                 Text(reais(p.precoAPartir), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
