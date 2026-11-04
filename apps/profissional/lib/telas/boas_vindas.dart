@@ -12,8 +12,8 @@ class TelaAbertura extends StatelessWidget {
           decoration: Cores.fundoMarca(escurecer: .7),
           child: Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const LogoIService(tamanho: 40, claro: true),
-              const SizedBox(height: 6),
+              const EmblemaIService(tamanho: 220),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(color: Cores.laranja, borderRadius: BorderRadius.circular(8)),

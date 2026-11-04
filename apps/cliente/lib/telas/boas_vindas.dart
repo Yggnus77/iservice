@@ -15,8 +15,8 @@ class TelaAbertura extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            LogoIService(tamanho: 40, claro: true),
-            SizedBox(height: 12),
+            EmblemaIService(tamanho: 220),
+            SizedBox(height: 16),
             Text('O profissional certo, mais perto de você.', style: TextStyle(color: Colors.white70)),
             SizedBox(height: 40),
             SizedBox.square(dimension: 28, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)),
