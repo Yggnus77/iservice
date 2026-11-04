@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../dados/modelos.dart';
@@ -12,7 +13,7 @@ import '../tema/tema.dart';
 import '../util/formatos.dart';
 import '../util/icones.dart';
 
-/// Logo em texto: "iServi" azul e "ce" laranja, com o pin.
+/// Logo: o pin da marca + "iServi" e "ce" laranja, como no emblema oficial.
 class LogoIService extends StatelessWidget {
   const LogoIService({super.key, this.tamanho = 28, this.claro = false});
   final double tamanho;
@@ -22,13 +23,13 @@ class LogoIService extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final estilo = TextStyle(fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily, fontSize: tamanho, fontWeight: FontWeight.w800, letterSpacing: -.5);
+    final estilo = GoogleFonts.montserrat(fontSize: tamanho, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, letterSpacing: -.5, height: 1.1);
     return Semantics(
       label: 'iService',
       child: ExcludeSemantics(
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Symbols.location_on_rounded, fill: 1, size: tamanho * 1.15, color: claro ? Colors.white : Cores.azul),
-          const SizedBox(width: 2),
+          Image.asset('assets/marca/simbolo.png', package: 'iservice_core', height: tamanho * 1.2, filterQuality: FilterQuality.medium),
+          SizedBox(width: tamanho * .22),
           Text.rich(TextSpan(children: [
             TextSpan(text: 'iServi', style: estilo.copyWith(color: claro ? Colors.white : Cores.azul)),
             TextSpan(text: 'ce', style: estilo.copyWith(color: Cores.laranja)),
@@ -37,6 +38,19 @@ class LogoIService extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Emblema oficial completo (círculo com o pin, a palavra e o slogan).
+class EmblemaIService extends StatelessWidget {
+  const EmblemaIService({super.key, this.tamanho = 160});
+  final double tamanho;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: 'iService: soluções, pessoas, resultados',
+        image: true,
+        child: Image.asset('assets/marca/emblema.png', package: 'iservice_core', width: tamanho, height: tamanho, filterQuality: FilterQuality.medium),
+      );
 }
 
 /// Foto redonda. Sem foto, mostra as iniciais.
