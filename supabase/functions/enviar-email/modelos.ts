@@ -371,6 +371,21 @@ export const MODELOS_AUTH: Record<string, { arquivo: string; nome: string; rotul
       nota: "Se você não pediu para trocar a senha, ignore este e-mail. Sua senha atual continua valendo.",
     },
   },
+  password_changed: {
+    arquivo: "senha-alterada.html",
+    nome: "Password changed",
+    rotulo: "Senha alterada",
+    conteudo: {
+      assunto: "Sua senha do iService foi alterada",
+      previa: "Se foi você, está tudo certo. Se não foi, fale com a gente agora.",
+      selo: { texto: "Segurança", tom: "azul" },
+      titulo: "Sua senha foi alterada",
+      saudacao: "Olá!",
+      paragrafos: ["A senha da sua conta <b>{{ .Email }}</b> no iService acabou de ser alterada. Se foi você, não precisa fazer nada."],
+      destaque: { rotulo: "Não foi você?", texto: "Redefina sua senha agora pelo app, em Esqueci a senha, e fale com o suporte pelo WhatsApp.", tom: "perigo" },
+      botao: { texto: "Falar com o suporte", link: SUPORTE_WHATSAPP_LINK, tom: "verde" },
+    },
+  },
   email_change: {
     arquivo: "trocar-email.html",
     nome: "Change email address",
