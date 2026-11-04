@@ -20,20 +20,38 @@ class Regiao {
       Regiao(id: j['id'], nome: j['nome'], uf: j['uf'], faixaPreco: j['faixa_preco']);
 }
 
+/// Como o profissional cobra uma especialidade. A faixa da região só compara preços da mesma forma.
+enum Cobranca {
+  servico('servico', 'Por serviço', 'por serviço'),
+  hora('hora', 'Por hora', 'por hora'),
+  diaria('diaria', 'Por diária', 'por diária');
+
+  const Cobranca(this.valor, this.rotulo, this.unidade);
+  final String valor;
+  final String rotulo;
+
+  /// Para frases como "R$ 200 por diária".
+  final String unidade;
+
+  static Cobranca de(Object? v) => values.firstWhere((c) => c.valor == v, orElse: () => servico);
+}
+
 class Especialidade {
-  const Especialidade({required this.id, required this.profissaoId, required this.nome, this.preco});
+  const Especialidade({required this.id, required this.profissaoId, required this.nome, this.preco, this.cobranca = Cobranca.servico});
   final int id;
   final String profissaoId;
   final String nome;
 
-  /// Preço definido pelo profissional (só no perfil dele).
+  /// Preço médio definido pelo profissional (só no perfil dele).
   final double? preco;
+  final Cobranca cobranca;
 
   factory Especialidade.fromJson(Map<String, dynamic> j, {String? profissaoId}) => Especialidade(
         id: j['id'],
         profissaoId: j['profissao_id'] ?? profissaoId ?? '',
         nome: j['nome'],
         preco: _dn(j['preco']),
+        cobranca: Cobranca.de(j['cobranca']),
       );
 }
 

@@ -468,14 +468,17 @@ class _SobreEPrecosState extends ConsumerState<_SobreEPrecos> {
       const SizedBox(height: 24),
       Text('Seus preços', style: t.titleMedium),
       const SizedBox(height: 4),
-      Text('Você sempre define o seu valor. Mostramos a faixa comum na sua região só como referência.', style: t.bodySmall),
+      Text('Informe quanto cobra, em média, em cada especialidade e se é por serviço, por hora ou por diária. '
+          'Você sempre define o seu valor; a faixa comum na sua região aparece só como referência.',
+          style: t.bodySmall),
       const SizedBox(height: 10),
       const EditorPrecos(),
     ]);
   }
 }
 
-/// Lista de especialidades marcadas com o campo de preço (usada também no Perfil).
+/// Lista de especialidades marcadas com o preço médio e a forma de cobrança (usada também no Perfil).
+/// O preço é obrigatório em cada especialidade: sem ele o cadastro não vai para análise.
 class EditorPrecos extends ConsumerWidget {
   const EditorPrecos({super.key});
 
@@ -495,19 +498,23 @@ class EditorPrecos extends ConsumerWidget {
           especialidade: e,
           profissao: profissoes.where((p) => p.id == e.profissaoId).firstOrNull?.nome ?? '',
           preco: minhas.especialidades[e.id],
+          cobranca: minhas.cobrancas[e.id] ?? Cobranca.servico,
           regiaoId: regiao,
         ),
     ]);
   }
 }
 
-final _faixaProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?)>((ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2));
+final _faixaProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
+    (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
 
 class _CampoPreco extends ConsumerStatefulWidget {
-  const _CampoPreco({super.key, required this.especialidade, required this.profissao, required this.preco, required this.regiaoId});
+  const _CampoPreco(
+      {super.key, required this.especialidade, required this.profissao, required this.preco, required this.cobranca, required this.regiaoId});
   final Especialidade especialidade;
   final String profissao;
   final double? preco;
+  final Cobranca cobranca;
   final String? regiaoId;
 
   @override
@@ -516,12 +523,13 @@ class _CampoPreco extends ConsumerStatefulWidget {
 
 class _CampoPrecoState extends ConsumerState<_CampoPreco> {
   late final _valor = TextEditingController(text: widget.preco?.toStringAsFixed(0));
+  late var _cobranca = widget.cobranca;
   double? get _num => double.tryParse(_valor.text.replaceAll(',', '.'));
 
-  Future<void> _salvar() async {
-    if (_num == widget.preco) return;
+  Future<void> _salvar({bool mudouCobranca = false}) async {
+    if (!mudouCobranca && _num == widget.preco) return;
     try {
-      await ref.read(profissionalRepo).definirPreco(widget.especialidade.id, _num);
+      await ref.read(profissionalRepo).definirPreco(widget.especialidade.id, _num, cobranca: _cobranca);
       ref.invalidate(minhasProfissoesProvider);
       ref.invalidate(pendenciasProvider);
     } catch (e) {
@@ -531,34 +539,53 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
 
   @override
   Widget build(BuildContext context) {
-    final faixa = ref.watch(_faixaProvider((widget.especialidade.id, widget.regiaoId))).value;
+    final faixa = ref.watch(_faixaProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
     final aviso = faixa?.aviso(_num);
     final t = Theme.of(context).textTheme;
     final c = context.cores;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.especialidade.nome, style: t.titleSmall),
-            Text(widget.profissao, style: t.bodySmall),
-            if (faixa != null) Text('Comum na região: ${faixaReais(faixa.minimo, faixa.maximo)}', style: t.bodySmall),
-            if (aviso != null) Text(aviso, style: t.bodySmall?.copyWith(color: c.alerta)),
-          ]),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 120,
-          child: TextField(
-            controller: _valor,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d,]'))],
-            decoration: const InputDecoration(prefixText: 'R\$ ', hintText: '0'),
-            onChanged: (_) => setState(() {}),
-            onEditingComplete: _salvar,
-            onTapOutside: (_) => _salvar(),
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.especialidade.nome, style: t.titleSmall),
+              Text(widget.profissao, style: t.bodySmall),
+              if (faixa != null)
+                Text('Comum na região: ${faixaReais(faixa.minimo, faixa.maximo)} ${_cobranca.unidade}', style: t.bodySmall),
+              if (_num == null)
+                Text('Informe quanto você cobra em média', style: t.bodySmall?.copyWith(color: c.alerta))
+              else if (aviso != null)
+                Text(aviso, style: t.bodySmall?.copyWith(color: c.alerta)),
+            ]),
           ),
-        ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 120,
+            child: TextField(
+              controller: _valor,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d,]'))],
+              decoration: const InputDecoration(prefixText: 'R\$ ', hintText: '0', labelText: 'Média *'),
+              onChanged: (_) => setState(() {}),
+              onEditingComplete: _salvar,
+              onTapOutside: (_) => _salvar(),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, children: [
+          for (final f in Cobranca.values)
+            ChoiceChip(
+              label: Text(f.rotulo),
+              selected: _cobranca == f,
+              onSelected: (s) {
+                if (!s || f == _cobranca) return;
+                setState(() => _cobranca = f);
+                _salvar(mudouCobranca: true);
+              },
+            ),
+        ]),
       ]),
     );
   }

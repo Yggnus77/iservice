@@ -138,7 +138,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
                 return Card(
                   child: ListTile(
                     title: Text(e.nome, style: t.titleSmall),
-                    subtitle: e.preco == null ? const Text('Valor combinado no local') : Text('A partir de ${reais(e.preco)}'),
+                    subtitle: e.preco == null ? const Text('Valor combinado no local') : Text('Em média ${reais(e.preco)} ${e.cobranca.unidade}'),
                     trailing: Icon(Symbols.arrow_forward_rounded, color: c.acaoTexto),
                     onTap: p.disponivel && prof.id == profissao?.id ? () => solicitar(e.id) : null,
                   ),
