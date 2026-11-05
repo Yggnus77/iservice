@@ -16,7 +16,7 @@ import 'componentes.dart';
 /// Endereço dos "azulejos" do mapa. O padrão é o OpenStreetMap, bom para testes;
 /// no lançamento troque por um provedor com contrato (MapTiler, Stadia, Mapbox)
 /// passando URL_MAPA na compilação.
-const _urlMapa = String.fromEnvironment('URL_MAPA', defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+const urlMapa = String.fromEnvironment('URL_MAPA', defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
 
 final _posicaoProvider = StreamProvider.autoDispose.family<PosicaoAoVivo?, String>(
   (ref, pedidoId) => ref.read(pedidosRepo).posicaoAoVivo(pedidoId),
@@ -91,7 +91,7 @@ class _MapaAoVivoState extends ConsumerState<MapaAoVivo> {
                     interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                   ),
                   children: [
-                    TileLayer(urlTemplate: _urlMapa, userAgentPackageName: 'br.app.iservice'),
+                    TileLayer(urlTemplate: urlMapa, userAgentPackageName: 'br.app.iservice'),
                     PolylineLayer(polylines: [
                       Polyline(
                         points: [LatLng(pos.lat, pos.lng), LatLng(pos.destinoLat, pos.destinoLng)],
