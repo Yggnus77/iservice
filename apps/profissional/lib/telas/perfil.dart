@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,9 +15,9 @@ import 'cadastro.dart' show EditorPrecos;
 final _portfolioProvider = FutureProvider.autoDispose((ref) => ref.read(profissionalRepo).portfolio());
 
 /// O perfil como o cliente vê (avaliações recentes vêm daqui).
-final _perfilPublicoProvider = FutureProvider.autoDispose((ref) {
+final _perfilPublicoProvider = FutureProvider.autoDispose<PerfilProfissional?>((ref) {
   final id = ref.watch(usuarioIdProvider);
-  return id == null ? Future.value(null) : ref.read(buscaRepo).perfil(id);
+  return id == null ? Future<PerfilProfissional?>.value() : ref.read(buscaRepo).perfil(id);
 });
 
 /// Perfil do profissional: foto, sobre, preços, área, portfólio, avaliações, acessibilidade e ajuda.
@@ -121,7 +123,7 @@ class TelaPerfilPro extends ConsumerWidget {
                     title: Text('Indique colegas: ${p.codigoIndicacao}'),
                     subtitle: const Text('Toque para copiar o convite.'),
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: 'Trabalhe com o iService! Use meu código ${p.codigoIndicacao} no cadastro.'));
+                      unawaited(Clipboard.setData(ClipboardData(text: 'Trabalhe com o iService! Use meu código ${p.codigoIndicacao} no cadastro.')));
                       mostrarMensagem(context, 'Convite copiado.');
                     },
                   ),
@@ -407,7 +409,7 @@ class _Portfolio extends ConsumerWidget {
                 child: Stack(children: [
                   CachedNetworkImage(imageUrl: arq.urlPublica('portfolio', item.depoisPath), width: 110, height: 132, fit: BoxFit.cover),
                   if (item.antesPath != null)
-                    Positioned(
+                    const Positioned(
                       left: 6,
                       top: 6,
                       child: Selo(texto: 'Antes/depois', cor: Colors.white, fundo: Colors.black54),

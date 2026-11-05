@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,7 +54,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
 
     void solicitar([int? esp]) {
       if (profissao == null) return;
-      context.push('/solicitar/${p.id}?profissao=${profissao.id}${esp == null ? '' : '&esp=$esp'}');
+      unawaited(context.push('/solicitar/${p.id}?profissao=${profissao.id}${esp == null ? '' : '&esp=$esp'}'));
     }
 
     return Scaffold(
@@ -138,7 +140,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
                 return Card(
                   child: ListTile(
                     title: Text(e.nome, style: t.titleSmall),
-                    subtitle: e.preco == null ? const Text('Valor combinado no local') : Text('A partir de ${reais(e.preco)}'),
+                    subtitle: e.preco == null ? const Text('Valor combinado no local') : _PrecoEFaixa(e),
                     trailing: Icon(Symbols.arrow_forward_rounded, color: c.acaoTexto),
                     onTap: p.disponivel && prof.id == profissao?.id ? () => solicitar(e.id) : null,
                   ),
@@ -190,9 +192,9 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
             ),
           ),
         ],
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 16, Medidas.margemTela, 0),
+            padding: EdgeInsets.fromLTRB(Medidas.margemTela, 16, Medidas.margemTela, 0),
             child: TituloSecao(titulo: 'Avaliações'),
           ),
         ),
@@ -220,7 +222,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
         padding: EdgeInsets.fromLTRB(Medidas.margemTela, 12, Medidas.margemTela, 12 + MediaQuery.paddingOf(context).bottom),
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border(top: BorderSide(color: c.linha))),
         child: p.disponivel
-            ? BotaoPrincipal(rotulo: 'Solicitar serviço', icone: Symbols.bolt_rounded, aoTocar: () => solicitar())
+            ? BotaoPrincipal(rotulo: 'Solicitar serviço', icone: Symbols.bolt_rounded, aoTocar: solicitar)
             : Column(mainAxisSize: MainAxisSize.min, children: [
                 Text('Atendendo outro cliente agora', style: t.titleSmall),
                 Text('Escolha outro profissional ou volte mais tarde.', style: t.bodySmall),
@@ -336,6 +338,25 @@ class _ItemAvaliacao extends StatelessWidget {
           decoration: BoxDecoration(color: c.superficieSuave, borderRadius: BorderRadius.circular(10)),
           child: Text('Resposta do profissional: ${a.resposta}', style: t.bodySmall),
         ),
+    ]);
+  }
+}
+
+/// Preço médio do profissional e, embaixo, a faixa comum na região do cliente.
+class _PrecoEFaixa extends ConsumerWidget {
+  const _PrecoEFaixa(this.e);
+  final Especialidade e;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final regiaoId = ref.watch(regiaoLocalProvider).value;
+    final faixa = ref.watch(faixaPrecoProvider((e.id, regiaoId, e.cobranca))).value;
+    final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == regiaoId).firstOrNull;
+    final t = Theme.of(context).textTheme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Em média ${reais(e.preco)} ${e.cobranca.unidade}'),
+      if (faixa != null)
+        Text('Comum ${regiao == null ? 'na sua região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)}', style: t.bodySmall),
     ]);
   }
 }

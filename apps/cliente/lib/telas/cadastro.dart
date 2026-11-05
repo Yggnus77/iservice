@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +22,7 @@ class _TelaCadastroState extends ConsumerState<TelaCadastro> {
 
   Future<void> _depoisDoEndereco() async {
     if (!_logado) {
-      context.push('/cadastro/3');
+      unawaited(context.push('/cadastro/3'));
       return;
     }
     setState(() => _salvando = true);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -66,6 +68,52 @@ class _Novas extends ConsumerWidget {
   }
 }
 
+/// Aceita ou recusa um pedido (no Início e em Solicitações). Ao recusar, pergunta
+/// o motivo; se a pessoa fechar sem escolher, nada acontece.
+Future<void> responderChamado(BuildContext context, WidgetRef ref, Pedido p, {required bool aceitar}) async {
+  String? motivo;
+  if (!aceitar) {
+    motivo = await _perguntarMotivo(context);
+    if (motivo == null) return;
+  }
+  try {
+    final r = await ref.read(pedidosRepo).responder(p.id, aceitar: aceitar, motivo: motivo);
+    ref.invalidate(pedidosProProvider);
+    if (!context.mounted) return;
+    if (r.status == StatusPedido.expirado) {
+      mostrarMensagem(context, 'O tempo para responder acabou.');
+    } else if (aceitar) {
+      unawaited(context.push('/pedido/${p.id}'));
+    } else {
+      mostrarMensagem(context, 'Pedido recusado.');
+    }
+  } catch (e) {
+    if (context.mounted) mostrarErro(context, e);
+  }
+}
+
+Future<String?> _perguntarMotivo(BuildContext context) {
+  const motivos = ['Estou ocupado agora', 'Fora da minha área', 'Não faço esse serviço', 'Horário não dá', 'Outro motivo'];
+  return showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 4),
+          child: Text('Por que vai recusar?', style: Theme.of(ctx).textTheme.titleMedium),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 8),
+          child: Text('O cliente é avisado. Recusas frequentes baixam sua confiabilidade.', style: Theme.of(ctx).textTheme.bodySmall),
+        ),
+        for (final m in motivos) ListTile(title: Text(m), onTap: () => Navigator.pop(ctx, m)),
+        const SizedBox(height: 8),
+      ]),
+    ),
+  );
+}
+
 class _CartaoSolicitacao extends ConsumerStatefulWidget {
   const _CartaoSolicitacao({super.key, required this.p});
   final Pedido p;
@@ -81,50 +129,9 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
   Pedido get p => widget.p;
 
   Future<void> _responder(bool aceitar) async {
-    String? motivo;
-    if (!aceitar) {
-      motivo = await _perguntarMotivo();
-      if (motivo == null) return;
-    }
     setState(() => _ocupado = true);
-    try {
-      final r = await ref.read(pedidosRepo).responder(p.id, aceitar: aceitar, motivo: motivo);
-      ref.invalidate(pedidosProProvider);
-      if (!mounted) return;
-      if (r.status == StatusPedido.expirado) {
-        mostrarMensagem(context, 'O tempo para responder acabou.');
-      } else if (aceitar) {
-        context.push('/pedido/${p.id}');
-      } else {
-        mostrarMensagem(context, 'Pedido recusado.');
-      }
-    } catch (e) {
-      if (mounted) mostrarErro(context, e);
-    } finally {
-      if (mounted) setState(() => _ocupado = false);
-    }
-  }
-
-  Future<String?> _perguntarMotivo() {
-    const motivos = ['Estou ocupado agora', 'Fora da minha área', 'Não faço esse serviço', 'Horário não dá', 'Outro motivo'];
-    return showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 4),
-            child: Text('Por que vai recusar?', style: Theme.of(ctx).textTheme.titleMedium),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 8),
-            child: Text('O cliente é avisado. Recusas frequentes baixam sua confiabilidade.', style: Theme.of(ctx).textTheme.bodySmall),
-          ),
-          for (final m in motivos) ListTile(title: Text(m), onTap: () => Navigator.pop(ctx, m)),
-          const SizedBox(height: 8),
-        ]),
-      ),
-    );
+    await responderChamado(context, ref, p, aceitar: aceitar);
+    if (mounted) setState(() => _ocupado = false);
   }
 
   @override
@@ -138,7 +145,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Avatar(nome: p.outraParteNome ?? '', url: p.outraParteFoto, tamanho: 48),
+            Avatar(nome: p.outraParteNome ?? '', url: p.outraParteFoto),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -152,9 +159,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Symbols.timer_rounded, size: 16, color: expirou ? c.perigo : c.alerta),
                 const SizedBox(width: 4),
-                expirou
-                    ? Text('Expirou', style: t.labelMedium?.copyWith(color: c.perigo))
-                    : ContagemRegressiva(
+                if (expirou) Text('Expirou', style: t.labelMedium?.copyWith(color: c.perigo)) else ContagemRegressiva(
                         ate: p.responderAte,
                         estilo: t.labelMedium?.copyWith(color: c.alerta),
                         aoAcabar: () {
@@ -174,11 +179,11 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
           ],
           const SizedBox(height: 12),
           _Info(icone: p.quando == QuandoPedido.agora ? Symbols.bolt_rounded : Symbols.schedule_rounded, texto: p.quandoTexto, destaque: p.quando == QuandoPedido.agora),
-          _Info(icone: Symbols.location_on_rounded, texto: [p.enderecoTexto, if (p.distanciaKm != null) distancia(p.distanciaKm!)].join(' · ')),
+          _Info(icone: Symbols.location_on_rounded, texto: [p.enderecoTexto, if (p.distanciaKm != null) distancia(p.distanciaKm)].join(' · ')),
           _Info(
             icone: Symbols.payments_rounded,
             texto: [
-              p.precoInformado == null ? 'Preço combinado no local' : 'Seu preço: a partir de ${reais(p.precoInformado)}',
+              if (p.precoInformado == null) 'Preço combinado no local' else 'Seu preço: a partir de ${reais(p.precoInformado)}',
               if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
             ].join(' '),
           ),

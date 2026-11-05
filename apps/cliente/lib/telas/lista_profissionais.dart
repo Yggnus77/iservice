@@ -6,12 +6,19 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
 
+/// Preços da lista, pela chave (ids separados por vírgula, profissão, especialidade).
+final _precosProvider = FutureProvider.autoDispose.family<Map<String, PrecoBusca>, (String, String, int?)>(
+    (ref, k) => ref.read(buscaRepo).precos(k.$1.isEmpty ? const [] : k.$1.split(','), k.$2, k.$3));
+
 /// Profissionais de uma profissão perto do cliente.
 /// Ordem padrão: mais bem avaliados primeiro (com rodízio justo para os novos).
 class TelaListaProfissionais extends ConsumerStatefulWidget {
-  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId});
+  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId, this.urgencia24h = false});
   final String profissaoId;
   final int? especialidadeId;
+
+  /// Veio do botão Urgência 24h: só quem atende a qualquer hora.
+  final bool urgencia24h;
 
   @override
   ConsumerState<TelaListaProfissionais> createState() => _TelaListaProfissionaisState();
@@ -23,19 +30,27 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
   // Cada nova busca gira o rodízio dos profissionais novos.
   int _rodizio = DateTime.now().millisecondsSinceEpoch ~/ 60000;
 
-  FiltroBusca get _filtro => FiltroBusca(profissaoId: widget.profissaoId, especialidadeId: _esp, porDistancia: _porDistancia, rodizio: _rodizio);
+  FiltroBusca get _filtro => FiltroBusca(
+        profissaoId: widget.profissaoId,
+        especialidadeId: _esp,
+        porDistancia: _porDistancia,
+        rodizio: _rodizio,
+        urgencia24h: widget.urgencia24h,
+      );
 
   @override
   Widget build(BuildContext context) {
     final profissao = ref.watch(profissaoPorIdProvider(widget.profissaoId));
     final lista = ref.watch(buscaProvider(_filtro));
     final local = ref.watch(localBuscaProvider);
+    final ids = (lista.value ?? const <ProfissionalResumo>[]).map((p) => p.id).join(',');
+    final precos = ref.watch(_precosProvider((ids, widget.profissaoId, _esp))).value ?? const <String, PrecoBusca>{};
     final c = context.cores;
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(profissao?.nome ?? ''),
+        title: Text(widget.urgencia24h ? 'Urgência 24h · ${profissao?.nome ?? ''}' : profissao?.nome ?? ''),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28),
           child: Padding(
@@ -100,6 +115,8 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
                     ),
                   ]
                 : [
+                    if (_esp != null && precos.isNotEmpty)
+                      SliverToBoxAdapter(child: _FaixaDaRegiao(especialidadeId: _esp!, precos: precos.values)),
                     if (l.first.faseLancamento && !_porDistancia)
                       SliverToBoxAdapter(
                         child: Padding(
@@ -114,6 +131,7 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (_, i) => CartaoProfissional(
                           p: l[i],
+                          preco: precos[l[i].id],
                           aoTocar: () => context.push('/profissional/${l[i].id}?profissao=${widget.profissaoId}'),
                         ),
                       ),
@@ -122,6 +140,41 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
           ),
         ]),
       ),
+    );
+  }
+}
+
+/// "Comum em Asa Sul: R$ 80 – R$ 150 por serviço", na forma de cobrança mais usada na lista.
+class _FaixaDaRegiao extends ConsumerWidget {
+  const _FaixaDaRegiao({required this.especialidadeId, required this.precos});
+  final int especialidadeId;
+  final Iterable<PrecoBusca> precos;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contagem = <Cobranca, int>{};
+    for (final p in precos) {
+      contagem[p.cobranca] = (contagem[p.cobranca] ?? 0) + 1;
+    }
+    final cobranca = contagem.entries.reduce((a, b) => b.value > a.value ? b : a).key;
+    final regiaoId = ref.watch(regiaoLocalProvider).value;
+    final faixa = ref.watch(faixaPrecoProvider((especialidadeId, regiaoId, cobranca))).value;
+    if (faixa == null) return const SizedBox.shrink();
+    final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == regiaoId).firstOrNull;
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 10),
+      child: Row(children: [
+        Icon(Symbols.sell_rounded, size: 16, color: c.textoSuave),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            'Comum ${regiao == null ? 'na sua região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)} ${cobranca.unidade}',
+            style: t.bodySmall,
+          ),
+        ),
+      ]),
     );
   }
 }

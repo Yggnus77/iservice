@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -107,6 +109,9 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         final taxa = (config['taxa_urgencia'] as num?)?.toDouble() ?? 15;
         final diasMax = (config['dias_max_combinado'] as num?)?.toInt() ?? 7;
         final janelas = _janelasDeHoje(config);
+        // Faixa comum na região do endereço, na mesma forma de cobrança do profissional.
+        final faixa = esp?.preco == null ? null : ref.watch(faixaPrecoProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
+        final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
 
         return Scaffold(
           appBar: AppBar(title: const Text('Solicitar serviço')),
@@ -182,7 +187,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
                 trailing: TextButton(
                   onPressed: () async {
                     if (enderecos.length < 2) {
-                      context.push('/enderecos');
+                      unawaited(context.push('/enderecos'));
                       return;
                     }
                     final e = await escolherEmLista<Endereco>(context, titulo: 'Endereço do atendimento', opcoes: enderecos, rotulo: (e) => '${e.rotulo}: ${e.linha1}', atual: endereco);
@@ -197,7 +202,15 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
-                  _Linha('Preço de ${primeiroNome(p.nome)}', esp?.preco == null ? 'Combinado no local' : 'a partir de ${reais(esp!.preco)}'),
+                  _Linha('Preço de ${primeiroNome(p.nome)}', esp?.preco == null ? 'Combinado no local' : 'em média ${reais(esp!.preco)} ${esp.cobranca.unidade}'),
+                  if (faixa != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 4),
+                      child: Text(
+                        'Comum ${regiao == null ? 'na região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)} ${esp!.cobranca.unidade}',
+                        style: t.bodySmall,
+                      ),
+                    ),
                   if (_quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
                   const Divider(height: 20),
                   Row(children: [

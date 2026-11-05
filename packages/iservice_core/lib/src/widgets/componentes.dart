@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../dados/modelos.dart';
@@ -12,7 +13,7 @@ import '../tema/tema.dart';
 import '../util/formatos.dart';
 import '../util/icones.dart';
 
-/// Logo em texto: "iServi" azul e "ce" laranja, com o pin.
+/// Logo: o pin da marca + "iServi" e "ce" laranja, como no emblema oficial.
 class LogoIService extends StatelessWidget {
   const LogoIService({super.key, this.tamanho = 28, this.claro = false});
   final double tamanho;
@@ -22,13 +23,13 @@ class LogoIService extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final estilo = TextStyle(fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily, fontSize: tamanho, fontWeight: FontWeight.w800, letterSpacing: -.5);
+    final estilo = GoogleFonts.montserrat(fontSize: tamanho, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, letterSpacing: -.5, height: 1.1);
     return Semantics(
       label: 'iService',
       child: ExcludeSemantics(
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Symbols.location_on_rounded, fill: 1, size: tamanho * 1.15, color: claro ? Colors.white : Cores.azul),
-          const SizedBox(width: 2),
+          Image.asset('assets/marca/simbolo.png', package: 'iservice_core', height: tamanho * 1.2),
+          SizedBox(width: tamanho * .22),
           Text.rich(TextSpan(children: [
             TextSpan(text: 'iServi', style: estilo.copyWith(color: claro ? Colors.white : Cores.azul)),
             TextSpan(text: 'ce', style: estilo.copyWith(color: Cores.laranja)),
@@ -37,6 +38,19 @@ class LogoIService extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Emblema oficial completo (círculo com o pin, a palavra e o slogan).
+class EmblemaIService extends StatelessWidget {
+  const EmblemaIService({super.key, this.tamanho = 160});
+  final double tamanho;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: 'iService: soluções, pessoas, resultados',
+        image: true,
+        child: Image.asset('assets/marca/emblema.png', package: 'iservice_core', width: tamanho, height: tamanho),
+      );
 }
 
 /// Foto redonda. Sem foto, mostra as iniciais.
@@ -132,21 +146,22 @@ class Estrelas extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       for (var i = 1; i <= 5; i++)
-        aoEscolher == null
-            ? Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela)
-            : Semantics(
-                button: true,
-                selected: i == valor.round(),
-                label: '$i estrela${i > 1 ? 's' : ''}: ${_rotulos[i - 1]}',
-                child: InkResponse(
-                  onTap: () => aoEscolher!(i),
-                  radius: tamanho,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela),
-                  ),
-                ),
+        if (aoEscolher == null)
+          Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela)
+        else
+          Semantics(
+            button: true,
+            selected: i == valor.round(),
+            label: '$i estrela${i > 1 ? 's' : ''}: ${_rotulos[i - 1]}',
+            child: InkResponse(
+              onTap: () => aoEscolher!(i),
+              radius: tamanho,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela),
               ),
+            ),
+          ),
     ]);
   }
 }
@@ -230,8 +245,11 @@ class Selo extends StatelessWidget {
 
 /// Cartão de profissional usado na busca, no ranking e nos favoritos.
 class CartaoProfissional extends StatelessWidget {
-  const CartaoProfissional({super.key, required this.p, required this.aoTocar, this.profissaoNome, this.mostrarPosicao = false});
+  const CartaoProfissional({super.key, required this.p, required this.aoTocar, this.profissaoNome, this.mostrarPosicao = false, this.preco});
   final ProfissionalResumo p;
+
+  /// Preço com a forma de cobrança; sem ele, mostra o "a partir de" da busca.
+  final PrecoBusca? preco;
   final VoidCallback aoTocar;
   final String? profissaoNome;
   final bool mostrarPosicao;
@@ -272,7 +290,13 @@ class CartaoProfissional extends StatelessWidget {
                 ],
               ]),
             ),
-            if (p.precoAPartir != null)
+            if (preco != null)
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text('em média', style: t.bodySmall?.copyWith(fontSize: 11)),
+                Text(reais(preco!.preco), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
+                Text(preco!.cobranca.unidade, style: t.bodySmall?.copyWith(fontSize: 11)),
+              ])
+            else if (p.precoAPartir != null)
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text('a partir de', style: t.bodySmall?.copyWith(fontSize: 11)),
                 Text(reais(p.precoAPartir), style: t.titleSmall?.copyWith(color: c.acaoTexto)),

@@ -139,6 +139,17 @@ class _TelaEntrarState extends ConsumerState<TelaEntrar> {
     }
   }
 
+  Future<void> _google() async {
+    setState(() => _carregando = true);
+    try {
+      await ref.read(contaRepo).entrarComGoogle(app: ref.read(appProvider));
+    } catch (e) {
+      if (mounted) mostrarErro(context, e);
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
   Future<void> _esqueci() async {
     if (Validar.email(_email.text) != null) {
       mostrarMensagem(context, 'Digite seu e-mail acima para receber o link.');
@@ -200,6 +211,14 @@ class _TelaEntrarState extends ConsumerState<TelaEntrar> {
             const SizedBox(height: 12),
             BotaoPrincipal(rotulo: 'Entrar', aoTocar: _entrar, carregando: _carregando),
             const SizedBox(height: 12),
+            if (ConfigIService.loginGoogle) ...[
+              OutlinedButton.icon(
+                onPressed: _carregando ? null : _google,
+                icon: const Icon(Symbols.account_circle_rounded),
+                label: const Text('Entrar com Google'),
+              ),
+              const SizedBox(height: 12),
+            ],
             OutlinedButton(onPressed: widget.aoCriarConta, child: Text(pro ? 'Quero ser profissional iService' : 'Criar conta')),
             const SizedBox(height: 24),
           ]),
@@ -231,7 +250,9 @@ class _PassoDadosPessoaisState extends ConsumerState<PassoDadosPessoais> {
   );
   late final _cpf = TextEditingController(text: cpfFormatado(ref.read(rascunhoCadastroProvider).cpf));
   late final _tel = TextEditingController(text: telefoneFormatado(ref.read(rascunhoCadastroProvider).telefone));
-  final _mCpf = mascaraCpf(), _mTel = mascaraTelefone(), _mData = mascaraData();
+  final _mCpf = mascaraCpf();
+  final _mTel = mascaraTelefone();
+  final _mData = mascaraData();
 
   void _continuar() {
     if (!_form.currentState!.validate()) return;
@@ -326,7 +347,8 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
   late final _referencia = TextEditingController(text: _r.referencia);
   late final _cep = TextEditingController(text: _r.cep);
   late String? _regiaoId = _r.regiaoId;
-  late double? _lat = _r.lat, _lng = _r.lng;
+  late double? _lat = _r.lat;
+  late double? _lng = _r.lng;
   bool _gps = false;
   bool _lendoGps = false;
 

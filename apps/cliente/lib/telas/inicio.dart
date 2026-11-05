@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -78,6 +80,8 @@ class TelaInicio extends ConsumerWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                const Padding(padding: EdgeInsets.only(right: 12), child: _BotaoUrgencia()),
               ]),
             ),
           ),
@@ -179,7 +183,7 @@ class _CartaoAndamento extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(children: [
-            Avatar(nome: pedido.outraParteNome ?? '', url: pedido.outraParteFoto, tamanho: 48),
+            Avatar(nome: pedido.outraParteNome ?? '', url: pedido.outraParteFoto),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -277,6 +281,82 @@ class _Banner extends StatelessWidget {
             ),
             const Icon(Symbols.handyman_rounded, size: 72, fill: 1, color: Cores.azul),
           ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Urgência 24h: escolhe a profissão e abre o mapa só com quem atende a qualquer
+/// hora. Laranja com texto azul-escuro (nunca branco sobre laranja).
+class _BotaoUrgencia extends ConsumerWidget {
+  const _BotaoUrgencia();
+
+  Future<void> _escolher(BuildContext context, List<Profissao> profissoes) async {
+    final id = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        final t = Theme.of(context).textTheme;
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: .7,
+          maxChildSize: .92,
+          builder: (context, rolagem) => ListView(controller: rolagem, padding: const EdgeInsets.only(bottom: 24), children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 4),
+              child: Text('Urgência 24h', style: t.titleLarge),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 12),
+              child: Text('Escolha o serviço. Mostramos quem atende agora, a qualquer hora.', style: t.bodyMedium),
+            ),
+            for (final p in profissoes)
+              ListTile(
+                minTileHeight: Medidas.toque,
+                leading: Icon(iconeProfissao(p.icone), color: Cores.azul),
+                title: Text(p.nome),
+                trailing: const Icon(Symbols.chevron_right_rounded),
+                onTap: () => Navigator.pop(context, p.id),
+              ),
+          ]),
+        );
+      },
+    );
+    if (id != null && context.mounted) unawaited(context.push('/profissao/$id?urgencia=1'));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Theme.of(context).textTheme;
+    final profissoes = ref.watch(profissoesProvider).value ?? const <Profissao>[];
+    return Semantics(
+      button: true,
+      label: 'Chamar urgência 24h',
+      child: Material(
+        color: Cores.laranja,
+        borderRadius: BorderRadius.circular(Medidas.raioControle),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Medidas.raioControle),
+          onTap: profissoes.isEmpty ? null : () => _escolher(context, profissoes),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: Medidas.toque),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(children: [
+                const Icon(Symbols.bolt_rounded, fill: 1, color: Cores.azulEscuro),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Chamar urgência 24h', style: t.titleSmall?.copyWith(color: Cores.azulEscuro)),
+                    Text('Profissionais que atendem a qualquer hora', style: t.bodySmall?.copyWith(color: Cores.azulEscuro)),
+                  ]),
+                ),
+                const Icon(Symbols.chevron_right_rounded, color: Cores.azulEscuro),
+              ]),
+            ),
+          ),
         ),
       ),
     );

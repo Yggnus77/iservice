@@ -17,7 +17,7 @@
   --roxo-suave: #efeafd;
   --estrela: #ffb400;
 
-  --fundo: #f4f6fb;
+  --fundo: #f5f7fb;
   --superficie: #ffffff;
   --superficie-suave: #eef2f8;
   --linha: #e1e6ef;
@@ -59,7 +59,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
   transition: transform .2s ease;
 }
 .lateral .marca { display: flex; align-items: center; gap: 12px; padding: 4px 10px 22px; }
-.lateral .marca img { width: 34px; height: 42px; }
+.lateral .marca img { width: 37px; height: 42px; }
 .lateral .marca strong { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; display: block; }
 .lateral .marca span { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #8fb4f5; }
 .lateral nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; flex: 1; }
@@ -339,7 +339,7 @@ table.tabela { width: 100%; border-collapse: collapse; }
   color: #fff; padding: 48px; display: flex; flex-direction: column; justify-content: space-between;
 }
 .entrar .arte .marca { display: flex; align-items: center; gap: 14px; }
-.entrar .arte .marca img { width: 44px; height: 54px; }
+.entrar .arte .marca img { width: 48px; height: 54px; }
 .entrar .arte .marca strong { font-size: 26px; font-weight: 800; }
 .entrar .arte h2 { font-size: 38px; font-weight: 800; letter-spacing: -1px; max-width: 520px; }
 .entrar .arte p { color: #c6d6f3; font-size: 16px; max-width: 480px; }

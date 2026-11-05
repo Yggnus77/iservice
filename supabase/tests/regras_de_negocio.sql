@@ -167,6 +167,36 @@ select pg_temp.ok((select minimo = 120 and maximo = 120 and not estimada and amo
 select pg_temp.ok((select minimo > 0 and maximo > minimo and estimada
   from public.faixa_preco((select id from public.especialidades where profissao_id = 'eletricista' and ordem = 5), 'ceilandia')),
   'faixa estimada enquanto há poucos preços reais');
+select pg_temp.ok((select amostras = 6 and not estimada
+  from public.faixa_preco((select id from public.especialidades where profissao_id = 'eletricista' and ordem = 0), 'lago-sul')),
+  'região sem preços próprios usa a faixa de regiões parecidas');
+select pg_temp.ok((select estimada and amostras = 0
+  from public.faixa_preco((select id from public.especialidades where profissao_id = 'eletricista' and ordem = 0), 'asa-sul', 'diaria')),
+  'preço por diária não se mistura com preço por serviço');
+select pg_temp.ok((select (public.perfil_profissional('00000000-0000-0000-0000-0000000000a2') -> 'profissoes' -> 0 -> 'especialidades' -> 0 ->> 'cobranca') = 'servico'),
+  'perfil mostra a forma de cobrança');
+select pg_temp.ok((select count(*) = 6 and bool_and(preco = 120 and cobranca = 'servico')
+  from public.precos_busca(array(select id from public.profissionais), 'eletricista')),
+  'busca traz o preço e a forma de cobrança de cada profissional');
+select pg_temp.ok(public.regiao_proxima(-15.816, -47.897) = 'asa-sul', 'GPS encontra a região mais próxima');
+select pg_temp.admin();
+insert into public.profissional_especialidades (profissional_id, especialidade_id)
+select '00000000-0000-0000-0000-0000000000a6', id from public.especialidades where profissao_id = 'eletricista' and ordem = 3;
+select pg_temp.como('00000000-0000-0000-0000-0000000000a6');
+select pg_temp.ok('especialidades_e_precos' = any(public.pendencias_profissional(auth.uid())),
+  'toda especialidade marcada precisa de preço');
+select pg_temp.admin();
+delete from public.profissional_especialidades
+where profissional_id = '00000000-0000-0000-0000-0000000000a6' and especialidade_id = (select id from public.especialidades where profissao_id = 'eletricista' and ordem = 3);
+insert into public.profissional_profissoes (profissional_id, profissao_id) values ('00000000-0000-0000-0000-0000000000a6', 'faxineira');
+insert into public.profissional_especialidades (profissional_id, especialidade_id)
+select '00000000-0000-0000-0000-0000000000a6', id from public.especialidades where profissao_id = 'faxineira' and ordem = 0;
+select pg_temp.ok((select x.cobranca = 'diaria' from public.profissional_especialidades x join public.especialidades e on e.id = x.especialidade_id
+  where x.profissional_id = '00000000-0000-0000-0000-0000000000a6' and e.profissao_id = 'faxineira'), 'faxina já vem como diária');
+delete from public.profissional_especialidades x using public.especialidades e
+where e.id = x.especialidade_id and x.profissional_id = '00000000-0000-0000-0000-0000000000a6' and e.profissao_id = 'faxineira';
+delete from public.profissional_profissoes where profissional_id = '00000000-0000-0000-0000-0000000000a6' and profissao_id = 'faxineira';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 select pg_temp.admin();
 
 -- Planos: com a cobrança ligada, o alcance do plano grátis (10 km) tira o Alex (6 km fica) e o Rafael (9 km fica)... e o VIP chega a 20.

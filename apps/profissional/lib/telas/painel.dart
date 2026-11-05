@@ -5,21 +5,34 @@ import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
+import 'solicitacoes.dart' show responderChamado;
 
-/// Início do profissional: disponibilidade, ganhos de hoje, solicitação nova,
-/// próximo atendimento, números e conquistas.
+/// Início do profissional: saudação, disponibilidade, chamados de hoje e nota,
+/// chamado novo (aceitar ou recusar aqui mesmo), próximo atendimento,
+/// ganhos, metas e conquistas.
 class TelaPainel extends ConsumerWidget {
   const TelaPainel({super.key});
+
+  static String _saudacao() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Bom dia,';
+    if (h < 18) return 'Boa tarde,';
+    return 'Boa noite,';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final perfil = ref.watch(meuPerfilProvider).value;
     final pro = perfil?.profissional;
     final andamento = ref.watch(pedidosProProvider('andamento')).value ?? const <Pedido>[];
+    final todos = ref.watch(pedidosProProvider('todos')).value;
     final ganhos = ref.watch(ganhosProvider('semana')).value;
     final naoLidas = ref.watch(naoLidasProvider);
     final novas = andamento.where((p) => p.status == StatusPedido.solicitado).toList();
     final proximos = andamento.where((p) => p.status != StatusPedido.solicitado).toList();
+    final hoje = DateUtils.dateOnly(DateTime.now());
+    final chamadosHoje = todos?.where((p) => DateUtils.dateOnly(p.criadoEm.toLocal()) == hoje).length;
+    final ocupado = proximos.any((p) => p.status == StatusPedido.aCaminho || p.status == StatusPedido.emAtendimento);
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -31,62 +44,83 @@ class TelaPainel extends ConsumerWidget {
         },
         child: ListView(padding: EdgeInsets.zero, children: [
           Container(
-            decoration: Cores.fundoMarca(alinhamento: Alignment.topCenter),
-            padding: EdgeInsets.fromLTRB(Medidas.margemTela, MediaQuery.paddingOf(context).top + 12, 8, 20),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Avatar(nome: perfil?.nome ?? '', url: perfil?.fotoUrl, tamanho: 44),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Olá, ${primeiroNome(perfil?.nome ?? '')}', style: t.titleMedium?.copyWith(color: Colors.white)),
-                    if (pro != null && pro.totalAvaliacoes > 0)
-                      Row(children: [
-                        const Icon(Symbols.star_rounded, fill: 1, size: 16, color: Cores.estrela),
-                        const SizedBox(width: 3),
-                        Text('${nota(pro.notaMedia)} · ${pro.totalAvaliacoes} avaliações', style: t.labelMedium?.copyWith(color: Colors.white70)),
-                      ])
-                    else
-                      Text('Bem-vindo ao iService', style: t.labelMedium?.copyWith(color: Colors.white70)),
-                  ]),
-                ),
-                IconButton(
-                  tooltip: 'Notificações',
-                  onPressed: () => context.push('/notificacoes'),
-                  icon: Badge(isLabelVisible: naoLidas > 0, label: Text('$naoLidas'), child: const Icon(Symbols.notifications_rounded, color: Colors.white)),
-                ),
-              ]),
-              const SizedBox(height: 18),
-              Padding(padding: const EdgeInsets.only(right: 12), child: _Disponibilidade(ligado: pro?.disponivel ?? false, ocupado: proximos.any((p) => p.status == StatusPedido.aCaminho || p.status == StatusPedido.emAtendimento))),
+            color: Cores.azulEscuro,
+            padding: EdgeInsets.fromLTRB(Medidas.margemTela, MediaQuery.paddingOf(context).top + 16, 8, 76),
+            child: Row(children: [
+              DecoratedBox(
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Cores.laranja, width: 2)),
+                child: Padding(padding: const EdgeInsets.all(2), child: Avatar(nome: perfil?.nome ?? '', url: perfil?.fotoUrl)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(_saudacao(), style: t.bodyMedium?.copyWith(color: const Color(0xFFC9D3E6))),
+                  Text(perfil?.nome ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: t.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+                ]),
+              ),
+              IconButton(
+                tooltip: 'Notificações',
+                onPressed: () => context.push('/notificacoes'),
+                icon: Badge(isLabelVisible: naoLidas > 0, label: Text('$naoLidas'), child: const Icon(Symbols.notifications_rounded, color: Colors.white)),
+              ),
             ]),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 16, Medidas.margemTela, 0),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              for (final p in novas) Padding(padding: const EdgeInsets.only(bottom: 12), child: _AvisoNova(p: p)),
-              Row(children: [
-                Expanded(child: _Numero(icone: Symbols.payments_rounded, rotulo: 'Ganhos hoje', valor: reais(ganhos?.hoje ?? 0), aoTocar: () => context.go('/ganhos'))),
-                const SizedBox(width: 12),
-                Expanded(child: _Numero(icone: Symbols.calendar_view_week_rounded, rotulo: 'Nesta semana', valor: reais(ganhos?.periodo ?? 0), aoTocar: () => context.go('/ganhos'))),
+          Transform.translate(
+            offset: const Offset(0, -56),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Medidas.margemTela),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                _Disponibilidade(ligado: pro?.disponivel ?? false, ocupado: ocupado),
+                const SizedBox(height: 12),
+                _Atende24h(ligado: pro?.atende24h ?? false),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(
+                    child: _Numero(
+                      icone: Symbols.receipt_long_rounded,
+                      rotulo: chamadosHoje == 1 ? 'chamado hoje' : 'chamados hoje',
+                      valor: chamadosHoje == null ? '–' : '$chamadosHoje',
+                      aoTocar: () => context.go('/solicitacoes'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _Numero(
+                      icone: Symbols.star_rounded,
+                      estrela: true,
+                      rotulo: (pro?.totalAvaliacoes ?? 0) == 0 ? 'ainda sem avaliações' : 'sua avaliação',
+                      valor: (pro?.totalAvaliacoes ?? 0) == 0 ? 'Novo' : nota(pro!.notaMedia),
+                    ),
+                  ),
+                ]),
+                if (novas.isNotEmpty) ...[
+                  TituloSecao(titulo: novas.length == 1 ? 'Novo chamado' : 'Novos chamados (${novas.length})'),
+                  for (final p in novas) Padding(padding: const EdgeInsets.only(bottom: 12), child: _NovoChamado(key: ValueKey(p.id), p: p)),
+                ],
+                if (proximos.isNotEmpty) ...[
+                  TituloSecao(titulo: 'Próximo atendimento', acao: 'Agenda', aoTocarAcao: () => context.go('/agenda')),
+                  CartaoAtendimento(p: proximos.first),
+                ],
+                TituloSecao(titulo: 'Seus números', acao: 'Ganhos', aoTocarAcao: () => context.go('/ganhos')),
+                Row(children: [
+                  Expanded(child: _Numero(icone: Symbols.payments_rounded, rotulo: 'ganhos hoje', valor: reais(ganhos?.hoje ?? 0), aoTocar: () => context.go('/ganhos'))),
+                  const SizedBox(width: 12),
+                  Expanded(child: _Numero(icone: Symbols.calendar_view_week_rounded, rotulo: 'nesta semana', valor: reais(ganhos?.periodo ?? 0), aoTocar: () => context.go('/ganhos'))),
+                ]),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: _Numero(icone: Symbols.task_alt_rounded, rotulo: 'serviços feitos', valor: '${pro?.servicosConcluidos ?? 0}')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _Numero(icone: Symbols.thumb_up_rounded, rotulo: 'pedidos aceitos', valor: '${((pro?.taxaAceite ?? 1) * 100).round()}%')),
+                ]),
+                if (pro != null) ...[
+                  const TituloSecao(titulo: 'Metas e conquistas'),
+                  _Conquistas(pro: pro),
+                ],
+                const SizedBox(height: 16),
+                _Dicas(pro: pro),
               ]),
-              const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: _Numero(icone: Symbols.task_alt_rounded, rotulo: 'Serviços feitos', valor: '${pro?.servicosConcluidos ?? 0}')),
-                const SizedBox(width: 12),
-                Expanded(child: _Numero(icone: Symbols.thumb_up_rounded, rotulo: 'Pedidos aceitos', valor: '${((pro?.taxaAceite ?? 1) * 100).round()}%')),
-              ]),
-              if (proximos.isNotEmpty) ...[
-                TituloSecao(titulo: 'Próximo atendimento', acao: 'Agenda', aoTocarAcao: () => context.go('/agenda')),
-                CartaoAtendimento(p: proximos.first),
-              ],
-              if (pro != null) ...[
-                const TituloSecao(titulo: 'Metas e conquistas'),
-                _Conquistas(pro: pro),
-              ],
-              const SizedBox(height: 16),
-              _Dicas(pro: pro),
-              const SizedBox(height: 24),
-            ]),
+            ),
           ),
         ]),
       ),
@@ -94,6 +128,8 @@ class TelaPainel extends ConsumerWidget {
   }
 }
 
+/// Cartão grande do modo disponível. Verde só quando está disponível de fato;
+/// sobre o verde, texto em azul-escuro (nunca branco).
 class _Disponibilidade extends ConsumerStatefulWidget {
   const _Disponibilidade({required this.ligado, required this.ocupado});
   final bool ligado;
@@ -129,32 +165,48 @@ class _DisponibilidadeState extends ConsumerState<_Disponibilidade> {
   Widget build(BuildContext context) {
     final ligado = _otimista ?? widget.ligado;
     final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    final verde = ligado && !widget.ocupado;
     final (titulo, texto) = widget.ocupado
-        ? ('Em atendimento', 'Você não aparece nas buscas até concluir.')
+        ? ('Você está em atendimento', 'Você não aparece nas buscas até concluir.')
         : ligado
-            ? ('Disponível para pedidos', 'Clientes perto de você podem te chamar agora.')
-            : ('Indisponível', 'Ligue para voltar a aparecer nas buscas.');
+            ? ('Você está disponível', 'Clientes da sua região podem te chamar agora.')
+            : ('Você está indisponível', 'Você não aparece nas buscas até ligar de novo.');
+    final fundo = widget.ocupado ? Cores.laranjaSuave : (verde ? Cores.verde : Theme.of(context).colorScheme.surface);
+    final corTexto = widget.ocupado || verde ? Cores.azulEscuro : null;
     return Material(
-      color: ligado && !widget.ocupado ? Cores.verdeSuave : Colors.white,
-      borderRadius: BorderRadius.circular(Medidas.raioCartao),
+      color: fundo,
+      elevation: 6,
+      shadowColor: const Color(0x520A1F44),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: verde || widget.ocupado ? BorderSide.none : BorderSide(color: c.linha),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+        padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
         child: Row(children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: widget.ocupado ? Cores.laranja : (ligado ? Cores.verde : Cores.bordaControle)),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(titulo, style: t.titleSmall?.copyWith(color: Cores.azulEscuro)),
-              Text(texto, style: t.bodySmall?.copyWith(color: Cores.textoSuave)),
+              Text('MODO DISPONÍVEL', style: t.labelSmall?.copyWith(color: corTexto ?? c.textoSuave, fontWeight: FontWeight.w700, letterSpacing: .8)),
+              const SizedBox(height: 4),
+              Text(titulo, style: t.titleLarge?.copyWith(color: corTexto, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(texto, style: t.bodySmall?.copyWith(color: corTexto ?? c.textoSuave, fontWeight: FontWeight.w500)),
             ]),
           ),
+          const SizedBox(width: 12),
           Semantics(
-            label: 'Disponível para pedidos',
-            child: Switch(value: ligado, onChanged: _salvando ? null : _trocar, activeTrackColor: Cores.verde, activeThumbColor: Colors.white),
+            label: 'Disponível para chamados',
+            child: Transform.scale(
+              scale: 1.15,
+              child: Switch(
+                value: ligado,
+                onChanged: _salvando || widget.ocupado ? null : _trocar,
+                activeTrackColor: Cores.azulEscuro,
+                activeThumbColor: Colors.white,
+                thumbIcon: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? const Icon(Symbols.check_rounded, color: Cores.verdeTexto) : null),
+              ),
+            ),
           ),
         ]),
       ),
@@ -162,32 +214,182 @@ class _DisponibilidadeState extends ConsumerState<_Disponibilidade> {
   }
 }
 
-class _AvisoNova extends StatelessWidget {
-  const _AvisoNova({required this.p});
+/// "Atendo 24h": entra no botão Urgência 24h do app Cliente. Só vale quando
+/// ele também está disponível; o servidor confere as duas coisas na busca.
+class _Atende24h extends ConsumerStatefulWidget {
+  const _Atende24h({required this.ligado});
+  final bool ligado;
+
+  @override
+  ConsumerState<_Atende24h> createState() => _Atende24hState();
+}
+
+class _Atende24hState extends ConsumerState<_Atende24h> {
+  bool? _otimista;
+  bool _salvando = false;
+
+  Future<void> _trocar(bool v) async {
+    setState(() {
+      _otimista = v;
+      _salvando = true;
+    });
+    try {
+      await ref.read(profissionalRepo).definirAtende24h(v);
+      ref.invalidate(meuPerfilProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _otimista = null);
+        mostrarErro(context, e);
+      }
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ligado = _otimista ?? widget.ligado;
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: SwitchListTile(
+        value: ligado,
+        onChanged: _salvando ? null : _trocar,
+        minTileHeight: Medidas.toque,
+        contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+        secondary: const Icon(Symbols.bolt_rounded, fill: 1, color: Cores.laranja),
+        title: Text('Atendo 24h', style: t.titleSmall),
+        subtitle: Text(
+          ligado ? 'Você aparece na Urgência 24h quando está disponível.' : 'Ligue para receber chamados de urgência a qualquer hora.',
+          style: t.bodySmall?.copyWith(color: c.textoSuave),
+        ),
+      ),
+    );
+  }
+}
+
+/// Chamado novo no Início: borda laranja, prazo de resposta, descrição e
+/// os botões Recusar (contorno) e Aceitar (verde, texto azul-escuro).
+class _NovoChamado extends ConsumerStatefulWidget {
+  const _NovoChamado({super.key, required this.p});
   final Pedido p;
+
+  @override
+  ConsumerState<_NovoChamado> createState() => _NovoChamadoState();
+}
+
+class _NovoChamadoState extends ConsumerState<_NovoChamado> {
+  bool _ocupado = false;
+  bool _acabou = false;
+
+  Pedido get p => widget.p;
+
+  Future<void> _responder(bool aceitar) async {
+    setState(() => _ocupado = true);
+    await responderChamado(context, ref, p, aceitar: aceitar);
+    if (mounted) setState(() => _ocupado = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final c = context.cores;
+    final profissao = ref.watch(profissaoPorIdProvider(p.profissaoId));
+    final expirou = _acabou || p.tempoParaResponder == Duration.zero;
+    final titulo = [profissao?.nome ?? '', if (p.distanciaKm != null) distancia(p.distanciaKm)].where((s) => s.isNotEmpty).join(' · ');
     return Material(
-      color: c.acao,
-      borderRadius: BorderRadius.circular(Medidas.raioCartao),
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 6,
+      shadowColor: const Color(0x520A1F44),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Medidas.raioCartao), side: const BorderSide(color: Cores.laranja, width: 2)),
       child: InkWell(
         borderRadius: BorderRadius.circular(Medidas.raioCartao),
         onTap: () => context.go('/solicitacoes'),
         child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(children: [
-            Icon(Symbols.notifications_active_rounded, fill: 1, color: c.textoNaAcao),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Nova solicitação de ${primeiroNome(p.outraParteNome ?? '')}', style: t.titleSmall?.copyWith(color: c.textoNaAcao)),
-                Text(p.especialidade ?? p.quandoTexto, style: t.bodySmall?.copyWith(color: c.textoNaAcao)),
-              ]),
-            ),
-            ContagemRegressiva(ate: p.responderAte, estilo: t.titleMedium?.copyWith(color: c.textoNaAcao)),
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Row(children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: c.alertaSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
+                child: Icon(iconeProfissao(profissao?.icone ?? ''), color: c.alerta),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(titulo, style: t.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text([primeiroNome(p.outraParteNome ?? 'Cliente'), p.enderecoTexto].join(' · '), style: t.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ]),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(color: c.acaoSuave, borderRadius: BorderRadius.circular(8)),
+                child: Text(p.quando == QuandoPedido.agora ? 'AGORA' : p.quandoTexto.toUpperCase(),
+                    style: t.labelSmall?.copyWith(color: c.acaoTexto, fontWeight: FontWeight.w700, letterSpacing: .6)),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            if (p.especialidade != null) ...[
+              Text(p.especialidade!, style: t.titleSmall),
+              const SizedBox(height: 4),
+            ],
+            if (p.descricao.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: c.superficieSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
+                child: Text(p.descricao, style: t.bodyMedium),
+              ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Icon(Symbols.timer_rounded, size: 18, color: expirou ? c.perigo : c.alerta),
+              const SizedBox(width: 6),
+              if (expirou)
+                Text('O tempo para responder acabou', style: t.labelLarge?.copyWith(color: c.perigo))
+              else ...[
+                Text('Responda em ', style: t.labelLarge?.copyWith(color: c.alerta)),
+                ContagemRegressiva(
+                  ate: p.responderAte,
+                  estilo: t.labelLarge?.copyWith(color: c.alerta),
+                  aoAcabar: () {
+                    if (!mounted) return;
+                    setState(() => _acabou = true);
+                    ref.invalidate(pedidosProProvider);
+                  },
+                ),
+              ],
+            ]),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _ocupado || expirou ? null : () => _responder(false),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
+                    side: const BorderSide(color: Cores.bordaControle, width: 1.5),
+                  ),
+                  child: const Text('Recusar'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _ocupado || expirou ? null : () => _responder(true),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    backgroundColor: Cores.verde,
+                    foregroundColor: Cores.azulEscuro,
+                    textStyle: t.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  child: _ocupado
+                      ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Cores.azulEscuro))
+                      : const Text('Aceitar'),
+                ),
+              ),
+            ]),
           ]),
         ),
       ),
@@ -196,8 +398,9 @@ class _AvisoNova extends StatelessWidget {
 }
 
 class _Numero extends StatelessWidget {
-  const _Numero({required this.icone, required this.rotulo, required this.valor, this.aoTocar});
+  const _Numero({required this.icone, required this.rotulo, required this.valor, this.aoTocar, this.estrela = false});
   final IconData icone;
+  final bool estrela;
   final String rotulo;
   final String valor;
   final VoidCallback? aoTocar;
@@ -213,9 +416,14 @@ class _Numero extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(icone, color: c.acaoTexto, size: 22),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: estrela ? Cores.laranjaSuave : c.acaoSuave, borderRadius: BorderRadius.circular(10)),
+              child: Icon(icone, fill: estrela ? 1 : 0, color: estrela ? Cores.estrela : c.acaoTexto, size: 20),
+            ),
             const SizedBox(height: 8),
-            Text(valor, style: t.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(valor, style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(rotulo, style: t.bodySmall),
           ]),
         ),
@@ -261,7 +469,7 @@ class CartaoAtendimento extends ConsumerWidget {
                 const SizedBox(width: 14),
                 Icon(Symbols.near_me_rounded, size: 16, color: c.textoSuave),
                 const SizedBox(width: 4),
-                Text(distancia(p.distanciaKm!), style: t.bodySmall),
+                Text(distancia(p.distanciaKm), style: t.bodySmall),
               ],
               const Spacer(),
               if (p.naoLidas > 0) Badge(label: Text('${p.naoLidas}'), child: Icon(Symbols.chat_rounded, size: 20, color: c.acaoTexto)),

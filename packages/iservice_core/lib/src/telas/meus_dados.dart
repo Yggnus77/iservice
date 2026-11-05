@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -5,11 +7,11 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../dados/modelos.dart';
 import '../estado/provedores.dart';
 import '../push.dart';
-import 'confirmar_celular.dart';
 import '../tema/cores.dart';
 import '../tema/tema.dart';
 import '../util/formatos.dart';
 import '../widgets/componentes.dart';
+import 'confirmar_celular.dart';
 
 const _diasExclusao = 30;
 
@@ -315,7 +317,7 @@ class _VigiaExclusaoContaState extends ConsumerState<VigiaExclusaoConta> {
       if (p == null || p.exclusaoSolicitadaEm == null || _perguntadoPara == p.id) return;
       _perguntadoPara = p.id;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) perguntarSeMantemConta(context, ref, p);
+        if (mounted) unawaited(perguntarSeMantemConta(context, ref, p));
       });
     }, fireImmediately: true);
   }

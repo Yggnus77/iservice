@@ -35,7 +35,7 @@ class _VigiaRecuperacaoSenhaState extends ConsumerState<VigiaRecuperacaoSenha> {
 
   @override
   void dispose() {
-    _assinatura?.cancel();
+    unawaited(_assinatura?.cancel());
     super.dispose();
   }
 

@@ -14,6 +14,8 @@ type Celula = {
 
 const nomesFaixa = ['', 'Faixa 1', 'Faixa 2', 'Faixa 3', 'Faixa 4', 'Faixa 5'];
 const exemplosFaixa = ['', 'Plano Piloto, Lagos, Sudoeste', 'Guará, Águas Claras, Cruzeiro', 'Taguatinga, Sobradinho, Paranoá', 'Ceilândia, Samambaia, Gama', 'Entorno (GO)'];
+const cobrancas = [['servico', 'Por serviço'], ['hora', 'Por hora'], ['diaria', 'Por diária']] as const;
+type Cobranca = (typeof cobrancas)[number][0];
 const real = (v: number) => `R$ ${Math.round(Number(v)).toLocaleString('pt-BR')}`;
 
 export default function Precos() {
@@ -22,7 +24,8 @@ export default function Precos() {
     return (data ?? []) as { id: string; nome: string }[];
   }, []);
   const [profissao, setProfissao] = useState('eletricista');
-  const tabela = useCarregar(() => rpc<Celula[]>('admin_tabela_precos', { p_profissao: profissao }), [profissao]);
+  const [cobranca, setCobranca] = useState<Cobranca>('servico');
+  const tabela = useCarregar(() => rpc<Celula[]>('admin_tabela_precos', { p_profissao: profissao, p_cobranca: cobranca }), [profissao, cobranca]);
   const { executar, ocupado } = useAcao();
   const [editar, setEditar] = useState<Celula | null>(null);
   const [min, setMin] = useState('');
@@ -47,16 +50,22 @@ export default function Precos() {
     if (!editar) return;
     const ok = await executar(() => rpc('admin_ajustar_preco', {
       p_especialidade: editar.especialidade_id, p_faixa: editar.faixa, p_minimo: remover ? null : Number(min), p_maximo: remover ? null : Number(max),
+      p_cobranca: cobranca,
     }), remover ? 'Ajuste removido; volta a valer o cálculo.' : 'Faixa ajustada. Já vale nos apps.');
     if (ok) { setEditar(null); tabela.recarregar(); }
   };
 
   return (
     <>
-      <Cabecalho titulo="Preços de referência" texto="A faixa comum (P25 a P75) que o app mostra para cada especialidade e região. O profissional sempre define o próprio preço."
-        acoes={<select className="entrada" value={profissao} onChange={(e) => setProfissao(e.target.value)} aria-label="Profissão">
-          {profissoes.dados?.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
-        </select>} />
+      <Cabecalho titulo="Preços de referência" texto="A faixa comum (P25 a P75) que o app mostra para cada especialidade e região, separada por forma de cobrança. O profissional sempre define o próprio preço."
+        acoes={<>
+          <select className="entrada" value={profissao} onChange={(e) => setProfissao(e.target.value)} aria-label="Profissão">
+            {profissoes.dados?.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+          </select>
+          <select className="entrada" value={cobranca} onChange={(e) => setCobranca(e.target.value as Cobranca)} aria-label="Forma de cobrança">
+            {cobrancas.map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+          </select>
+        </>} />
       <div className="linha-flex texto-suave" style={{ marginBottom: 14, gap: 18 }}>
         <span><strong style={{ color: 'var(--verde-texto)' }}>●</strong> Calculada com 5+ preços reais</span>
         <span><strong style={{ color: 'var(--texto-fraco)' }}>●</strong> Estimada pela base (poucos preços)</span>
@@ -100,7 +109,7 @@ export default function Precos() {
             )}
         </div>
       </section>
-      <Dialogo aberto={!!editar} fechar={() => setEditar(null)} titulo={editar ? `${editar.especialidade} · ${nomesFaixa[editar.faixa]}` : ''}
+      <Dialogo aberto={!!editar} fechar={() => setEditar(null)} titulo={editar ? `${editar.especialidade} · ${nomesFaixa[editar.faixa]} · ${cobrancas.find(([v]) => v === cobranca)?.[1]}` : ''}
         texto={editar ? <>Calculado agora: {real(editar.minimo)} a {real(editar.maximo)} ({editar.amostras} {editar.amostras === 1 ? 'preço real' : 'preços reais'}{editar.estimada ? ', estimado' : ''}).</> : null}
         rodape={<>
           {editar?.ajuste_minimo != null ? <button className="botao contorno perigo-texto" disabled={ocupado} onClick={() => salvar(true)}>Remover ajuste</button> : null}

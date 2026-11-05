@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../dados/modelos.dart';
 import '../estado/provedores.dart';
 import '../tema/cores.dart';
 import '../util/formatos.dart';
@@ -16,7 +17,12 @@ IconData _icone(String tipo) => switch (tipo) {
       'mensagem' => Symbols.chat_rounded,
       'avaliacao_nova' => Symbols.star_rounded,
       'cadastro_aprovado' => Symbols.verified_rounded,
-      'cadastro_recusado' => Symbols.error_rounded,
+      'cadastro_recusado' || 'documento_recusado' => Symbols.error_rounded,
+      'cadastro_recebido' => Symbols.hourglass_top_rounded,
+      'boas_vindas' => Symbols.waving_hand_rounded,
+      'reclamacao_aberta' || 'reclamacao_recebida' || 'garantia' => Symbols.shield_rounded,
+      'conta_suspensa' => Symbols.block_rounded,
+      'conta_reativada' => Symbols.check_circle_rounded,
       _ => Symbols.notifications_rounded,
     };
 
@@ -32,7 +38,7 @@ class _TelaNotificacoesState extends ConsumerState<TelaNotificacoes> {
   @override
   void dispose() {
     // Ao sair da tela, tudo que foi visto conta como lido.
-    ref.read(notificacoesRepo).marcarLidas();
+    unawaited(ref.read(notificacoesRepo).marcarLidas());
     super.dispose();
   }
 
@@ -52,7 +58,7 @@ class _TelaNotificacoesState extends ConsumerState<TelaNotificacoes> {
                 itemCount: l.length,
                 separatorBuilder: (_, _) => const Divider(indent: 72),
                 itemBuilder: (_, i) {
-                  final Notificacao n = l[i];
+                  final n = l[i];
                   return ListTile(
                     tileColor: n.lida ? null : c.acaoSuave.withValues(alpha: .5),
                     leading: CircleAvatar(backgroundColor: c.acaoSuave, child: Icon(_icone(n.tipo), color: c.acaoTexto)),

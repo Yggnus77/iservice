@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iservice_core/iservice_core.dart';
 
@@ -25,19 +26,28 @@ final favoritosProvider = FutureProvider((ref) {
 final perfilProfissionalProvider = FutureProvider.autoDispose.family<PerfilProfissional?, String>((ref, id) => ref.read(buscaRepo).perfil(id));
 
 /// Parâmetros da busca de uma profissão.
+@immutable
 class FiltroBusca {
-  const FiltroBusca({required this.profissaoId, this.especialidadeId, this.porDistancia = false, this.rodizio = 0});
+  const FiltroBusca({required this.profissaoId, this.especialidadeId, this.porDistancia = false, this.rodizio = 0, this.urgencia24h = false});
   final String profissaoId;
   final int? especialidadeId;
   final bool porDistancia;
   final int rodizio;
 
-  @override
-  bool operator ==(Object other) =>
-      other is FiltroBusca && other.profissaoId == profissaoId && other.especialidadeId == especialidadeId && other.porDistancia == porDistancia && other.rodizio == rodizio;
+  /// Só quem atende 24h (botão Urgência 24h).
+  final bool urgencia24h;
 
   @override
-  int get hashCode => Object.hash(profissaoId, especialidadeId, porDistancia, rodizio);
+  bool operator ==(Object other) =>
+      other is FiltroBusca &&
+      other.profissaoId == profissaoId &&
+      other.especialidadeId == especialidadeId &&
+      other.porDistancia == porDistancia &&
+      other.rodizio == rodizio &&
+      other.urgencia24h == urgencia24h;
+
+  @override
+  int get hashCode => Object.hash(profissaoId, especialidadeId, porDistancia, rodizio, urgencia24h);
 }
 
 final buscaProvider = FutureProvider.autoDispose.family<List<ProfissionalResumo>, FiltroBusca>((ref, f) {
@@ -49,5 +59,6 @@ final buscaProvider = FutureProvider.autoDispose.family<List<ProfissionalResumo>
         especialidadeId: f.especialidadeId,
         porDistancia: f.porDistancia,
         rodizio: f.rodizio,
+        urgencia24h: f.urgencia24h,
       );
 });

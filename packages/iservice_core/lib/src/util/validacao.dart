@@ -51,7 +51,7 @@ abstract final class Validar {
   static String? senha(String? v) {
     final s = v ?? '';
     if (s.length < 8) return 'Use pelo menos 8 caracteres.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(s) || !RegExp(r'\d').hasMatch(s)) return 'Misture letras e números.';
+    if (!RegExp('[A-Za-z]').hasMatch(s) || !RegExp(r'\d').hasMatch(s)) return 'Misture letras e números.';
     return null;
   }
 

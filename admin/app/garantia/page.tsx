@@ -8,6 +8,9 @@ import { Abas, Carregando, ErroCaixa, Miniatura, Selo, SeloStatus, Vazio, useAca
 import { rpc } from '@/lib/supabase';
 import { dataHora, haQuanto, moeda, statusReclamacao } from '@/lib/formatos';
 
+// Mesmo número que vai nos e-mails da Garantia (função enviar-email).
+const protocolo = (id: number) => `G-${String(id).padStart(5, '0')}`;
+
 type Reclamacao = {
   id: number; pedido_id: string; codigo: string; motivo: string; descricao: string; fotos: string[]; status: string; resolucao: string | null;
   autor_id: string; autor: string; autor_papel: string; cliente: string; profissional: string; profissao: string; valor: number | null;
@@ -35,7 +38,7 @@ function Mediacao({ r, aoMudar }: { r: Reclamacao; aoMudar: () => void }) {
   return (
     <section className="cartao" style={{ position: 'sticky', top: 16 }}>
       <div className="titulo">
-        <div><h2>{r.motivo}</h2><p>Pedido <Link href={`/pedido/?id=${r.pedido_id}`} className="mono">{r.codigo} <ExternalLink size={12} /></Link> · {r.profissao} · {moeda(r.valor)}</p></div>
+        <div><h2>{r.motivo}</h2><p>Protocolo <span className="mono">{protocolo(r.id)}</span> · Pedido <Link href={`/pedido/?id=${r.pedido_id}`} className="mono">{r.codigo} <ExternalLink size={12} /></Link> · {r.profissao} · {moeda(r.valor)}</p></div>
         <SeloStatus mapa={statusReclamacao} valor={r.status} />
       </div>
       <div className="corpo" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -120,7 +123,7 @@ export default function Garantia() {
                 <tbody>
                   {dados.map((r) => (
                     <tr key={r.id} className="clicavel" onClick={() => setSel(r.id)} style={atual?.id === r.id ? { background: 'var(--azul-suave)' } : undefined}>
-                      <td><strong>{r.motivo}</strong><div className="fraco"><span className="mono">{r.codigo}</span> · {r.profissao}</div></td>
+                      <td><strong>{r.motivo}</strong><div className="fraco"><span className="mono">{protocolo(r.id)}</span> · <span className="mono">{r.codigo}</span> · {r.profissao}</div></td>
                       <td>{r.cliente}<div className="fraco">com {r.profissional}</div></td>
                       <td className="fraco">{haQuanto(r.criada_em)}{r.status === 'aberta' && Date.now() - new Date(r.criada_em).getTime() > 86400000 ? <div><Selo tom="vermelho">+24 h sem resposta</Selo></div> : null}</td>
                       <td><SeloStatus mapa={statusReclamacao} valor={r.status} /></td>

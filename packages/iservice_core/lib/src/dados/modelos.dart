@@ -20,20 +20,38 @@ class Regiao {
       Regiao(id: j['id'], nome: j['nome'], uf: j['uf'], faixaPreco: j['faixa_preco']);
 }
 
+/// Como o profissional cobra uma especialidade. A faixa da região só compara preços da mesma forma.
+enum Cobranca {
+  servico('servico', 'Por serviço', 'por serviço'),
+  hora('hora', 'Por hora', 'por hora'),
+  diaria('diaria', 'Por diária', 'por diária');
+
+  const Cobranca(this.valor, this.rotulo, this.unidade);
+  final String valor;
+  final String rotulo;
+
+  /// Para frases como "R$ 200 por diária".
+  final String unidade;
+
+  static Cobranca de(Object? v) => values.firstWhere((c) => c.valor == v, orElse: () => servico);
+}
+
 class Especialidade {
-  const Especialidade({required this.id, required this.profissaoId, required this.nome, this.preco});
+  const Especialidade({required this.id, required this.profissaoId, required this.nome, this.preco, this.cobranca = Cobranca.servico});
   final int id;
   final String profissaoId;
   final String nome;
 
-  /// Preço definido pelo profissional (só no perfil dele).
+  /// Preço médio definido pelo profissional (só no perfil dele).
   final double? preco;
+  final Cobranca cobranca;
 
   factory Especialidade.fromJson(Map<String, dynamic> j, {String? profissaoId}) => Especialidade(
         id: j['id'],
         profissaoId: j['profissao_id'] ?? profissaoId ?? '',
         nome: j['nome'],
         preco: _dn(j['preco']),
+        cobranca: Cobranca.de(j['cobranca']),
       );
 }
 
@@ -151,6 +169,7 @@ class MeuCadastroProfissional {
     required this.disponivel,
     required this.verificado,
     required this.areaRaioKm,
+    this.atende24h = false,
     required this.notaMedia,
     required this.totalAvaliacoes,
     required this.servicosConcluidos,
@@ -167,6 +186,9 @@ class MeuCadastroProfissional {
   final String? motivoStatus;
   final bool disponivel;
   final bool verificado;
+
+  /// Marcou "Atendo 24h": aparece no botão Urgência 24h do cliente.
+  final bool atende24h;
   final String? bio;
   final int? anosExperiencia;
   final double? areaLat;
@@ -187,6 +209,7 @@ class MeuCadastroProfissional {
         motivoStatus: j['motivo_status'],
         disponivel: j['disponivel'] ?? false,
         verificado: j['verificado'] ?? false,
+        atende24h: j['atende_24h'] ?? false,
         bio: j['bio'],
         anosExperiencia: j['anos_experiencia'],
         areaLat: _dn(j['area_lat']),
@@ -471,6 +494,13 @@ class FaixaPreco {
 
   factory FaixaPreco.fromJson(Map<String, dynamic> j) =>
       FaixaPreco(minimo: _d(j['minimo']), maximo: _d(j['maximo']), estimada: j['estimada'] ?? true);
+}
+
+/// Preço de um profissional na lista da busca, com a forma de cobrança.
+class PrecoBusca {
+  const PrecoBusca(this.preco, this.cobranca);
+  final double preco;
+  final Cobranca cobranca;
 }
 
 enum QuandoPedido {

@@ -7,13 +7,16 @@ import 'repositorios.dart';
 
 /// O que o profissional marcou: profissões, especialidades e preços.
 class MinhasProfissoes {
-  const MinhasProfissoes({required this.profissoes, required this.especialidades});
+  const MinhasProfissoes({required this.profissoes, required this.especialidades, this.cobrancas = const {}});
 
   /// id da profissão -> é a principal?
   final Map<String, bool> profissoes;
 
   /// id da especialidade -> preço (null = ainda sem preço)
   final Map<int, double?> especialidades;
+
+  /// id da especialidade -> forma de cobrança
+  final Map<int, Cobranca> cobrancas;
 }
 
 class DocumentoEnviado {
@@ -55,15 +58,19 @@ class ProfissionalRepo {
 
   Future<void> definirDisponivel(bool v) => _t(() => _db.rpc('definir_disponivel', params: {'p_disponivel': v}));
 
+  /// Liga ou desliga "Atendo 24h" (Urgência 24h do app Cliente).
+  Future<void> definirAtende24h(bool v) => _t(() => _db.from('profissionais').update({'atende_24h': v}).eq('id', _uid));
+
   Future<void> salvarSobre({String? bio, int? anosExperiencia}) =>
       _t(() => _db.from('profissionais').update({'bio': bio, 'anos_experiencia': anosExperiencia}).eq('id', _uid));
 
   Future<MinhasProfissoes> minhasProfissoes() => _t(() async {
         final p = await _db.from('profissional_profissoes').select('profissao_id, principal').eq('profissional_id', _uid);
-        final e = await _db.from('profissional_especialidades').select('especialidade_id, preco').eq('profissional_id', _uid);
+        final e = await _db.from('profissional_especialidades').select('especialidade_id, preco, cobranca').eq('profissional_id', _uid);
         return MinhasProfissoes(
           profissoes: {for (final l in p) l['profissao_id'] as String: l['principal'] as bool},
           especialidades: {for (final l in e) l['especialidade_id'] as int: (l['preco'] as num?)?.toDouble()},
+          cobrancas: {for (final l in e) l['especialidade_id'] as int: Cobranca.de(l['cobranca'])},
         );
       });
 
@@ -87,8 +94,11 @@ class ProfissionalRepo {
         }
       });
 
-  Future<void> definirPreco(int especialidadeId, double? preco) => _t(
-      () => _db.from('profissional_especialidades').update({'preco': preco}).eq('profissional_id', _uid).eq('especialidade_id', especialidadeId));
+  Future<void> definirPreco(int especialidadeId, double? preco, {Cobranca? cobranca}) => _t(() => _db
+      .from('profissional_especialidades')
+      .update({'preco': preco, if (cobranca != null) 'cobranca': cobranca.valor})
+      .eq('profissional_id', _uid)
+      .eq('especialidade_id', especialidadeId));
 
   Future<int> sugerirEspecialidade(String profissaoId, String nome) =>
       _t(() async => ((await _db.rpc('sugerir_especialidade', params: {'p_profissao': profissaoId, 'p_nome': nome})) as num).toInt());

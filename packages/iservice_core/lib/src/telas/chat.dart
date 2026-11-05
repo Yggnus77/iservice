@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -49,7 +51,7 @@ class _TelaChatState extends ConsumerState<TelaChat> {
     final msgs = ref.watch(_mensagensProvider(widget.pedidoId));
     ref.listen(_mensagensProvider(widget.pedidoId), (_, prox) {
       if (prox.value?.any((m) => m.autorId != eu && m.lidaEm == null) ?? false) {
-        ref.read(chatRepo).marcarLidas(widget.pedidoId);
+        unawaited(ref.read(chatRepo).marcarLidas(widget.pedidoId));
       }
     });
     final c = context.cores;
