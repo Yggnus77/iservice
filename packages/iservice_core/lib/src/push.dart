@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config.dart';
@@ -44,6 +45,9 @@ class ConfigFirebase {
     );
   }
 }
+
+/// Canal nativo (MainActivity) que põe o aviso na barra de notificações com o som da marca.
+const _canalAvisos = MethodChannel('br.app.iservice/avisos');
 
 /// Liga o push enquanto há alguém logado: pede permissão, registra o aparelho no
 /// backend e abre o pedido quando a pessoa toca na notificação.
@@ -91,10 +95,17 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
       // ignore: deprecated_member_use
       _assinaturas.add(fcm.onTokenRefresh.listen(registrar));
 
-      // App aberto: mostra um aviso discreto (a lista de Notificações já atualiza sozinha).
-      _assinaturas.add(FirebaseMessaging.onMessage.listen((m) {
+      // App aberto: no Android o FCM não mostra nada sozinho, então o aviso vai para a
+      // barra de notificações pelo canal com o som do iService (MainActivity). No iPhone
+      // o sistema já mostra o aviso com o som (opções acima).
+      _assinaturas.add(FirebaseMessaging.onMessage.listen((m) async {
         final titulo = m.notification?.title;
-        if (titulo != null && mounted && defaultTargetPlatform != TargetPlatform.iOS) mostrarMensagem(context, titulo);
+        if (titulo == null || defaultTargetPlatform == TargetPlatform.iOS) return;
+        try {
+          await _canalAvisos.invokeMethod<void>('mostrar', {'titulo': titulo, 'corpo': m.notification?.body ?? ''});
+        } catch (_) {
+          if (mounted) mostrarMensagem(context, titulo);
+        }
       }));
       _assinaturas.add(FirebaseMessaging.onMessageOpenedApp.listen(_abrir));
       final inicial = await fcm.getInitialMessage();
