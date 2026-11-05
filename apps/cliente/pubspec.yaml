@@ -47,6 +47,8 @@ dependencies:
   material_symbols_icons: ^4.2960.0
   cached_network_image: ^4.0.5
   intl: ^0.20.3
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:

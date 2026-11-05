@@ -13,6 +13,7 @@ import 'telas/explorar.dart';
 import 'telas/favoritos.dart';
 import 'telas/inicio.dart';
 import 'telas/lista_profissionais.dart';
+import 'telas/mapa_profissionais.dart';
 import 'telas/pedidos.dart';
 import 'telas/perfil.dart';
 import 'telas/perfil_profissional.dart';
@@ -84,8 +85,16 @@ final rotasProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/busca', builder: (_, _) => const TelaBusca()),
       GoRoute(path: '/ranking', builder: (_, e) => TelaRanking(profissaoId: e.uri.queryParameters['profissao'])),
+      // Busca de uma profissão: abre no mapa; "Ver lista" e os filtros levam à lista.
       GoRoute(
         path: '/profissao/:id',
+        builder: (_, e) => TelaMapaProfissionais(
+          profissaoId: e.pathParameters['id']!,
+          especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: '/profissao/:id/lista',
         builder: (_, e) => TelaListaProfissionais(
           profissaoId: e.pathParameters['id']!,
           especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),

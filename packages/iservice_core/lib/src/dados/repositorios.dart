@@ -289,6 +289,16 @@ class BuscaRepo {
         return [for (final l in r as List) ProfissionalResumo.fromJson({...l, 'profissao_id': profissaoId})];
       });
 
+  /// Posição aproximada (grade de ~1 km, nunca o endereço) de cada profissional
+  /// da lista, para os pins da busca no mapa.
+  Future<Map<String, ({double lat, double lng})>> posicoesMapa(List<String> ids) => _tentar(() async {
+        if (ids.isEmpty) return const <String, ({double lat, double lng})>{};
+        final r = await _db.rpc('posicoes_mapa', params: {'p_ids': ids});
+        return {
+          for (final l in r as List) l['profissional_id'] as String: (lat: (l['lat'] as num).toDouble(), lng: (l['lng'] as num).toDouble()),
+        };
+      });
+
   /// Preço de cada profissional da lista: o da especialidade escolhida ou o menor da profissão.
   Future<Map<String, PrecoBusca>> precos(List<String> ids, String profissaoId, int? especialidadeId) => _tentar(() async {
         if (ids.isEmpty) return const <String, PrecoBusca>{};
