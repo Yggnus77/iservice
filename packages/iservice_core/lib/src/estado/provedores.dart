@@ -32,7 +32,7 @@ final usuarioIdProvider = Provider<String?>((ref) => ref.watch(sessaoProvider).v
 final meuPerfilProvider = FutureProvider<MeuPerfil?>((ref) async {
   final uid = ref.watch(usuarioIdProvider);
   if (uid == null) return null;
-  return ref.read(contaRepo).meuPerfil();
+  return await ref.read(contaRepo).meuPerfil();
 });
 
 final profissoesProvider = FutureProvider<List<Profissao>>((ref) => ref.read(catalogoRepo).profissoes());
@@ -95,7 +95,7 @@ Future<Position?> lerLocalizacaoAtual() async {
   var p = await Geolocator.checkPermission();
   if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
   if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return null;
-  return Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+  return await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
 }
 
 final notificacoesProvider = StreamProvider<List<Notificacao>>((ref) {

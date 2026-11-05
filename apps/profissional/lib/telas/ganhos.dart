@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iservice_core/iservice_core.dart';
 import 'package:intl/intl.dart';
+import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
@@ -149,12 +149,12 @@ class _Barras extends StatelessWidget {
       const nomes = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
       barras = [
         for (var i = 0; i < 7; i++)
-          (nomes[i], dias.where((d) => DateUtils.isSameDay(d.$1, segunda.add(Duration(days: i)))).fold(0.0, (s, d) => s + d.$2)),
+          (nomes[i], dias.where((d) => DateUtils.isSameDay(d.$1, segunda.add(Duration(days: i)))).fold<double>(0, (s, d) => s + d.$2)),
       ];
     } else {
       barras = [for (final (d, v) in dias) ('${d.day}', v)];
     }
-    final maior = barras.fold(0.0, (m, b) => math.max(m, b.$2));
+    final maior = barras.fold<double>(0, (m, b) => math.max(m, b.$2));
     return SizedBox(
       height: 150,
       child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [

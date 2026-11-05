@@ -58,6 +58,9 @@ class ProfissionalRepo {
 
   Future<void> definirDisponivel(bool v) => _t(() => _db.rpc('definir_disponivel', params: {'p_disponivel': v}));
 
+  /// Liga ou desliga "Atendo 24h" (Urgência 24h do app Cliente).
+  Future<void> definirAtende24h(bool v) => _t(() => _db.from('profissionais').update({'atende_24h': v}).eq('id', _uid));
+
   Future<void> salvarSobre({String? bio, int? anosExperiencia}) =>
       _t(() => _db.from('profissionais').update({'bio': bio, 'anos_experiencia': anosExperiencia}).eq('id', _uid));
 

@@ -11,6 +11,9 @@ abstract final class Medidas {
   static const raioPilula = 999.0;
   static const margemTela = 20.0;
   static const alturaBotao = 52.0;
+
+  /// Área mínima de toque (brief: 48 px).
+  static const toque = 48.0;
 }
 
 /// Tema do app. O Cliente usa azul como cor de ação; o Profissional, laranja

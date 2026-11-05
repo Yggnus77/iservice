@@ -13,9 +13,12 @@ final _precosProvider = FutureProvider.autoDispose.family<Map<String, PrecoBusca
 /// Profissionais de uma profissão perto do cliente.
 /// Ordem padrão: mais bem avaliados primeiro (com rodízio justo para os novos).
 class TelaListaProfissionais extends ConsumerStatefulWidget {
-  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId});
+  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId, this.urgencia24h = false});
   final String profissaoId;
   final int? especialidadeId;
+
+  /// Veio do botão Urgência 24h: só quem atende a qualquer hora.
+  final bool urgencia24h;
 
   @override
   ConsumerState<TelaListaProfissionais> createState() => _TelaListaProfissionaisState();
@@ -27,7 +30,13 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
   // Cada nova busca gira o rodízio dos profissionais novos.
   int _rodizio = DateTime.now().millisecondsSinceEpoch ~/ 60000;
 
-  FiltroBusca get _filtro => FiltroBusca(profissaoId: widget.profissaoId, especialidadeId: _esp, porDistancia: _porDistancia, rodizio: _rodizio);
+  FiltroBusca get _filtro => FiltroBusca(
+        profissaoId: widget.profissaoId,
+        especialidadeId: _esp,
+        porDistancia: _porDistancia,
+        rodizio: _rodizio,
+        urgencia24h: widget.urgencia24h,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +50,7 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(profissao?.nome ?? ''),
+        title: Text(widget.urgencia24h ? 'Urgência 24h · ${profissao?.nome ?? ''}' : profissao?.nome ?? ''),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28),
           child: Padding(

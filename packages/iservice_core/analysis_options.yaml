@@ -1,6 +1,14 @@
-include: package:flutter_lints/flutter.yaml
+# Regras do Very Good (very_good_analysis, MIT), como pede o brief do MVP.
+include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
+  # O Very Good liga o modo estrito de tipos. Os dados chegam do Supabase como
+  # JSON dinâmico e são convertidos nos modelos; o modo estrito exigiria um cast
+  # em cada campo sem ganho real, então fica desligado.
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
   exclude:
     - build/**
     - android/**
@@ -10,5 +18,22 @@ analyzer:
     - macos/**
     - linux/**
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    # Só estilo, sem efeito no comportamento: o código usa nomes em português,
+    # imports relativos dentro do pacote e linhas de até 160 colunas.
+    public_member_api_docs: false
+    always_use_package_imports: false
+    always_put_required_named_parameters_first: false
+    sort_constructors_first: false
+    specify_nonobvious_property_types: false
+    lines_longer_than_80_chars: false
+    avoid_catches_without_on_clauses: false
+    cascade_invocations: false
+    sort_pub_dependencies: false
+    # Assinaturas que já existem (ex.: definirDisponivel(true)); mudar não traz ganho.
+    avoid_positional_boolean_parameters: false
+    use_setters_to_change_properties: false
+    prefer_constructors_over_static_methods: false
+    # Leitura do JSON do Supabase (mapas dinâmicos), mesmo motivo do strict-casts.
+    avoid_dynamic_calls: false

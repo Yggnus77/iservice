@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,14 +122,14 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
 
   void _abrirRota() {
     final q = Uri.encodeComponent(p.enderecoTexto);
-    launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$q'), mode: LaunchMode.externalApplication);
+    unawaited(launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$q'), mode: LaunchMode.externalApplication));
   }
 
   void _abrirChat() {
     final nome = Uri.encodeComponent(p.outraParteNome ?? '');
     final foto = Uri.encodeComponent(p.outraParteFoto ?? '');
     final sub = Uri.encodeComponent('Pedido ${p.codigo}');
-    context.push('/pedido/${p.id}/chat?nome=$nome&foto=$foto&sub=$sub');
+    unawaited(context.push('/pedido/${p.id}/chat?nome=$nome&foto=$foto&sub=$sub'));
   }
 
   @override
@@ -186,7 +188,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
                 texto: p.valorCobrado != null
                     ? 'Cobrado: ${reais(p.valorCobrado)}'
                     : [
-                        p.precoInformado == null ? 'Preço combinado no local' : 'A partir de ${reais(p.precoInformado)}',
+                        if (p.precoInformado == null) 'Preço combinado no local' else 'A partir de ${reais(p.precoInformado)}',
                         if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
                       ].join(' '),
               ),
@@ -230,7 +232,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
   }
 
   Widget? _botoes() {
-    final Widget? conteudo = switch (p.status) {
+    final conteudo = switch (p.status) {
       StatusPedido.solicitado => Row(children: [
           Expanded(
             child: OutlinedButton(
@@ -364,9 +366,9 @@ class _FolhaConcluirState extends State<_FolhaConcluir> {
           controller: _valor,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))],
           style: t.headlineSmall,
-          decoration: const InputDecoration(labelText: 'Valor cobrado', prefixText: 'R\$ '),
+          decoration: const InputDecoration(labelText: 'Valor cobrado', prefixText: r'R$ '),
         ),
         const SizedBox(height: 16),
         Text('Forma de pagamento', style: t.titleSmall),

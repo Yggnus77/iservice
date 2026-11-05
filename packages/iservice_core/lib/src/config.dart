@@ -18,6 +18,14 @@ class ConfigIService {
 
   static String urlDoApp(AppIService app) => '$urlSite/${app.name}/';
 
+  /// Botão "Entrar com Google". Fica desligado até o Google estar configurado
+  /// no Supabase (Authentication > Sign In / Providers > Google). Ligar com
+  /// --dart-define=LOGIN_GOOGLE=true.
+  static const loginGoogle = bool.fromEnvironment('LOGIN_GOOGLE');
+
+  /// Endereço para onde o login com Google volta no celular (deep link do app).
+  static String retornoLogin(AppIService app) => 'br.app.iservice.${app.name}://login-callback/';
+
   static bool get configurado => supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
   static Future<void> iniciar() async {

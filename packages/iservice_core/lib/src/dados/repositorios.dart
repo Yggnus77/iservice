@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
@@ -116,6 +117,15 @@ class ContaRepo {
 
   Future<void> entrar(String email, String senha) =>
       _tentar(() => _db.auth.signInWithPassword(email: email.trim(), password: senha));
+
+  /// Entra (ou cria a conta) com o Google. No celular abre o navegador e volta
+  /// pelo deep link do app; na web volta para a própria página do app. O
+  /// cadastro completo (foto, CPF etc.) continua sendo pedido depois.
+  Future<void> entrarComGoogle({required AppIService app}) => _tentar(() => _db.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: kIsWeb ? ConfigIService.urlDoApp(app) : ConfigIService.retornoLogin(app),
+        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+      ));
 
   /// Cria a conta. [app] decide se nasce também o cadastro de profissional.
   Future<void> criarConta({
@@ -276,9 +286,11 @@ class BuscaRepo {
     int? especialidadeId,
     bool porDistancia = false,
     int rodizio = 0,
+    bool urgencia24h = false,
   }) =>
       _tentar(() async {
-        final r = await _db.rpc('buscar_profissionais', params: {
+        // Urgência 24h: mesma busca, só com quem marcou "Atendo 24h" (filtrado no servidor).
+        final r = await _db.rpc(urgencia24h ? 'buscar_urgencia_24h' : 'buscar_profissionais', params: {
           'p_profissao': profissaoId,
           'p_lat': lat,
           'p_lng': lng,
@@ -487,7 +499,7 @@ class NotificacoesRepo {
       .from('notificacoes')
       .stream(primaryKey: ['id'])
       .eq('usuario_id', _db.auth.currentUser!.id)
-      .order('criada_em', ascending: false)
+      .order('criada_em')
       .limit(100)
       .map((l) => [for (final n in l) Notificacao.fromJson(n)]);
 

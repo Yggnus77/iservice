@@ -62,7 +62,7 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
   @override
   void initState() {
     super.initState();
-    _iniciar();
+    unawaited(_iniciar());
   }
 
   Future<void> _iniciar() async {
@@ -87,6 +87,7 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
       // "Installation ID" ainda não serve para o envio pela HTTP v1.
       // ignore: deprecated_member_use
       await registrar(await fcm.getToken());
+      // Mesmo motivo: o token renovado também vem da API clássica.
       // ignore: deprecated_member_use
       _assinaturas.add(fcm.onTokenRefresh.listen(registrar));
 
@@ -111,7 +112,7 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
   @override
   void dispose() {
     for (final a in _assinaturas) {
-      a.cancel();
+      unawaited(a.cancel());
     }
     super.dispose();
   }
@@ -124,6 +125,7 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
 Future<String?> tokenPushAtual() async {
   if (Firebase.apps.isEmpty) return null;
   try {
+    // Mesmo motivo acima: o token do FCM ainda vem desta chamada.
     // ignore: deprecated_member_use
     return await FirebaseMessaging.instance.getToken();
   } catch (_) {
@@ -132,4 +134,7 @@ Future<String?> tokenPushAtual() async {
 }
 
 /// Sai da conta tirando este aparelho do push (para não receber avisos da conta antiga).
-Future<void> sairDaConta(WidgetRef ref) async => ref.read(contaRepo).sair(tokenPush: await tokenPushAtual());
+Future<void> sairDaConta(WidgetRef ref) async {
+  final token = await tokenPushAtual();
+  await ref.read(contaRepo).sair(tokenPush: token);
+}

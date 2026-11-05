@@ -178,7 +178,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
 
   Future<void> _garantia(BuildContext context) async {
     final texto = TextEditingController();
-    String motivo = 'Serviço mal feito';
+    var motivo = 'Serviço mal feito';
     final enviar = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,

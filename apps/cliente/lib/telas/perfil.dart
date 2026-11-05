@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +63,7 @@ class TelaPerfil extends ConsumerWidget {
                   title: Text('Seu código: ${p.codigoIndicacao}', style: t.titleSmall),
                   subtitle: const Text('Toque para copiar e enviar a um amigo.'),
                   onTap: () {
-                    Clipboard.setData(ClipboardData(text: 'Baixe o iService e use meu código ${p.codigoIndicacao} no cadastro!'));
+                    unawaited(Clipboard.setData(ClipboardData(text: 'Baixe o iService e use meu código ${p.codigoIndicacao} no cadastro!')));
                     mostrarMensagem(context, 'Convite copiado.');
                   },
                 ),

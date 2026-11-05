@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,7 +83,7 @@ Future<void> responderChamado(BuildContext context, WidgetRef ref, Pedido p, {re
     if (r.status == StatusPedido.expirado) {
       mostrarMensagem(context, 'O tempo para responder acabou.');
     } else if (aceitar) {
-      context.push('/pedido/${p.id}');
+      unawaited(context.push('/pedido/${p.id}'));
     } else {
       mostrarMensagem(context, 'Pedido recusado.');
     }
@@ -143,7 +145,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Avatar(nome: p.outraParteNome ?? '', url: p.outraParteFoto, tamanho: 48),
+            Avatar(nome: p.outraParteNome ?? '', url: p.outraParteFoto),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -157,9 +159,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Symbols.timer_rounded, size: 16, color: expirou ? c.perigo : c.alerta),
                 const SizedBox(width: 4),
-                expirou
-                    ? Text('Expirou', style: t.labelMedium?.copyWith(color: c.perigo))
-                    : ContagemRegressiva(
+                if (expirou) Text('Expirou', style: t.labelMedium?.copyWith(color: c.perigo)) else ContagemRegressiva(
                         ate: p.responderAte,
                         estilo: t.labelMedium?.copyWith(color: c.alerta),
                         aoAcabar: () {
@@ -179,11 +179,11 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
           ],
           const SizedBox(height: 12),
           _Info(icone: p.quando == QuandoPedido.agora ? Symbols.bolt_rounded : Symbols.schedule_rounded, texto: p.quandoTexto, destaque: p.quando == QuandoPedido.agora),
-          _Info(icone: Symbols.location_on_rounded, texto: [p.enderecoTexto, if (p.distanciaKm != null) distancia(p.distanciaKm!)].join(' · ')),
+          _Info(icone: Symbols.location_on_rounded, texto: [p.enderecoTexto, if (p.distanciaKm != null) distancia(p.distanciaKm)].join(' · ')),
           _Info(
             icone: Symbols.payments_rounded,
             texto: [
-              p.precoInformado == null ? 'Preço combinado no local' : 'Seu preço: a partir de ${reais(p.precoInformado)}',
+              if (p.precoInformado == null) 'Preço combinado no local' else 'Seu preço: a partir de ${reais(p.precoInformado)}',
               if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
             ].join(' '),
           ),
