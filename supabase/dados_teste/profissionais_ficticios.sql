@@ -8,7 +8,7 @@
 -- no app (sem senha).
 --
 -- Rodar de novo apaga os fictícios antigos e cria tudo outra vez.
--- Para APAGAR antes do lançamento, rode só o bloco "Apagar" lá embaixo.
+-- Para APAGAR antes do lançamento, rode só as duas linhas do bloco "Apagar" logo abaixo.
 
 -- Apagar (também roda antes de criar). Pedidos de teste feitos com eles são
 -- apagados junto, para a exclusão não travar.
