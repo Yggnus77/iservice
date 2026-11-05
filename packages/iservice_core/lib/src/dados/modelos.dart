@@ -169,6 +169,7 @@ class MeuCadastroProfissional {
     required this.disponivel,
     required this.verificado,
     required this.areaRaioKm,
+    this.atende24h = false,
     required this.notaMedia,
     required this.totalAvaliacoes,
     required this.servicosConcluidos,
@@ -185,6 +186,9 @@ class MeuCadastroProfissional {
   final String? motivoStatus;
   final bool disponivel;
   final bool verificado;
+
+  /// Marcou "Atendo 24h": aparece no botão Urgência 24h do cliente.
+  final bool atende24h;
   final String? bio;
   final int? anosExperiencia;
   final double? areaLat;
@@ -205,6 +209,7 @@ class MeuCadastroProfissional {
         motivoStatus: j['motivo_status'],
         disponivel: j['disponivel'] ?? false,
         verificado: j['verificado'] ?? false,
+        atende24h: j['atende_24h'] ?? false,
         bio: j['bio'],
         anosExperiencia: j['anos_experiencia'],
         areaLat: _dn(j['area_lat']),

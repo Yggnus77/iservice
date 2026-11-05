@@ -49,7 +49,7 @@ class TelaPainel extends ConsumerWidget {
             child: Row(children: [
               DecoratedBox(
                 decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Cores.laranja, width: 2)),
-                child: Padding(padding: const EdgeInsets.all(2), child: Avatar(nome: perfil?.nome ?? '', url: perfil?.fotoUrl, tamanho: 48)),
+                child: Padding(padding: const EdgeInsets.all(2), child: Avatar(nome: perfil?.nome ?? '', url: perfil?.fotoUrl)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -71,6 +71,8 @@ class TelaPainel extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: Medidas.margemTela),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 _Disponibilidade(ligado: pro?.disponivel ?? false, ocupado: ocupado),
+                const SizedBox(height: 12),
+                _Atende24h(ligado: pro?.atende24h ?? false),
                 const SizedBox(height: 12),
                 Row(children: [
                   Expanded(
@@ -212,6 +214,61 @@ class _DisponibilidadeState extends ConsumerState<_Disponibilidade> {
   }
 }
 
+/// "Atendo 24h": entra no botão Urgência 24h do app Cliente. Só vale quando
+/// ele também está disponível; o servidor confere as duas coisas na busca.
+class _Atende24h extends ConsumerStatefulWidget {
+  const _Atende24h({required this.ligado});
+  final bool ligado;
+
+  @override
+  ConsumerState<_Atende24h> createState() => _Atende24hState();
+}
+
+class _Atende24hState extends ConsumerState<_Atende24h> {
+  bool? _otimista;
+  bool _salvando = false;
+
+  Future<void> _trocar(bool v) async {
+    setState(() {
+      _otimista = v;
+      _salvando = true;
+    });
+    try {
+      await ref.read(profissionalRepo).definirAtende24h(v);
+      ref.invalidate(meuPerfilProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _otimista = null);
+        mostrarErro(context, e);
+      }
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ligado = _otimista ?? widget.ligado;
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: SwitchListTile(
+        value: ligado,
+        onChanged: _salvando ? null : _trocar,
+        minTileHeight: Medidas.toque,
+        contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+        secondary: const Icon(Symbols.bolt_rounded, fill: 1, color: Cores.laranja),
+        title: Text('Atendo 24h', style: t.titleSmall),
+        subtitle: Text(
+          ligado ? 'Você aparece na Urgência 24h quando está disponível.' : 'Ligue para receber chamados de urgência a qualquer hora.',
+          style: t.bodySmall?.copyWith(color: c.textoSuave),
+        ),
+      ),
+    );
+  }
+}
+
 /// Chamado novo no Início: borda laranja, prazo de resposta, descrição e
 /// os botões Recusar (contorno) e Aceitar (verde, texto azul-escuro).
 class _NovoChamado extends ConsumerStatefulWidget {
@@ -240,7 +297,7 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
     final c = context.cores;
     final profissao = ref.watch(profissaoPorIdProvider(p.profissaoId));
     final expirou = _acabou || p.tempoParaResponder == Duration.zero;
-    final titulo = [profissao?.nome ?? '', if (p.distanciaKm != null) distancia(p.distanciaKm!)].where((s) => s.isNotEmpty).join(' · ');
+    final titulo = [profissao?.nome ?? '', if (p.distanciaKm != null) distancia(p.distanciaKm)].where((s) => s.isNotEmpty).join(' · ');
     return Material(
       color: Theme.of(context).colorScheme.surface,
       elevation: 6,
@@ -412,7 +469,7 @@ class CartaoAtendimento extends ConsumerWidget {
                 const SizedBox(width: 14),
                 Icon(Symbols.near_me_rounded, size: 16, color: c.textoSuave),
                 const SizedBox(width: 4),
-                Text(distancia(p.distanciaKm!), style: t.bodySmall),
+                Text(distancia(p.distanciaKm), style: t.bodySmall),
               ],
               const Spacer(),
               if (p.naoLidas > 0) Badge(label: Text('${p.naoLidas}'), child: Icon(Symbols.chat_rounded, size: 20, color: c.acaoTexto)),

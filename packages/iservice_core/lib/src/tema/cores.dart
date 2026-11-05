@@ -10,7 +10,7 @@ abstract final class Cores {
   static const estrela = Color(0xFFFFB400);
   static const noite = Color(0xFF011031);
 
-  static const fundo = Color(0xFFF4F6FB);
+  static const fundo = Color(0xFFF5F7FB);
   static const superficie = Color(0xFFFFFFFF);
   static const superficieSuave = Color(0xFFEEF2F8);
   static const linha = Color(0xFFE1E6EF);

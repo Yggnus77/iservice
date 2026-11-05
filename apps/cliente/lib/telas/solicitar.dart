@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -185,7 +187,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
                 trailing: TextButton(
                   onPressed: () async {
                     if (enderecos.length < 2) {
-                      context.push('/enderecos');
+                      unawaited(context.push('/enderecos'));
                       return;
                     }
                     final e = await escolherEmLista<Endereco>(context, titulo: 'Endereço do atendimento', opcoes: enderecos, rotulo: (e) => '${e.rotulo}: ${e.linha1}', atual: endereco);

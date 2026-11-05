@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -42,9 +43,12 @@ Map<String, LatLng> _espalhar(List<ProfissionalResumo> lista, Map<String, _Ponto
 /// local de busca e, embaixo, uma folha com os cartões, mais bem avaliados
 /// primeiro. "Chamar" abre o pedido direcionado só para aquele profissional.
 class TelaMapaProfissionais extends ConsumerStatefulWidget {
-  const TelaMapaProfissionais({super.key, required this.profissaoId, this.especialidadeId});
+  const TelaMapaProfissionais({super.key, required this.profissaoId, this.especialidadeId, this.urgencia24h = false});
   final String profissaoId;
   final int? especialidadeId;
+
+  /// Veio do botão Urgência 24h: só quem atende a qualquer hora.
+  final bool urgencia24h;
 
   @override
   ConsumerState<TelaMapaProfissionais> createState() => _TelaMapaProfissionaisState();
@@ -61,7 +65,21 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
 
   static const _folhaInicial = .46;
 
-  FiltroBusca get _filtro => FiltroBusca(profissaoId: widget.profissaoId, especialidadeId: widget.especialidadeId, rodizio: _rodizio);
+  FiltroBusca get _filtro => FiltroBusca(
+        profissaoId: widget.profissaoId,
+        especialidadeId: widget.especialidadeId,
+        rodizio: _rodizio,
+        urgencia24h: widget.urgencia24h,
+      );
+
+  /// Filtros da busca para levar à lista: especialidade e urgência.
+  String get _query {
+    final q = [
+      if (widget.especialidadeId != null) 'esp=${widget.especialidadeId}',
+      if (widget.urgencia24h) 'urgencia=1',
+    ];
+    return q.isEmpty ? '' : '?${q.join('&')}';
+  }
 
   @override
   void dispose() {
@@ -181,7 +199,7 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
               aoTrocarLocal: () => context.push('/enderecos'),
               aoBuscar: () => context.push('/busca'),
               aoAbrirFiltros: () => context.push(
-                  '/profissao/${widget.profissaoId}/lista${widget.especialidadeId == null ? '' : '?esp=${widget.especialidadeId}'}'),
+                  '/profissao/${widget.profissaoId}/lista$_query'),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -206,7 +224,12 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
           snapSizes: const [_folhaInicial],
           builder: (context, rolagem) => _Folha(
             rolagem: rolagem,
-            titulo: profissao == null ? 'Profissionais perto de você' : '${_plural(profissao.nome)} perto de você',
+            titulo: widget.urgencia24h
+                ? 'Urgência 24h${profissao == null ? '' : ' · ${_plural(profissao.nome)}'}'
+                : profissao == null
+                    ? 'Profissionais perto de você'
+                    : '${_plural(profissao.nome)} perto de você',
+            subtitulo: widget.urgencia24h ? 'Atendem a qualquer hora · mais bem avaliados primeiro' : 'Mais bem avaliados primeiro',
             lista: lista,
             selecionadoId: selecionado?.id,
             profissaoNome: profissao?.nome ?? '',
@@ -214,7 +237,7 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
             aoTentar: () => ref.invalidate(buscaProvider(_filtro)),
             aoSelecionar: (p) {
               if (p.id == selecionado?.id) {
-                context.push('/profissional/${p.id}?profissao=${widget.profissaoId}');
+                unawaited(context.push('/profissional/${p.id}?profissao=${widget.profissaoId}'));
               } else {
                 _selecionar(p.id, centralizar: posicoes[p.id]);
               }
@@ -222,7 +245,7 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
             aoChamar: (p) => context.push(
                 '/solicitar/${p.id}?profissao=${widget.profissaoId}${widget.especialidadeId == null ? '' : '&esp=${widget.especialidadeId}'}'),
             aoVerLista: () => context.push(
-                '/profissao/${widget.profissaoId}/lista${widget.especialidadeId == null ? '' : '?esp=${widget.especialidadeId}'}'),
+                '/profissao/${widget.profissaoId}/lista$_query'),
           ),
         ),
       ]),
@@ -252,7 +275,6 @@ class _Cabecalho extends StatelessWidget {
     final topo = MediaQuery.paddingOf(context).top;
     return Material(
       color: Cores.azul,
-      elevation: 0,
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
       child: Padding(
         padding: EdgeInsets.fromLTRB(4, topo + 4, 12, 16),
@@ -401,7 +423,8 @@ class _FormaPin extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size s) {
-    final w = s.width, h = s.height;
+    final w = s.width;
+    final h = s.height;
     final path = Path()
       ..moveTo(w / 2, h)
       ..cubicTo(w * .5, h, 0, h * .62, 0, w / 2)
@@ -468,6 +491,7 @@ class _Folha extends StatelessWidget {
   const _Folha({
     required this.rolagem,
     required this.titulo,
+    required this.subtitulo,
     required this.lista,
     required this.selecionadoId,
     required this.profissaoNome,
@@ -479,6 +503,7 @@ class _Folha extends StatelessWidget {
   });
   final ScrollController rolagem;
   final String titulo;
+  final String subtitulo;
   final AsyncValue<List<ProfissionalResumo>> lista;
   final String? selecionadoId;
   final String profissaoNome;
@@ -509,7 +534,7 @@ class _Folha extends StatelessWidget {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(titulo, style: t.titleMedium),
-                    Text('Mais bem avaliados primeiro', style: t.bodySmall),
+                    Text(subtitulo, style: t.bodySmall),
                   ]),
                 ),
                 TextButton(onPressed: aoVerLista, child: const Text('Ver lista')),
@@ -582,7 +607,7 @@ class _CartaoMapa extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
-              Avatar(nome: p.nome, url: p.fotoUrl, tamanho: 48),
+              Avatar(nome: p.nome, url: p.fotoUrl),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

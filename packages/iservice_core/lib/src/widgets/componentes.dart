@@ -28,7 +28,7 @@ class LogoIService extends StatelessWidget {
       label: 'iService',
       child: ExcludeSemantics(
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Image.asset('assets/marca/simbolo.png', package: 'iservice_core', height: tamanho * 1.2, filterQuality: FilterQuality.medium),
+          Image.asset('assets/marca/simbolo.png', package: 'iservice_core', height: tamanho * 1.2),
           SizedBox(width: tamanho * .22),
           Text.rich(TextSpan(children: [
             TextSpan(text: 'iServi', style: estilo.copyWith(color: claro ? Colors.white : Cores.azul)),
@@ -49,7 +49,7 @@ class EmblemaIService extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         label: 'iService: soluções, pessoas, resultados',
         image: true,
-        child: Image.asset('assets/marca/emblema.png', package: 'iservice_core', width: tamanho, height: tamanho, filterQuality: FilterQuality.medium),
+        child: Image.asset('assets/marca/emblema.png', package: 'iservice_core', width: tamanho, height: tamanho),
       );
 }
 
@@ -146,21 +146,22 @@ class Estrelas extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       for (var i = 1; i <= 5; i++)
-        aoEscolher == null
-            ? Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela)
-            : Semantics(
-                button: true,
-                selected: i == valor.round(),
-                label: '$i estrela${i > 1 ? 's' : ''}: ${_rotulos[i - 1]}',
-                child: InkResponse(
-                  onTap: () => aoEscolher!(i),
-                  radius: tamanho,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela),
-                  ),
-                ),
+        if (aoEscolher == null)
+          Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela)
+        else
+          Semantics(
+            button: true,
+            selected: i == valor.round(),
+            label: '$i estrela${i > 1 ? 's' : ''}: ${_rotulos[i - 1]}',
+            child: InkResponse(
+              onTap: () => aoEscolher!(i),
+              radius: tamanho,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(Symbols.star_rounded, fill: i <= valor.round() ? 1 : 0, size: tamanho, color: Cores.estrela),
               ),
+            ),
+          ),
     ]);
   }
 }

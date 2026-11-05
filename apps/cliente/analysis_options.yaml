@@ -1,35 +1,39 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
-#
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
-include: package:flutter_lints/flutter.yaml
+# Regras do Very Good (very_good_analysis, MIT), como pede o brief do MVP.
+include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
+  # O Very Good liga o modo estrito de tipos. Os dados chegam do Supabase como
+  # JSON dinâmico e são convertidos nos modelos; o modo estrito exigiria um cast
+  # em cada campo sem ganho real, então fica desligado.
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
   exclude:
     - build/**
     - android/**
     - ios/**
     - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
-
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+    # Só estilo, sem efeito no comportamento: o código usa nomes em português,
+    # imports relativos dentro do pacote e linhas de até 160 colunas.
+    public_member_api_docs: false
+    always_use_package_imports: false
+    always_put_required_named_parameters_first: false
+    sort_constructors_first: false
+    specify_nonobvious_property_types: false
+    lines_longer_than_80_chars: false
+    avoid_catches_without_on_clauses: false
+    cascade_invocations: false
+    sort_pub_dependencies: false
+    # Assinaturas que já existem (ex.: definirDisponivel(true)); mudar não traz ganho.
+    avoid_positional_boolean_parameters: false
+    use_setters_to_change_properties: false
+    prefer_constructors_over_static_methods: false
+    # Leitura do JSON do Supabase (mapas dinâmicos), mesmo motivo do strict-casts.
+    avoid_dynamic_calls: false

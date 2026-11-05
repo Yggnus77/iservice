@@ -78,7 +78,7 @@ class _MapaAoVivoState extends ConsumerState<MapaAoVivo> {
         SizedBox(
           height: 240,
           child: pos == null
-              ? Container(color: c.superficieSuave, child: const Center(child: CircularProgressIndicator()))
+              ? ColoredBox(color: c.superficieSuave, child: const Center(child: CircularProgressIndicator()))
               : FlutterMap(
                   mapController: _mapa,
                   options: MapOptions(
@@ -106,7 +106,7 @@ class _MapaAoVivoState extends ConsumerState<MapaAoVivo> {
                         width: 40,
                         height: 40,
                         alignment: Alignment.topCenter,
-                        child: Icon(Symbols.location_on_rounded, fill: 1, size: 40, color: Cores.perigo),
+                        child: const Icon(Symbols.location_on_rounded, fill: 1, size: 40, color: Cores.perigo),
                       ),
                       Marker(
                         point: LatLng(pos.lat, pos.lng),
@@ -159,13 +159,13 @@ class _TransmissorPosicaoState extends ConsumerState<TransmissorPosicao> {
   @override
   void initState() {
     super.initState();
-    if (widget.ativo) _ligar();
+    if (widget.ativo) unawaited(_ligar());
   }
 
   @override
   void didUpdateWidget(TransmissorPosicao antigo) {
     super.didUpdateWidget(antigo);
-    if (widget.ativo && !antigo.ativo) _ligar();
+    if (widget.ativo && !antigo.ativo) unawaited(_ligar());
     if (!widget.ativo && antigo.ativo) _desligar();
   }
 
@@ -185,7 +185,7 @@ class _TransmissorPosicaoState extends ConsumerState<TransmissorPosicao> {
   }
 
   void _desligar() {
-    _gps?.cancel();
+    unawaited(_gps?.cancel());
     _gps = null;
   }
 

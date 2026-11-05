@@ -29,7 +29,7 @@ class TelaEnderecos extends ConsumerWidget {
                     if (op == 'principal') {
                       await conta.salvarEndereco(
                         id: e.id, logradouro: e.logradouro, lat: e.lat, lng: e.lng, regiaoId: e.regiaoId, bloco: e.bloco, numero: e.numero,
-                        complemento: e.complemento, referencia: e.referencia, cep: e.cep, cidade: e.cidade, uf: e.uf, rotulo: e.rotulo, principal: true,
+                        complemento: e.complemento, referencia: e.referencia, cep: e.cep, cidade: e.cidade, uf: e.uf, rotulo: e.rotulo,
                       );
                     } else {
                       await conta.apagarEndereco(e.id);

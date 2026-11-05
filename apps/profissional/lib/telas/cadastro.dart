@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +41,7 @@ class _TelaCadastroState extends ConsumerState<TelaCadastro> {
   /// Depois dos passos 1 e 2: grava (se já tem conta) ou pede e-mail e senha.
   Future<void> _depoisDoEndereco() async {
     if (!_logado) {
-      context.push('/cadastro/3');
+      unawaited(context.push('/cadastro/3'));
       return;
     }
     await _ocupado(() async {
@@ -228,7 +230,7 @@ class _PassoProfissoesState extends ConsumerState<_PassoProfissoes> {
                         mostrarMensagem(context, 'Você pode escolher até 3 profissões.');
                         return;
                       }
-                      _rodar(() => ref.read(profissionalRepo).marcarProfissao(p.id, s, principal: marcadas.isEmpty));
+                      unawaited(_rodar(() => ref.read(profissionalRepo).marcarProfissao(p.id, s, principal: marcadas.isEmpty)));
                     },
             ),
         ]),
@@ -563,7 +565,7 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
               controller: _valor,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d,]'))],
-              decoration: const InputDecoration(prefixText: 'R\$ ', hintText: '0', labelText: 'Média *'),
+              decoration: const InputDecoration(prefixText: r'R$ ', hintText: '0', labelText: 'Média *'),
               onChanged: (_) => setState(() {}),
               onEditingComplete: _salvar,
               onTapOutside: (_) => _salvar(),
@@ -579,7 +581,7 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
               onSelected: (s) {
                 if (!s || f == _cobranca) return;
                 setState(() => _cobranca = f);
-                _salvar(mudouCobranca: true);
+                unawaited(_salvar(mudouCobranca: true));
               },
             ),
         ]),

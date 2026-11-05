@@ -1,8 +1,8 @@
 import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
-final _brl = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2);
-final _brlInteiro = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 0);
+final _brl = NumberFormat.currency(locale: 'pt_BR', symbol: r'R$', decimalDigits: 2);
+final _brlInteiro = NumberFormat.currency(locale: 'pt_BR', symbol: r'R$', decimalDigits: 0);
 
 /// R$ 1.234,50 (sem centavos quando o valor é redondo).
 String reais(num? valor) {
@@ -71,7 +71,9 @@ String telefoneFormatado(String tel) {
 DateTime? lerData(String s) {
   final p = s.split('/');
   if (p.length != 3 || p[2].length != 4) return null;
-  final d = int.tryParse(p[0]), m = int.tryParse(p[1]), a = int.tryParse(p[2]);
+  final d = int.tryParse(p[0]);
+  final m = int.tryParse(p[1]);
+  final a = int.tryParse(p[2]);
   if (d == null || m == null || a == null) return null;
   final data = DateTime(a, m, d);
   if (data.day != d || data.month != m) return null;

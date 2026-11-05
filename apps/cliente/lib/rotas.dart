@@ -91,6 +91,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
         builder: (_, e) => TelaMapaProfissionais(
           profissaoId: e.pathParameters['id']!,
           especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),
+          urgencia24h: e.uri.queryParameters['urgencia'] == '1',
         ),
       ),
       GoRoute(
@@ -98,6 +99,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
         builder: (_, e) => TelaListaProfissionais(
           profissaoId: e.pathParameters['id']!,
           especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),
+          urgencia24h: e.uri.queryParameters['urgencia'] == '1',
         ),
       ),
       GoRoute(
