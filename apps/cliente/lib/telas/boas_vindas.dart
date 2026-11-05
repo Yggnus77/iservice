@@ -10,7 +10,7 @@ class TelaAbertura extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     body: DecoratedBox(
-      decoration: Cores.fundoMarca(escurecer: .6),
+      decoration: Cores.fundoMarca(escurecer: .6, alinhamento: Cores.focoFundo, imagem: Cores.imagemFundo),
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

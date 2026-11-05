@@ -43,16 +43,28 @@ abstract final class Cores {
   static const gradienteAzul = LinearGradient(colors: [Color(0xFF1A6CF0), Color(0xFF0046B8)]);
   static const gradienteLaranja = LinearGradient(colors: [Color(0xFFFFA133), Color(0xFFFF7A00)]);
 
-  /// Imagem da marca (Brasília, logo e profissionais).
+  /// Imagem da marca (profissional de costas, logo e categorias). O profissional fica
+  /// à esquerda; em telas em pé, [focoFundo] mostra ele em vez de cortar o logo ao meio.
   static const imagemFundo = AssetImage('assets/fundo.jpg', package: 'iservice_core');
+  static const focoFundo = Alignment.centerLeft;
+
+  /// Recorte da mesma imagem só com o telhado e a casa, sem textos, para cabeçalhos e cartões.
+  static const imagemCabecalho = AssetImage('assets/fundo-cabecalho.jpg', package: 'iservice_core');
 
   /// Fundo das áreas escuras da marca: a imagem com uma camada azul-escura por cima,
   /// para o texto branco continuar legível. [escurecer] vai de 0 (só a imagem) a 1.
-  static BoxDecoration fundoMarca({double escurecer = .78, BorderRadius? raio, Alignment alinhamento = Alignment.center}) => BoxDecoration(
+  /// Por padrão usa o recorte sem textos; telas cheias passam [imagemFundo].
+  static BoxDecoration fundoMarca({
+    double escurecer = .78,
+    BorderRadius? raio,
+    Alignment alinhamento = Alignment.center,
+    ImageProvider imagem = imagemCabecalho,
+  }) =>
+      BoxDecoration(
         color: azulEscuro,
         borderRadius: raio,
         image: DecorationImage(
-          image: imagemFundo,
+          image: imagem,
           fit: BoxFit.cover,
           alignment: alinhamento,
           colorFilter: ColorFilter.mode(azulEscuro.withValues(alpha: escurecer), BlendMode.srcOver),
