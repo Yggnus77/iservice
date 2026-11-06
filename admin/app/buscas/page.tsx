@@ -75,7 +75,14 @@ export default function Buscas() {
             <div><h2>Mapa de calor</h2><p>Local aproximado (cerca de 1 km) de cada busca. Passe o mouse para ver os números.</p></div>
             <Abas ativa={modo} mudar={setModo} abas={[{ id: 'sem', rotulo: 'Sem resultado' }, { id: 'todas', rotulo: 'Todas' }]} />
           </div>
-          {mapa.erro ? <div className="corpo"><ErroCaixa erro={mapa.erro} tentar={mapa.recarregar} /></div> : <MapaCalor pontos={pontos} />}
+          {mapa.erro ? <div className="corpo"><ErroCaixa erro={mapa.erro} tentar={mapa.recarregar} /></div> : (
+            <div className="mapa-caixa">
+              <MapaCalor pontos={pontos} />
+              {mapa.dados && !pontos.length && (
+                <div className="mapa-aviso">{modo === 'sem' ? 'Nenhuma busca sem resultado no período' : 'Nenhuma busca no período'}</div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="cartao">

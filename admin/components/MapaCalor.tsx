@@ -22,8 +22,10 @@ export default function MapaCalor({ pontos }: { pontos: Ponto[] }) {
       if (!vivo || !elemento.current) return;
       if (!mapa.current) {
         mapa.current = L.map(elemento.current, { zoomControl: true, scrollWheelZoom: true }).setView(CENTRO, 10);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 18,
+        // Blocos do OpenStreetMap (o mesmo dos apps): não pedem chave. O CARTO passou a exigir chave.
+        // O tom claro vem do CSS (.mapa .leaflet-tile-pane), para a mancha de calor se destacar.
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
         }).addTo(mapa.current);
       }
       camadas.current.forEach((c) => c.remove());
