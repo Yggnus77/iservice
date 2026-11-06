@@ -331,6 +331,9 @@ table.tabela { width: 100%; border-collapse: collapse; }
 /* Mapa */
 .mapa { height: 560px; border-radius: 0 0 var(--raio) var(--raio); overflow: hidden; z-index: 0; }
 @media (max-width: 720px) { .mapa { height: 420px; } }
+.mapa-caixa { position: relative; }
+.mapa-aviso { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 500; background: #fff; color: #334155; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; box-shadow: 0 2px 10px rgba(15,23,42,.15); pointer-events: none; white-space: nowrap; }
+.mapa .leaflet-tile-pane { filter: grayscale(1) brightness(1.06) contrast(0.88); }
 
 /* Login */
 .entrar { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
