@@ -18,3 +18,7 @@ Site estático (HTML + CSS + um pouco de JS), sem build. Abra `index.html` no na
 4. Em Settings → Pages do repositório, preencha o domínio em *Custom domain* e marque *Enforce HTTPS* quando liberar.
 
 Com o domínio próprio (iservice.app.br), os apps web ficam em `/cliente/` e `/profissional/`: compile com `--base-href /cliente/` e `--base-href /profissional/`.
+
+## Páginas de profissão e para profissionais
+
+As páginas `*-em-brasilia.html`, `profissionais.html` e o `sitemap.xml` são geradas por `python3 tools/gerar_paginas_site.py` a partir do cabeçalho e do rodapé de `termos.html`. Para mudar textos ou incluir uma profissão nova, edite o script e gere de novo.
