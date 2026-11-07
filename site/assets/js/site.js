@@ -3,7 +3,7 @@
 const CONTATO = {
   whatsapp: '5598985516037',   // só números com DDI e DDD, ex.: '5561999999999'
   email: 'iserviceapp86@gmail.com',      // ex.: 'contato@seudominio.com.br'
-  instagram: 'iservice.app',  // usuário sem @, ex.: 'iservice.oficial'
+  instagram: 'iserviceapp.br',  // usuário sem @, ex.: 'iservice.oficial'
   cnpj: ''        // ex.: '00.000.000/0001-00'
 };
 // Versão de teste: Android baixa o APK; iPhone usa a versão web até sair na App Store.
