@@ -127,7 +127,7 @@ export const tipoDocumento: Record<string, string> = {
   comprovante_endereco: 'Comprovante de endereço',
 };
 
-export const quandoPedido: Record<string, string> = { agora: 'Agora', hoje: 'Hoje', combinado: 'Horário combinado' };
+export const quandoPedido: Record<string, string> = { agora: 'Agora', hoje: 'Hoje', combinado: 'Agendado' };
 
 export const pendencia: Record<string, string> = {
   foto: 'Foto de perfil',

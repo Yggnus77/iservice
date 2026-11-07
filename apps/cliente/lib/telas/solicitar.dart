@@ -9,12 +9,16 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../estado.dart';
 
 /// Pedido direcionado: vai só para o profissional escolhido.
-/// Só "agora" ou "hoje"; outro dia apenas se combinado com ele (até 7 dias).
+/// "Agora" (com taxa de urgência), "Hoje" numa janela, ou agendado para um dia
+/// da agenda (até dias_max_combinado dias), mesmo com ele ocupado agora.
 class TelaSolicitar extends ConsumerStatefulWidget {
-  const TelaSolicitar({super.key, required this.profissionalId, required this.profissaoId, this.especialidadeId});
+  const TelaSolicitar({super.key, required this.profissionalId, required this.profissaoId, this.especialidadeId, this.agendar = false});
   final String profissionalId;
   final String profissaoId;
   final int? especialidadeId;
+
+  /// Abre já em "Agendar" (vindo de um profissional ocupado agora).
+  final bool agendar;
 
   @override
   ConsumerState<TelaSolicitar> createState() => _TelaSolicitarState();
@@ -23,7 +27,7 @@ class TelaSolicitar extends ConsumerStatefulWidget {
 class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
   late int? _esp = widget.especialidadeId;
   final _descricao = TextEditingController();
-  QuandoPedido _quando = QuandoPedido.agora;
+  late QuandoPedido _quando = widget.agendar ? QuandoPedido.combinado : QuandoPedido.agora;
   String? _janela;
   DateTime? _combinado;
   int? _enderecoId;
@@ -39,22 +43,23 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
     }).toList();
   }
 
-  Future<void> _escolherHorario(int diasMax) async {
-    final agora = DateTime.now();
-    final dia = await showDatePicker(
-      context: context,
-      firstDate: agora,
-      lastDate: agora.add(Duration(days: diasMax)),
-      initialDate: _combinado ?? agora.add(const Duration(days: 1)),
-      helpText: 'Dia combinado com o profissional',
+  Future<void> _escolherHorario(PerfilProfissional pro, int diasMax) async {
+    final ocupados = await ref.read(pedidosRepo).horariosOcupados(pro.id).catchError((_) => <DateTime>[]);
+    if (!mounted) return;
+    final h = await escolherHorarioAgenda(
+      context,
+      diasMax: diasMax,
+      titulo: 'Agendar com ${primeiroNome(pro.nome)}',
+      subtitulo: 'Escolha um dia nos próximos $diasMax dias. ${primeiroNome(pro.nome)} confirma ou sugere outro horário.',
+      ocupados: ocupados,
+      inicial: _combinado,
+      rotuloConfirmar: 'Escolher',
     );
-    if (dia == null || !mounted) return;
-    final hora = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 9, minute: 0), helpText: 'Horário combinado');
-    if (hora == null) return;
-    setState(() => _combinado = DateTime(dia.year, dia.month, dia.day, hora.hour, hora.minute));
+    if (h != null) setState(() => _combinado = h);
   }
 
   Future<void> _enviar(PerfilProfissional pro, Endereco? endereco) async {
+    if (!pro.disponivel) _quando = QuandoPedido.combinado;
     if (endereco == null) {
       mostrarMensagem(context, 'Cadastre um endereço para o atendimento.');
       return;
@@ -64,7 +69,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
       return;
     }
     if (_quando == QuandoPedido.combinado && _combinado == null) {
-      mostrarMensagem(context, 'Escolha o dia e o horário combinados.');
+      mostrarMensagem(context, 'Escolha o dia e o horário do agendamento.');
       return;
     }
     setState(() => _enviando = true);
@@ -109,6 +114,13 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         final taxa = (config['taxa_urgencia'] as num?)?.toDouble() ?? 15;
         final diasMax = (config['dias_max_combinado'] as num?)?.toInt() ?? 7;
         final janelas = _janelasDeHoje(config);
+        // Ocupado agora: só dá para agendar.
+        final soAgendar = !p.disponivel;
+        final quando = soAgendar ? QuandoPedido.combinado : _quando;
+        final prazoMin = quando == QuandoPedido.combinado
+            ? (config['prazo_resposta_agendado_min'] as num?)?.toInt() ?? 120
+            : (config['prazo_resposta_min'] as num?)?.toInt() ?? 10;
+        final prazoTexto = prazoMin >= 60 && prazoMin % 60 == 0 ? '${prazoMin ~/ 60} ${prazoMin == 60 ? 'hora' : 'horas'}' : '$prazoMin minutos';
         // Faixa comum na região do endereço, na mesma forma de cobrança do profissional.
         final faixa = esp?.preco == null ? null : ref.watch(faixaPrecoProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
         final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
@@ -131,7 +143,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
             Row(children: [
               Icon(Symbols.lock_person_rounded, size: 16, color: c.textoSuave),
               const SizedBox(width: 6),
-              Expanded(child: Text('O pedido vai só para ${primeiroNome(p.nome)}. Ele tem 10 minutos para responder.', style: t.bodySmall)),
+              Expanded(child: Text('O pedido vai só para ${primeiroNome(p.nome)}, que tem até $prazoTexto para responder.', style: t.bodySmall)),
             ]),
             const TituloSecao(titulo: 'O que você precisa?'),
             Wrap(spacing: 8, runSpacing: 8, children: [
@@ -150,32 +162,50 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
               ),
             ),
             const TituloSecao(titulo: 'Quando?'),
-            SegmentedButton<QuandoPedido>(
-              segments: const [
-                ButtonSegment(value: QuandoPedido.agora, label: Text('Agora'), icon: Icon(Symbols.bolt_rounded)),
-                ButtonSegment(value: QuandoPedido.hoje, label: Text('Hoje'), icon: Icon(Symbols.today_rounded)),
-                ButtonSegment(value: QuandoPedido.combinado, label: Text('Combinar'), icon: Icon(Symbols.handshake_rounded)),
-              ],
-              selected: {_quando},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() => _quando = s.first),
-            ),
+            if (soAgendar)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: c.alertaSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
+                child: Row(children: [
+                  Icon(Symbols.event_busy_rounded, color: c.alerta),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${primeiroNome(p.nome)} está ocupado agora. Agende um dia e horário nos próximos $diasMax dias.', style: t.bodyMedium)),
+                ]),
+              )
+            else
+              SegmentedButton<QuandoPedido>(
+                segments: const [
+                  ButtonSegment(value: QuandoPedido.agora, label: Text('Agora'), icon: Icon(Symbols.bolt_rounded)),
+                  ButtonSegment(value: QuandoPedido.hoje, label: Text('Hoje'), icon: Icon(Symbols.today_rounded)),
+                  ButtonSegment(value: QuandoPedido.combinado, label: Text('Agendar'), icon: Icon(Symbols.event_rounded)),
+                ],
+                selected: {quando},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setState(() => _quando = s.first),
+              ),
             const SizedBox(height: 10),
-            switch (_quando) {
+            switch (quando) {
               QuandoPedido.agora => Text('Atendimento o quanto antes. Taxa de urgência de ${reais(taxa)}.', style: t.bodySmall),
               QuandoPedido.hoje => janelas.isEmpty
-                  ? Text('Não há mais janelas hoje. Use "Agora" ou combine um horário.', style: t.bodySmall)
+                  ? Text('Não há mais janelas hoje. Use "Agora" ou agende outro dia.', style: t.bodySmall)
                   : Wrap(spacing: 8, runSpacing: 8, children: [
                       for (final j in janelas) ChoiceChip(label: Text(j), selected: _janela == j, onSelected: (s) => setState(() => _janela = s ? j : null)),
                     ]),
-              QuandoPedido.combinado => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Use só se você já combinou o horário com ${primeiroNome(p.nome)} (até $diasMax dias).', style: t.bodySmall),
+              QuandoPedido.combinado => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if (!soAgendar)
+                    Text('Escolha um dia nos próximos $diasMax dias, sem taxa de urgência. ${primeiroNome(p.nome)} confirma ou sugere outro horário.', style: t.bodySmall),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
-                    onPressed: () => _escolherHorario(diasMax),
-                    icon: const Icon(Symbols.event_rounded),
-                    label: Text(_combinado == null ? 'Escolher dia e horário' : diaEHora(_combinado!)),
+                    onPressed: () => _escolherHorario(p, diasMax),
+                    icon: const Icon(Symbols.calendar_month_rounded),
+                    label: Text(_combinado == null ? 'Escolher dia e horário' : diaRelativoEHora(_combinado!)),
                   ),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Icon(Symbols.notifications_active_rounded, size: 16, color: c.textoSuave),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('Confirmado, vocês dois recebem o aviso, e um lembrete na véspera e 1 hora antes.', style: t.bodySmall)),
+                  ]),
                 ]),
             },
             const TituloSecao(titulo: 'Onde?'),
@@ -211,7 +241,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
                         style: t.bodySmall,
                       ),
                     ),
-                  if (_quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
+                  if (quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
                   const Divider(height: 20),
                   Row(children: [
                     Icon(Symbols.payments_rounded, size: 18, color: c.textoSuave),
@@ -225,7 +255,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
           bottomNavigationBar: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 8, Medidas.margemTela, 12),
-              child: BotaoPrincipal(rotulo: 'Enviar pedido para ${primeiroNome(p.nome)}', carregando: _enviando, aoTocar: () => _enviar(p, endereco)),
+              child: BotaoPrincipal(rotulo: quando == QuandoPedido.combinado ? 'Pedir agendamento a ${primeiroNome(p.nome)}' : 'Enviar pedido para ${primeiroNome(p.nome)}', carregando: _enviando, aoTocar: () => _enviar(p, endereco)),
             ),
           ),
         );

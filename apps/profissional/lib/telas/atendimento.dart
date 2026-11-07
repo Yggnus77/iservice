@@ -9,6 +9,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../estado.dart';
+import 'solicitacoes.dart' show AguardandoCliente, sugerirHorario;
 
 final _pedidoBase = FutureProvider.autoDispose.family<Pedido?, String>((ref, id) async {
   final lista = await ref.read(pedidosRepo).meus(papel: 'profissional');
@@ -181,7 +182,10 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
               Text(p.especialidade ?? profissao?.nome ?? '', style: t.titleMedium),
               if (p.descricao.isNotEmpty) ...[const SizedBox(height: 6), Text(p.descricao, style: t.bodyMedium)],
               const Divider(height: 24),
-              _Linha(icone: p.quando == QuandoPedido.agora ? Symbols.bolt_rounded : Symbols.schedule_rounded, texto: p.quandoTexto),
+              _Linha(
+                icone: switch (p.quando) { QuandoPedido.agora => Symbols.bolt_rounded, QuandoPedido.hoje => Symbols.schedule_rounded, QuandoPedido.combinado => Symbols.event_rounded },
+                texto: p.agendado ? 'Agendado: ${p.quandoTexto.toLowerCase()}' : p.quandoTexto,
+              ),
               _Linha(icone: Symbols.location_on_rounded, texto: p.enderecoTexto, acao: ativo ? ('Rota', _abrirRota) : null),
               _Linha(
                 icone: Symbols.payments_rounded,
@@ -195,12 +199,16 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             ]),
           ),
         ),
+        if (p.aguardandoCliente) ...[
+          const SizedBox(height: 12),
+          AguardandoCliente(p: p),
+        ],
         if (p.status == StatusPedido.solicitado) ...[
           const SizedBox(height: 12),
           Row(children: [
             Icon(Symbols.timer_rounded, size: 18, color: c.alerta),
             const SizedBox(width: 6),
-            Text('Responda em ', style: t.bodyMedium),
+            Text(p.aguardandoCliente ? 'O cliente tem até ' : 'Responda em ', style: t.bodyMedium),
             ContagemRegressiva(ate: p.responderAte, estilo: t.titleSmall?.copyWith(color: c.alerta), aoAcabar: () => ref.invalidate(_pedidoBase(p.id))),
           ]),
         ],
@@ -233,16 +241,27 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
 
   Widget? _botoes() {
     final conteudo = switch (p.status) {
-      StatusPedido.solicitado => Row(children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _ocupado ? null : () => _responder(false),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: Cores.perigo),
-              child: const Text('Recusar'),
+      StatusPedido.solicitado when p.aguardandoCliente => null,
+      StatusPedido.solicitado => Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _ocupado ? null : () => _responder(false),
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: Cores.perigo),
+                child: const Text('Recusar'),
+              ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: BotaoPrincipal(rotulo: p.agendado ? 'Confirmar horário' : 'Aceitar', icone: Symbols.check_rounded, carregando: _ocupado, aoTocar: () => _responder(true)),
+            ),
+          ]),
+          TextButton.icon(
+            onPressed: _ocupado ? null : () => sugerirHorario(context, ref, p),
+            icon: const Icon(Symbols.edit_calendar_rounded),
+            label: const Text('Sugerir outro horário'),
           ),
-          const SizedBox(width: 12),
-          Expanded(flex: 2, child: BotaoPrincipal(rotulo: 'Aceitar', icone: Symbols.check_rounded, carregando: _ocupado, aoTocar: () => _responder(true))),
         ]),
       StatusPedido.aceito => Row(children: [
           Expanded(

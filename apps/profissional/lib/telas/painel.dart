@@ -5,7 +5,7 @@ import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
-import 'solicitacoes.dart' show responderChamado;
+import 'solicitacoes.dart' show AguardandoCliente, responderChamado, sugerirHorario;
 
 /// Início do profissional: saudação, disponibilidade, chamados de hoje e nota,
 /// chamado novo (aceitar ou recusar aqui mesmo), próximo atendimento,
@@ -29,7 +29,13 @@ class TelaPainel extends ConsumerWidget {
     final ganhos = ref.watch(ganhosProvider('semana')).value;
     final naoLidas = ref.watch(naoLidasProvider);
     final novas = andamento.where((p) => p.status == StatusPedido.solicitado).toList();
-    final proximos = andamento.where((p) => p.status != StatusPedido.solicitado).toList();
+    // Próximo atendimento: o que está em curso, senão o mais cedo na agenda.
+    final proximos = andamento.where((p) => p.status != StatusPedido.solicitado).toList()
+      ..sort((a, b) {
+        int peso(Pedido p) => p.status == StatusPedido.emAtendimento ? 0 : (p.status == StatusPedido.aCaminho ? 1 : 2);
+        final c = peso(a).compareTo(peso(b));
+        return c != 0 ? c : a.dataAtendimento.compareTo(b.dataAtendimento);
+      });
     final hoje = DateUtils.dateOnly(DateTime.now());
     final chamadosHoje = todos?.where((p) => DateUtils.dateOnly(p.criadoEm.toLocal()) == hoje).length;
     final ocupado = proximos.any((p) => p.status == StatusPedido.aCaminho || p.status == StatusPedido.emAtendimento);
@@ -327,7 +333,7 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(color: c.acaoSuave, borderRadius: BorderRadius.circular(8)),
-                child: Text(p.quando == QuandoPedido.agora ? 'AGORA' : p.quandoTexto.toUpperCase(),
+                child: Text(p.quando == QuandoPedido.agora ? 'AGORA' : (p.agendado ? diaRelativo(p.combinadoPara!) : p.quandoTexto).toUpperCase(),
                     style: t.labelSmall?.copyWith(color: c.acaoTexto, fontWeight: FontWeight.w700, letterSpacing: .6)),
               ),
             ]),
@@ -342,6 +348,14 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
                 decoration: BoxDecoration(color: c.superficieSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
                 child: Text(p.descricao, style: t.bodyMedium),
               ),
+            if (p.agendado) ...[
+              const SizedBox(height: 10),
+              Row(children: [
+                Icon(Symbols.event_rounded, size: 18, color: c.acaoTexto),
+                const SizedBox(width: 6),
+                Expanded(child: Text('Pediu para ${p.quandoTexto.toLowerCase()}', style: t.titleSmall)),
+              ]),
+            ],
             const SizedBox(height: 12),
             Row(children: [
               Icon(Symbols.timer_rounded, size: 18, color: expirou ? c.perigo : c.alerta),
@@ -362,6 +376,7 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
               ],
             ]),
             const SizedBox(height: 14),
+            if (p.aguardandoCliente) AguardandoCliente(p: p) else ...[
             Row(children: [
               Expanded(
                 child: OutlinedButton(
@@ -386,10 +401,19 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
                   ),
                   child: _ocupado
                       ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Cores.azulEscuro))
-                      : const Text('Aceitar'),
+                      : Text(p.agendado ? 'Confirmar' : 'Aceitar'),
                 ),
               ),
             ]),
+            const SizedBox(height: 4),
+            Center(
+              child: TextButton.icon(
+                onPressed: _ocupado || expirou ? null : () => sugerirHorario(context, ref, p),
+                icon: const Icon(Symbols.edit_calendar_rounded),
+                label: const Text('Sugerir outro horário'),
+              ),
+            ),
+            ],
           ]),
         ),
       ),

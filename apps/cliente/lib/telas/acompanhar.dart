@@ -78,6 +78,33 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
     });
   }
 
+  Future<void> _responderProposta(bool aceitar) async {
+    if (!aceitar) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Recusar o horário sugerido?'),
+          content: const Text('O pedido será encerrado. Você pode agendar outro dia ou escolher outro profissional.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Voltar')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: Cores.perigo), child: const Text('Recusar horário')),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    await _acao(() async {
+      final r = await ref.read(pedidosRepo).responderProposta(p.id, aceitar: aceitar);
+      ref.invalidate(pedidosClienteProvider);
+      if (!mounted) return;
+      if (r.status == StatusPedido.expirado) {
+        mostrarMensagem(context, 'O prazo para confirmar acabou.');
+      } else if (aceitar) {
+        mostrarMensagem(context, 'Agendado para ${r.quandoTexto.toLowerCase()}. Avisamos vocês dois.');
+      }
+    });
+  }
+
   Future<void> _compartilhar() => _acao(() async {
         final token = await ref.read(pedidosRepo).compartilhar(p.id);
         final config = await ref.read(configProvider.future);
@@ -124,6 +151,35 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
         _Cabecalho(p: p, aoAcabarPrazo: () => ref.invalidate(pedidosClienteProvider)),
+        if (p.aguardandoCliente) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Row(children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: c.acaoSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
+                    child: Icon(Symbols.event_rounded, color: c.acaoTexto),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Horário sugerido', style: t.bodySmall),
+                      Text(diaRelativoEHora(p.propostaPara!), style: t.titleMedium),
+                    ]),
+                  ),
+                ]),
+                const SizedBox(height: 14),
+                BotaoPrincipal(rotulo: 'Confirmar este horário', icone: Symbols.event_available_rounded, carregando: _ocupado, aoTocar: () => _responderProposta(true)),
+                const SizedBox(height: 8),
+                OutlinedButton(onPressed: _ocupado ? null : () => _responderProposta(false), child: const Text('Esse horário não dá')),
+              ]),
+            ),
+          ),
+        ],
         if (p.status == StatusPedido.aCaminho) ...[
           const SizedBox(height: 16),
           MapaAoVivo(pedidoId: p.id, nomeProfissional: nome, fotoProfissional: p.outraParteFoto),
@@ -163,9 +219,22 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
           const SizedBox(height: 10),
         ],
         if (p.status == StatusPedido.solicitado || p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho)
-          TextButton(onPressed: _ocupado ? null : _cancelar, style: TextButton.styleFrom(foregroundColor: c.perigo), child: const Text('Cancelar pedido')),
+          if (!p.aguardandoCliente)
+            TextButton(
+              onPressed: _ocupado ? null : _cancelar,
+              style: TextButton.styleFrom(foregroundColor: c.perigo),
+              child: Text(p.agendado && p.status == StatusPedido.aceito ? 'Cancelar agendamento' : 'Cancelar pedido'),
+            ),
         if (p.status.encerradoSemServico) ...[
           BotaoPrincipal(rotulo: 'Escolher outro profissional', icone: Symbols.person_search_rounded, aoTocar: () => context.pushReplacement('/profissao/${p.profissaoId}')),
+          if (p.outraParteId != null) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => context.pushReplacement('/solicitar/${p.outraParteId}?profissao=${p.profissaoId}&agendar=1'),
+              icon: const Icon(Symbols.event_rounded),
+              label: Text('Agendar outro dia com ${primeiroNome(nome)}'),
+            ),
+          ],
         ],
         if (p.status == StatusPedido.concluido) ...[
           if (!p.avaliado) BotaoPrincipal(rotulo: 'Avaliar ${primeiroNome(nome)}', icone: Symbols.star_rounded, aoTocar: () => context.push('/pedido/${p.id}/avaliar')),
@@ -223,11 +292,17 @@ class _Cabecalho extends StatelessWidget {
     final c = context.cores;
     final nome = primeiroNome(p.outraParteNome ?? 'o profissional');
     final (titulo, texto, icone) = switch (p.status) {
+      StatusPedido.solicitado when p.aguardandoCliente =>
+        ('$nome sugeriu outro horário', p.agendado ? 'Você pediu ${p.quandoTexto.toLowerCase()}. Confirme o novo horário abaixo.' : 'Ele está ocupado agora, mas pode atender no horário abaixo.', Symbols.edit_calendar_rounded),
+      StatusPedido.solicitado when p.agendado => ('Aguardando $nome', 'Você pediu ${p.quandoTexto.toLowerCase()}. Só $nome recebeu o pedido e pode confirmar ou sugerir outro horário.', Symbols.hourglass_top_rounded),
       StatusPedido.solicitado => ('Aguardando $nome', 'Só $nome recebeu o seu pedido.', Symbols.hourglass_top_rounded),
-      StatusPedido.aceito => ('$nome aceitou!', p.quando == QuandoPedido.combinado ? 'Horário confirmado: ${p.quandoTexto}.' : 'Ele vai sair para o seu endereço em breve.', Symbols.thumb_up_rounded),
+      StatusPedido.aceito when p.agendado =>
+        ('Marcado: ${p.quandoTexto.toLowerCase()}', '$nome confirmou. Avisamos vocês dois na véspera e 1 hora antes.', Symbols.event_available_rounded),
+      StatusPedido.aceito => ('$nome aceitou!', 'Ele vai sair para o seu endereço em breve.', Symbols.thumb_up_rounded),
       StatusPedido.aCaminho => ('$nome está a caminho', 'Fique de olho no chat.', Symbols.directions_car_rounded),
       StatusPedido.emAtendimento => ('Em atendimento', '$nome chegou e começou o serviço.', Symbols.construction_rounded),
       StatusPedido.concluido => ('Serviço concluído', 'Obrigado por usar o iService!', Symbols.task_alt_rounded),
+      StatusPedido.recusado when p.agendado => ('$nome não pode nesse horário', 'O pedido foi encerrado e não foi enviado a mais ninguém. Agende outro dia ou escolha outro profissional.', Symbols.event_busy_rounded),
       StatusPedido.recusado => ('$nome não pode atender agora', 'O pedido foi encerrado e não foi enviado a mais ninguém. Escolha outro profissional.', Symbols.event_busy_rounded),
       StatusPedido.expirado => ('$nome não respondeu a tempo', 'O pedido foi encerrado. Escolha outro profissional recomendado.', Symbols.timer_off_rounded),
       StatusPedido.cancelado => ('Pedido cancelado', 'Nenhuma cobrança foi feita.', Symbols.cancel_rounded),
@@ -254,7 +329,7 @@ class _Cabecalho extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(Symbols.timer_rounded, size: 18, color: c.alerta),
             const SizedBox(width: 6),
-            Text('Resposta em até ', style: t.labelMedium?.copyWith(color: c.alerta)),
+            Text(p.aguardandoCliente ? 'Confirme em até ' : 'Resposta em até ', style: t.labelMedium?.copyWith(color: c.alerta)),
             ContagemRegressiva(ate: p.responderAte, estilo: t.labelLarge?.copyWith(color: c.alerta), aoAcabar: aoAcabarPrazo),
           ]),
         ),
