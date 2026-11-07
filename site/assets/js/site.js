@@ -8,8 +8,8 @@ const CONTATO = {
 };
 // Versão de teste: Android baixa o APK; iPhone usa a versão web até sair na App Store.
 const APPS = {
-  cliente: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-cliente.apk', web: 'cliente/' },
-  profissional: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-profissional.apk', web: 'profissional/' }
+  cliente: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-cliente.apk', web: '/cliente/' },
+  profissional: { apk: 'https://github.com/Yggnus77/iservice/releases/download/teste-android/iservice-profissional.apk', web: '/profissional/' }
 };
 const LOJAS = {
   ios: '',        // link da App Store quando o app for aprovado

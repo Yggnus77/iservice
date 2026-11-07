@@ -3,8 +3,14 @@
 Uso: python3 tools/gerar_paginas_site.py
 
 Lê o cabeçalho e o rodapé de site/termos.html, escreve site/<slug>-em-brasilia.html
-para cada profissão, site/profissionais.html e atualiza site/sitemap.xml.
+para cada profissão, site/profissionais.html, o blog (site/blog/) e atualiza site/sitemap.xml
+e a seção "Dicas para resolver hoje" de site/index.html.
 Não edite as páginas geradas à mão: mude este script e gere de novo.
+
+Blog: cada artigo é um arquivo tools/blog/<slug>.html com um comentário JSON no topo
+(titulo, descricao, categoria, icone, publico, profissoes, publicado, faq) e o corpo em HTML.
+Os links do corpo são escritos como se a página estivesse na raiz (ex.: chaveiro-em-brasilia.html).
+Ícone novo precisa entrar no icon_names da fonte em todas as páginas.
 """
 import html
 import json
@@ -15,6 +21,9 @@ from pathlib import Path
 SITE = Path(__file__).resolve().parent.parent / 'site'
 DOMINIO = 'https://iservice.app.br/'
 HOJE = date.today().isoformat()
+BLOG_FONTES = Path(__file__).resolve().parent / 'blog'
+MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
+         'outubro', 'novembro', 'dezembro']
 
 REGIOES_DF = ['Asa Sul', 'Asa Norte', 'Sudoeste', 'Noroeste', 'Lago Sul', 'Lago Norte', 'Park Way', 'Cruzeiro',
               'Guará', 'Águas Claras', 'Vicente Pires', 'Jardim Botânico', 'Taguatinga', 'Núcleo Bandeirante',
@@ -267,6 +276,7 @@ def pagina_profissao(p, cabeca, rodape):
       <p>Baixe o iService e veja quem está perto de você.</p>
       <a class="btn btn-azul" href="#baixar" data-baixar="cliente">Baixar o app</a>
     </div>
+    {dicas_html(p)}
     <div class="cartao-lateral">
       <b>Outros serviços</b>
       {outras_html(p)}
@@ -347,25 +357,267 @@ def pagina_profissionais(cabeca, rodape):
       <p>O cadastro é grátis e leva poucos minutos.</p>
       <a class="btn btn-laranja" href="profissional/" data-baixar="profissional">Quero me cadastrar</a>
     </div>
+    {dicas_profissionais_html()}
   </aside>
 </div>
 </main>'''
     return montar_cabeca(cabeca, titulo, descricao, url, ld) + corpo + rodape
 
 
+# ---------------------------------------------------------------- blog
+
+def ler_artigos():
+    artigos = []
+    for f in sorted(BLOG_FONTES.glob('*.html')):
+        texto = f.read_text()
+        m = re.match(r'\s*<!--(.*?)-->\s*', texto, re.S)
+        a = json.loads(m.group(1))
+        a['slug'] = f.stem
+        a['corpo'] = texto[m.end():].strip()
+        a.setdefault('faq', [])
+        a.setdefault('profissoes', [])
+        a.setdefault('atualizado', a['publicado'])
+        palavras = len(re.sub(r'<[^>]+>', ' ', a['corpo']).split())
+        a['leitura'] = max(2, round(palavras / 200))
+        artigos.append(a)
+    artigos.sort(key=lambda a: a['titulo'])
+    artigos.sort(key=lambda a: (a['publicado'], a.get('destaque', 0)), reverse=True)
+    return artigos
+
+
+ARTIGOS = []
+
+
+def url_artigo(a):
+    return f"blog/{a['slug']}.html"
+
+
+def data_br(iso):
+    ano, mes, dia = iso.split('-')
+    return f'{int(dia)} de {MESES[int(mes) - 1]} de {ano}'
+
+
+def subir(texto):
+    """Ajusta links relativos para páginas dentro de site/blog/."""
+    return re.sub(r'(\s(?:href|src)=")(?!https?:|#|/|mailto:|tel:|data:|\.\./)', r'\1../', texto)
+
+
+def dicas_html(p):
+    lista = [a for a in ARTIGOS if p['slug'] in a['profissoes']]
+    if not lista:
+        return ''
+    itens = ''.join(f'<li><a href="{url_artigo(a)}">{e(a["titulo"])}</a></li>' for a in lista[:3])
+    return f"""<div class="cartao-lateral">
+      <b>Dicas do blog</b>
+      <ul class="outros-servicos">{itens}</ul>
+    </div>"""
+
+
+def dicas_profissionais_html():
+    lista = [a for a in ARTIGOS if a['publico'] == 'profissional']
+    if not lista:
+        return ''
+    itens = ''.join(f'<li><a href="{url_artigo(a)}">{e(a["titulo"])}</a></li>' for a in lista[:3])
+    return f"""<div class="cartao-lateral">
+      <b>Dicas para autônomos</b>
+      <ul class="outros-servicos">{itens}</ul>
+    </div>"""
+
+
+def cartao_artigo(a, titulo_tag='h3'):
+    return f"""<a class="cartao-artigo" href="{url_artigo(a)}">
+        <span class="selo-artigo"><span class="ms">{a['icone']}</span></span>
+        <span class="categoria">{e(a['categoria'])}</span>
+        <{titulo_tag}>{e(a['titulo'])}</{titulo_tag}>
+        <p>{e(a['descricao'])}</p>
+        <span class="leia">Ler artigo · {a['leitura']} min <span class="ms">arrow_forward</span></span>
+      </a>"""
+
+
+def pagina_artigo(a, cabeca, rodape):
+    url = DOMINIO + url_artigo(a)
+    titulo = f"{a['titulo']} | Blog iService"
+    profs = [p for s in a['profissoes'] for p in PROFISSOES if p['slug'] == s]
+    org = {'@type': 'Organization', 'name': 'iService', 'url': DOMINIO,
+           'logo': {'@type': 'ImageObject', 'url': DOMINIO + 'assets/img/icon-512.png'}}
+    post = {'@type': 'BlogPosting', 'headline': a['titulo'], 'description': a['descricao'], 'url': url,
+            'mainEntityOfPage': url, 'datePublished': a['publicado'], 'dateModified': a['atualizado'],
+            'inLanguage': 'pt-BR', 'image': DOMINIO + 'og-image.jpg', 'articleSection': a['categoria'],
+            'author': org, 'publisher': org,
+            'isPartOf': {'@type': 'Blog', 'name': 'Blog iService', 'url': DOMINIO + 'blog/'},
+            'spatialCoverage': {'@type': 'Place', 'name': 'Brasília e Entorno'}}
+    if profs:
+        post['about'] = [{'@type': 'Service', 'name': p['nome'], 'url': DOMINIO + arquivo(p)} for p in profs]
+    grafo = [post, {'@type': 'BreadcrumbList', 'itemListElement': [
+        {'@type': 'ListItem', 'position': 1, 'name': 'iService', 'item': DOMINIO},
+        {'@type': 'ListItem', 'position': 2, 'name': 'Blog', 'item': DOMINIO + 'blog/'},
+        {'@type': 'ListItem', 'position': 3, 'name': a['titulo'], 'item': url}]}]
+    if a['faq']:
+        grafo.append({'@type': 'FAQPage', 'mainEntity': [
+            {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': r}} for q, r in a['faq']]})
+    ld = {'@context': 'https://schema.org', '@graph': grafo}
+    cab = montar_cabeca(cabeca, titulo, a['descricao'], url, ld)
+    cab = cab.replace('<meta property="og:type" content="website">',
+                      '<meta property="og:type" content="article">\n'
+                      f'<meta property="article:published_time" content="{a["publicado"]}">\n'
+                      f'<meta property="article:modified_time" content="{a["atualizado"]}">')
+
+    if a['publico'] == 'profissional':
+        chamadas = """<a class="btn btn-laranja" href="profissional/" data-baixar="profissional">Quero me cadastrar <span class="ms">arrow_forward</span></a>
+      <a class="btn btn-branco" href="profissionais.html">Como funciona para profissionais</a>"""
+        lateral = """<div class="cartao-lateral">
+      <b>Receba clientes perto de você</b>
+      <p>Cadastro grátis no lançamento. Você define o preço e o pedido chega só para você.</p>
+      <a class="btn btn-laranja" href="profissional/" data-baixar="profissional">Quero me cadastrar</a>
+    </div>"""
+    else:
+        alvo = profs[0] if profs else None
+        nome = alvo['busca'] if alvo else 'um profissional'
+        chamadas = '<a class="btn btn-laranja" href="#baixar" data-baixar="cliente"><span class="ms">download</span> Baixar o iService</a>'
+        if alvo:
+            chamadas += f'\n      <a class="btn btn-branco" href="{arquivo(alvo)}">Ver {e(alvo["busca"])} perto de você</a>'
+        lateral = f"""<div class="cartao-lateral">
+      <b>Precisa de {e(nome)} hoje?</b>
+      <p>Veja no mapa quem está perto, compare avaliações e preço e chame quem preferir.</p>
+      <a class="btn btn-azul" href="#baixar" data-baixar="cliente">Baixar o app</a>
+    </div>"""
+    servicos = ''
+    if profs:
+        itens = ''.join(f'<li><a href="{arquivo(p)}">{e(p["nome"])} em Brasília</a></li>' for p in profs)
+        servicos = f"""<div class="cartao-lateral">
+      <b>Serviços deste artigo</b>
+      <ul class="outros-servicos">{itens}</ul>
+    </div>"""
+    outros = [o for o in ARTIGOS if o is not a]
+    outros.sort(key=lambda o: (o['publico'] != a['publico'], -len(set(o['profissoes']) & set(a['profissoes']))))
+    leia = ''.join(cartao_artigo(o) for o in outros[:3])
+    faq = ''
+    if a['faq']:
+        faq = f"""
+    <h2 id="duvidas">Perguntas frequentes</h2>
+    <div class="faq">
+{faq_html(a['faq'])}
+    </div>"""
+    corpo = f"""<main id="conteudo">
+<section class="pagina-cabeca servico-cabeca artigo-cabeca">
+  <div class="envolve">
+    <nav class="migalhas" aria-label="Você está em"><a href="index.html">Início</a> › <a href="blog/">Blog</a> › {e(a['categoria'])}</nav>
+    <span class="categoria-artigo"><span class="ms">{a['icone']}</span>{e(a['categoria'])}</span>
+    <h1>{e(a['titulo'])}</h1>
+    <p>{e(a['descricao'])}</p>
+    <p class="artigo-meta"><time datetime="{a['publicado']}">{data_br(a['publicado'])}</time> · {a['leitura']} min de leitura · Equipe iService</p>
+    <div class="chamadas">
+      {chamadas}
+    </div>
+  </div>
+</section>
+<div class="envolve servico-corpo">
+  <article class="artigo-texto">
+{a['corpo']}
+{faq}
+  </article>
+  <aside>
+    {lateral}
+    {servicos}
+  </aside>
+</div>
+<section class="secao cinza leia-tambem">
+  <div class="envolve">
+    <div class="cabeca"><span class="etiqueta">Continue lendo</span><h2>Mais dicas do iService</h2></div>
+    <div class="blog-grade">
+      {leia}
+    </div>
+  </div>
+</section>
+</main>"""
+    return subir(cab + corpo + rodape)
+
+
+def pagina_blog(cabeca, rodape):
+    url = DOMINIO + 'blog/'
+    titulo = 'Blog iService: dicas de casa e serviços em Brasília e Entorno'
+    descricao = ('Dicas práticas para resolver hoje os imprevistos da casa e do carro em Brasília e no Entorno: '
+                 'preços, emergências, segurança e conselhos para profissionais autônomos.')
+    ld = {'@context': 'https://schema.org', '@graph': [
+        {'@type': 'Blog', 'name': 'Blog iService', 'description': descricao, 'url': url, 'inLanguage': 'pt-BR',
+         'publisher': {'@type': 'Organization', 'name': 'iService', 'url': DOMINIO},
+         'blogPost': [{'@type': 'BlogPosting', 'headline': a['titulo'], 'url': DOMINIO + url_artigo(a),
+                       'datePublished': a['publicado']} for a in ARTIGOS]},
+        migalhas('Blog', url)]}
+    clientes = ''.join(cartao_artigo(a, 'h2') for a in ARTIGOS if a['publico'] != 'profissional')
+    profissionais = ''.join(cartao_artigo(a, 'h2') for a in ARTIGOS if a['publico'] == 'profissional')
+    corpo = f"""<main id="conteudo">
+<section class="pagina-cabeca servico-cabeca">
+  <div class="envolve">
+    <nav class="migalhas" aria-label="Você está em"><a href="index.html">Início</a> › Blog</nav>
+    <h1>Blog iService</h1>
+    <p>Dicas para resolver hoje os imprevistos da casa e do carro em Brasília e no Entorno, e conselhos para quem trabalha por conta própria.</p>
+  </div>
+</section>
+<section class="secao blog-lista">
+  <div class="envolve">
+    <h2 class="blog-titulo-grupo">Para a sua casa e o seu carro</h2>
+    <div class="blog-grade">
+      {clientes}
+    </div>
+    <h2 class="blog-titulo-grupo">Para profissionais</h2>
+    <div class="blog-grade">
+      {profissionais}
+    </div>
+  </div>
+</section>
+</main>"""
+    return subir(montar_cabeca(cabeca, titulo, descricao, url, ld) + corpo + rodape)
+
+
+def atualizar_inicio():
+    """Reescreve a seção entre <!-- blog:inicio --> e <!-- blog:fim --> de index.html."""
+    arq = SITE / 'index.html'
+    texto = arq.read_text()
+    cartoes = ''.join(cartao_artigo(a) for a in ARTIGOS[:3])
+    secao = f"""<!-- blog:inicio -->
+<section class="secao" id="dicas">
+  <div class="envolve">
+    <div class="cabeca centro">
+      <span class="etiqueta">Blog</span>
+      <h2>Dicas para resolver hoje</h2>
+      <p>O que fazer quando falta luz, vaza água ou a chave some, e quanto costuma custar.</p>
+    </div>
+    <div class="blog-grade">
+      {cartoes}
+    </div>
+    <p class="ver-todas"><a class="btn btn-contorno-escuro" href="blog/">Ver todas as dicas <span class="ms">arrow_forward</span></a></p>
+  </div>
+</section>
+<!-- blog:fim -->"""
+    texto = re.sub(r'<!-- blog:inicio -->.*?<!-- blog:fim -->', lambda m: secao, texto, flags=re.S)
+    arq.write_text(texto)
+
+
 def sitemap():
-    urls = ['', 'profissionais.html'] + [arquivo(p) for p in PROFISSOES] + ['termos.html', 'privacidade.html', 'excluir-conta.html']
-    corpo = ''.join(f'  <url>\n    <loc>{DOMINIO}{u}</loc>\n    <lastmod>{HOJE}</lastmod>\n  </url>\n' for u in urls)
+    urls = [(u, HOJE) for u in ['', 'profissionais.html'] + [arquivo(p) for p in PROFISSOES]]
+    urls += [('blog/', max([a['atualizado'] for a in ARTIGOS] or [HOJE]))]
+    urls += [(url_artigo(a), a['atualizado']) for a in ARTIGOS]
+    urls += [(u, HOJE) for u in ['termos.html', 'privacidade.html', 'excluir-conta.html']]
+    corpo = ''.join(f'  <url>\n    <loc>{DOMINIO}{u}</loc>\n    <lastmod>{d}</lastmod>\n  </url>\n' for u, d in urls)
     return f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{corpo}</urlset>\n'
 
 
 def main():
+    ARTIGOS[:] = ler_artigos()
     cabeca, rodape = molde()
+    (SITE / 'blog').mkdir(exist_ok=True)
+    for velho in (SITE / 'blog').glob('*.html'):
+        velho.unlink()
+    for a in ARTIGOS:
+        (SITE / url_artigo(a)).write_text(pagina_artigo(a, cabeca, rodape))
+    (SITE / 'blog' / 'index.html').write_text(pagina_blog(cabeca, rodape))
+    atualizar_inicio()
     for p in PROFISSOES:
         (SITE / arquivo(p)).write_text(pagina_profissao(p, cabeca, rodape))
     (SITE / 'profissionais.html').write_text(pagina_profissionais(cabeca, rodape))
     (SITE / 'sitemap.xml').write_text(sitemap())
-    print(f'{len(PROFISSOES)} profissões + profissionais.html + sitemap.xml')
+    print(f'{len(PROFISSOES)} profissões + profissionais.html + {len(ARTIGOS)} artigos do blog + sitemap.xml')
 
 
 if __name__ == '__main__':
