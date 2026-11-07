@@ -15,6 +15,7 @@ function detalhe(a: Acao): string {
   for (const k of ['motivo', 'observacao', 'resolucao', 'nota', 'titulo', 'tipo', 'status']) {
     if (typeof d[k] === 'string' && d[k]) partes.push(String(d[k]));
   }
+  if (a.acao.endsWith('_equipe') && d.email) partes.push(`${d.nome ?? ''} (${d.email})`);
   if (typeof d.destinatarios === 'number') partes.push(`${d.destinatarios} destinatários`);
   if (a.acao === 'ajustar_preco') partes.push(d.minimo == null ? 'ajuste removido' : `faixa ${d.faixa}: R$ ${d.minimo} a R$ ${d.maximo}`);
   const depois = d.depois as Record<string, unknown> | undefined;

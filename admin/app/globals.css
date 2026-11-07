@@ -140,6 +140,7 @@ a.numero:hover { text-decoration: none; border-color: #bcd0f2; }
 .alerta-faixa.vermelho { background: var(--perigo-suave); border-color: #f5c2c2; color: #8e1c1c; }
 .alerta-faixa.laranja { background: var(--laranja-suave); border-color: #ffd9a8; color: #7a4100; }
 .alerta-faixa.azul { background: var(--azul-suave); border-color: #c3d6f7; color: #123d84; }
+.alerta-faixa.verde { background: var(--verde-suave); border-color: #b5e8c8; color: #0b5a2a; }
 
 /* Selos */
 .selo { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; line-height: 1.4; }
@@ -352,6 +353,9 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .entrar .form > div { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px; }
 .entrar .form h1 { font-size: 26px; font-weight: 800; }
 .entrar .form p { margin: 0; color: var(--texto-suave); }
+.entrar-links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.entrar-links button { background: none; border: 0; padding: 4px 0; color: var(--azul); font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+.entrar-links button:hover { text-decoration: underline; }
 @media (max-width: 900px) { .entrar { grid-template-columns: 1fr; } .entrar .arte { display: none; } }
 
 .marcar { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-weight: 500; }
@@ -365,3 +369,9 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .lista-simples { list-style: none; margin: 0; padding: 0; }
 .lista-simples li { padding: 10px 0; border-bottom: 1px solid var(--linha); display: flex; gap: 10px; align-items: center; }
 .lista-simples li:last-child { border-bottom: 0; }
+
+/* Equipe */
+.passos-equipe { list-style: none; margin: 0; padding: 0; gap: 18px; }
+.passos-equipe li { display: flex; gap: 12px; align-items: flex-start; color: var(--texto-suave); }
+.passos-equipe li > span { width: 28px; height: 28px; border-radius: 50%; background: var(--azul-suave); color: var(--azul-forte); font-weight: 800; display: grid; place-items: center; flex: none; }
+.passos-equipe strong { display: block; color: var(--texto); }

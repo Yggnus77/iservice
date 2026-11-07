@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
-  ShieldAlert, ShieldCheck, Siren, Tags, Users, Settings, Lock, Mail, CheckCircle2,
+  ShieldAlert, ShieldCheck, Siren, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -53,6 +53,7 @@ const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; co
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
   { href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },
   { href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
+  { grupo: 'Equipe', href: '/equipe/', rotulo: 'Equipe', icone: <UsersRound /> },
   { href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },
 ];
 
@@ -64,19 +65,83 @@ function ativo(rota: string, href: string) {
     (base === '/pedidos' && r.startsWith('/pedido')) || (base === '/pessoas' && r.startsWith('/pessoa'));
 }
 
+type ModoEntrar = 'entrar' | 'primeiro' | 'esqueci';
+
+function CampoIcone({ id, rotulo, icone, ...props }: { id: string; rotulo: string; icone: ReactNode } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="campo">
+      <label htmlFor={id}>{rotulo}</label>
+      <div className="busca" style={{ maxWidth: 'none' }}>
+        {icone}
+        <input id={id} className="entrada" {...props} />
+      </div>
+    </div>
+  );
+}
+
+const retornoPainel = () => `${window.location.origin}/admin/`;
+
+function traduzirAuth(msg: string) {
+  if (/Invalid login/i.test(msg)) return 'E-mail ou senha incorretos.';
+  if (/Email not confirmed/i.test(msg)) return 'Falta confirmar o e-mail. Abra o link que enviamos para a sua caixa de entrada.';
+  if (/banned/i.test(msg)) return 'Esta conta está suspensa.';
+  if (/at least|weak|short/i.test(msg)) return 'A senha precisa ter pelo menos 8 caracteres, com letras e números.';
+  if (/rate limit|security purposes/i.test(msg)) return 'Muitas tentativas seguidas. Espere um minuto e tente de novo.';
+  if (/already registered/i.test(msg)) return 'Este e-mail já tem conta iService. Use "Entrar" com a senha que você já usa.';
+  return msg;
+}
+
 function Entrar() {
+  const [modo, setModo] = useState<ModoEntrar>('entrar');
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [senha2, setSenha2] = useState('');
   const [erro, setErro] = useState('');
+  const [enviado, setEnviado] = useState('');
   const [ocupado, setOcupado] = useState(false);
+
+  const trocar = (m: ModoEntrar) => { setModo(m); setErro(''); setEnviado(''); setSenha(''); setSenha2(''); };
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOcupado(true);
     setErro('');
-    const { error } = await db().auth.signInWithPassword({ email: email.trim(), password: senha });
-    setOcupado(false);
-    if (error) setErro(/Invalid login/i.test(error.message) ? 'E-mail ou senha incorretos.' : /banned/i.test(error.message) ? 'Esta conta está suspensa.' : error.message);
+    const mail = email.trim().toLowerCase();
+    if (modo === 'primeiro') {
+      if (senha.length < 8) { setErro('A senha precisa ter pelo menos 8 caracteres.'); return; }
+      if (senha !== senha2) { setErro('As duas senhas não são iguais.'); return; }
+    }
+    setOcupado(true);
+    try {
+      if (modo === 'entrar') {
+        const { error } = await db().auth.signInWithPassword({ email: mail, password: senha });
+        if (error) setErro(traduzirAuth(error.message));
+      } else if (modo === 'primeiro') {
+        const { data, error } = await db().auth.signUp({
+          email: mail, password: senha,
+          options: { data: { nome: nome.trim(), app: 'equipe' }, emailRedirectTo: retornoPainel() },
+        });
+        if (error) setErro(traduzirAuth(error.message));
+        else if (data.user && (data.user.identities?.length ?? 0) === 0) setErro(traduzirAuth('already registered'));
+        else if (data.session) return; // confirmação desligada: já entrou
+        else setEnviado(`Enviamos um e-mail para ${mail}. Abra o link "Confirmar e-mail" e o painel abre já com o seu acesso.`);
+      } else {
+        const { error } = await db().auth.resetPasswordForEmail(mail, { redirectTo: retornoPainel() });
+        if (error) setErro(traduzirAuth(error.message));
+        else setEnviado(`Se ${mail} tiver conta, chega em instantes um e-mail com o link para criar uma nova senha.`);
+      }
+    } finally {
+      setOcupado(false);
+    }
   };
+
+  const titulos: Record<ModoEntrar, [string, string, string]> = {
+    entrar: ['Entrar', 'Use a conta iService que tem acesso de equipe.', 'Entrar'],
+    primeiro: ['Primeiro acesso', 'Recebeu um convite da equipe iService? Crie a sua senha com o e-mail convidado.', 'Criar minha senha'],
+    esqueci: ['Esqueci minha senha', 'Mandamos um link para você criar uma senha nova.', 'Enviar link'],
+  };
+  const [t, sub, botao] = titulos[modo];
+
   return (
     <div className="entrar">
       <div className="arte">
@@ -95,25 +160,67 @@ function Entrar() {
       <form className="form" onSubmit={enviar}>
         <div>
           <div>
-            <h1>Entrar</h1>
-            <p>Use a conta iService que tem acesso de equipe.</p>
+            <h1>{t}</h1>
+            <p>{sub}</p>
           </div>
-          <div className="campo">
-            <label htmlFor="email">E-mail</label>
-            <div className="busca" style={{ maxWidth: 'none' }}>
-              <Mail />
-              <input id="email" className="entrada" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          {enviado ? <>
+            <div className="alerta-faixa verde" role="status" style={{ margin: 0 }}><MailCheck /><div>{enviado}</div></div>
+            <button type="button" className="botao contorno grande cheio" onClick={() => trocar('entrar')}>Voltar para Entrar</button>
+          </> : <>
+            {modo === 'primeiro' ? (
+              <CampoIcone id="nome" rotulo="Seu nome" icone={<UserRound />} autoComplete="name" required minLength={2} value={nome} onChange={(e) => setNome(e.target.value)} />
+            ) : null}
+            <CampoIcone id="email" rotulo="E-mail" icone={<Mail />} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            {modo !== 'esqueci' ? (
+              <CampoIcone id="senha" rotulo={modo === 'primeiro' ? 'Crie uma senha' : 'Senha'} icone={<Lock />} type="password"
+                autoComplete={modo === 'primeiro' ? 'new-password' : 'current-password'} required value={senha} onChange={(e) => setSenha(e.target.value)} />
+            ) : null}
+            {modo === 'primeiro' ? (
+              <CampoIcone id="senha2" rotulo="Repita a senha" icone={<Lock />} type="password" autoComplete="new-password" required value={senha2} onChange={(e) => setSenha2(e.target.value)} />
+            ) : null}
+            {erro ? <div className="erro-caixa" role="alert">{erro}</div> : null}
+            <button className="botao primario grande cheio" disabled={ocupado}>{ocupado ? <Loader2 className="girar" /> : null} {botao}</button>
+            <div className="entrar-links">
+              {modo === 'entrar' ? <>
+                <button type="button" onClick={() => trocar('primeiro')}>Primeiro acesso</button>
+                <button type="button" onClick={() => trocar('esqueci')}>Esqueci minha senha</button>
+              </> : <button type="button" onClick={() => trocar('entrar')}>‹ Voltar para Entrar</button>}
             </div>
+          </>}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/** Aberto pelo link de "Esqueci minha senha": define a senha nova. */
+function NovaSenha({ pronto }: { pronto: () => void }) {
+  const [senha, setSenha] = useState('');
+  const [senha2, setSenha2] = useState('');
+  const [erro, setErro] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (senha.length < 8) { setErro('A senha precisa ter pelo menos 8 caracteres.'); return; }
+    if (senha !== senha2) { setErro('As duas senhas não são iguais.'); return; }
+    setOcupado(true);
+    const { error } = await db().auth.updateUser({ password: senha });
+    setOcupado(false);
+    if (error) setErro(/different from the old/i.test(error.message) ? 'Use uma senha diferente da anterior.' : traduzirAuth(error.message));
+    else pronto();
+  };
+  return (
+    <div className="entrar" style={{ gridTemplateColumns: '1fr' }}>
+      <form className="form" onSubmit={enviar}>
+        <div>
+          <div>
+            <h1>Crie uma senha nova</h1>
+            <p>Depois disso o painel abre normalmente.</p>
           </div>
-          <div className="campo">
-            <label htmlFor="senha">Senha</label>
-            <div className="busca" style={{ maxWidth: 'none' }}>
-              <Lock />
-              <input id="senha" className="entrada" type="password" autoComplete="current-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
-            </div>
-          </div>
+          <CampoIcone id="nova" rotulo="Nova senha" icone={<Lock />} type="password" autoComplete="new-password" required value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <CampoIcone id="nova2" rotulo="Repita a senha" icone={<Lock />} type="password" autoComplete="new-password" required value={senha2} onChange={(e) => setSenha2(e.target.value)} />
           {erro ? <div className="erro-caixa" role="alert">{erro}</div> : null}
-          <button className="botao primario grande cheio" disabled={ocupado}>{ocupado ? <Loader2 className="girar" /> : null} Entrar</button>
+          <button className="botao primario grande cheio" disabled={ocupado}>{ocupado ? <Loader2 className="girar" /> : null} Salvar senha</button>
         </div>
       </form>
     </div>
@@ -128,7 +235,7 @@ function SemAcesso({ motivo, sair }: { motivo: 'nao_admin' | 'sql_pendente'; sai
           <ShieldAlert size={40} color="#c62828" />
           {motivo === 'nao_admin' ? <>
             <h1>Sem acesso ao painel</h1>
-            <p>Esta conta não faz parte da equipe iService. Peça para alguém da equipe liberar o seu e-mail.</p>
+            <p>Esta conta não faz parte da equipe iService. Peça para alguém da equipe convidar o seu e-mail na aba Equipe e entre de novo.</p>
           </> : <>
             <h1>Falta preparar o banco</h1>
             <p>O banco ainda não tem as funções do painel. Cole o arquivo <strong>aplicar-painel-admin.sql</strong> no SQL Editor do Supabase e recarregue esta página.</p>
@@ -146,11 +253,15 @@ export default function Painel({ children }: { children: ReactNode }) {
   const [nome, setNome] = useState('');
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
   const rota = usePathname();
 
   useEffect(() => {
     db().auth.getSession().then(({ data }) => setSessao(data.session));
-    const { data } = db().auth.onAuthStateChange((_e, s) => setSessao(s));
+    const { data } = db().auth.onAuthStateChange((evento, s) => {
+      if (evento === 'PASSWORD_RECOVERY') setRecuperando(true);
+      setSessao(s);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -191,6 +302,7 @@ export default function Painel({ children }: { children: ReactNode }) {
 
   if (sessao === undefined) return <Carregando />;
   if (!sessao) return <Avisos><Entrar /></Avisos>;
+  if (recuperando) return <NovaSenha pronto={() => setRecuperando(false)} />;
   if (acesso === 'verificando') return <Carregando texto="Conferindo o acesso…" />;
   if (acesso !== 'ok') return <SemAcesso motivo={acesso} sair={sair} />;
 
