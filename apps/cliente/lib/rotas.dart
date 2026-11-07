@@ -112,6 +112,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
           profissionalId: e.pathParameters['id']!,
           profissaoId: e.uri.queryParameters['profissao']!,
           especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),
+          agendar: e.uri.queryParameters['agendar'] == '1',
         ),
       ),
       GoRoute(path: '/pedido/:id', builder: (_, e) => TelaAcompanhar(pedidoId: e.pathParameters['id']!)),

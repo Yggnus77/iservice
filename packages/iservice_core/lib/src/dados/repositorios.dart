@@ -441,6 +441,24 @@ class PedidosRepo {
         return Pedido.daTabela(r as Map<String, dynamic>);
       });
 
+  /// Profissional sugere outro dia e horário; o cliente confirma ou recusa.
+  Future<Pedido> proporHorario(String pedidoId, DateTime para) => _tentar(() async {
+        final r = await _db.rpc('propor_horario', params: {'p_pedido': pedidoId, 'p_para': para.toUtc().toIso8601String()});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
+  /// Cliente confirma (vira agendado) ou recusa o horário sugerido.
+  Future<Pedido> responderProposta(String pedidoId, {required bool aceitar}) => _tentar(() async {
+        final r = await _db.rpc('responder_proposta', params: {'p_pedido': pedidoId, 'p_aceitar': aceitar});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
+  /// Horários já marcados com o profissional (só os horários, sem dados de clientes).
+  Future<List<DateTime>> horariosOcupados(String profissionalId) => _tentar(() async {
+        final r = await _db.rpc('horarios_ocupados', params: {'p_profissional': profissionalId});
+        return [for (final l in r as List) DateTime.parse(l['inicio'] as String).toLocal()];
+      });
+
   Future<Pedido> avancar(String pedidoId, StatusPedido status, {double? valor, String? formaPagamento}) => _tentar(() async {
         final r = await _db.rpc('avancar_pedido', params: {
           'p_pedido': pedidoId,

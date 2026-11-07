@@ -36,6 +36,12 @@ const exemplos: { tipo: string; app: App; nome: string; titulo?: string; corpo?:
     corpo: "Recebemos três reclamações de não comparecimento em menos de uma semana." },
   { rotulo: "Conta reativada", tipo: "conta_reativada", app: "profissional", nome: "Carlos Pereira" },
   { rotulo: "Exclusão de conta", tipo: "exclusao_conta", app: "cliente", nome: "Mariana Souza", dados: { dias: 30 } },
+  { rotulo: "Agendamento confirmado (cliente)", tipo: "agendamento_confirmado", app: "cliente", nome: "Mariana Souza", titulo: "Marcado: sábado, 14/11 às 09:00",
+    dados: { combinado_para: "2026-11-14T12:00:00Z", com: "Carlos", servico: "Eletricista", endereco: "SQS 308, Bloco C, Apto 101, Brasília/DF", codigo: "7F3A2C" } },
+  { rotulo: "Agendamento confirmado (profissional)", tipo: "agendamento_confirmado", app: "profissional", nome: "Carlos Pereira", titulo: "Marcado: sábado, 14/11 às 09:00",
+    dados: { combinado_para: "2026-11-14T12:00:00Z", com: "Mariana", servico: "Eletricista", endereco: "SQS 308, Bloco C, Apto 101, Brasília/DF", codigo: "7F3A2C" } },
+  { rotulo: "Lembrete da véspera (cliente)", tipo: "lembrete_agendamento", app: "cliente", nome: "Mariana Souza", titulo: "Lembrete: atendimento amanhã às 09:00",
+    dados: { combinado_para: "2026-11-14T12:00:00Z", com: "Carlos", servico: "Eletricista", endereco: "SQS 308, Bloco C, Apto 101, Brasília/DF", codigo: "7F3A2C" } },
 ];
 
 const lista: { rotulo: string; arquivo: string; assunto: string }[] = [];

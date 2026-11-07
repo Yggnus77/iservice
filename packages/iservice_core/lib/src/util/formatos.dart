@@ -48,6 +48,20 @@ String diaEHora(DateTime d) {
   return s[0].toUpperCase() + s.substring(1);
 }
 
+/// "Hoje às 15:30" · "Amanhã às 09:00" · "Sexta, 14/11 às 09:00"
+String diaRelativoEHora(DateTime d) => '${diaRelativo(d)} às ${hora(d)}';
+
+/// "Hoje" · "Amanhã" · "Sexta, 14/11"
+String diaRelativo(DateTime d) {
+  final l = d.toLocal();
+  final agora = DateTime.now();
+  final dif = DateTime(l.year, l.month, l.day).difference(DateTime(agora.year, agora.month, agora.day)).inDays;
+  if (dif == 0) return 'Hoje';
+  if (dif == 1) return 'Amanhã';
+  final s = DateFormat('EEEE, dd/MM', 'pt_BR').format(l).replaceFirst('-feira', '');
+  return s[0].toUpperCase() + s.substring(1);
+}
+
 String soDigitos(String s) => s.replaceAll(RegExp(r'\D'), '');
 
 MaskTextInputFormatter mascaraCpf() => MaskTextInputFormatter(mask: '###.###.###-##', filter: {'#': RegExp(r'\d')});

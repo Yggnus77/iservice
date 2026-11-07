@@ -20,5 +20,6 @@ export 'src/tema/tema.dart';
 export 'src/util/formatos.dart';
 export 'src/util/icones.dart';
 export 'src/util/validacao.dart';
+export 'src/widgets/agenda.dart';
 export 'src/widgets/componentes.dart';
 export 'src/widgets/mapa_ao_vivo.dart';

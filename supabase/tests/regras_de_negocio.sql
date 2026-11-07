@@ -430,4 +430,103 @@ select pg_temp.ok((select (public.admin_site(7)->'dias'->6->>'visitas')::int = 1
   'painel mostra visitas e downloads do dia');
 select pg_temp.admin();
 
+-- Agenda de até 7 dias: agendar com o profissional ocupado, sugerir outro horário e lembretes.
+select pg_temp.admin();
+update public.pedidos set status = 'cancelado', encerrado_em = now() where cliente_id = '00000000-0000-0000-0000-0000000000c1' and status = 'solicitado';
+update public.profissionais set disponivel = false where id = '00000000-0000-0000-0000-0000000000a5';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+do $$ begin
+  perform public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora');
+  raise exception 'FALHOU: pedido agora com profissional ocupado';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - "agora" exige o profissional disponível';
+end $$;
+truncate t;
+insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()),
+  'combinado', null, 'Trocar tomadas', null, now() + interval '3 days')).id;
+select pg_temp.ok((select status = 'solicitado' and taxa_urgencia = 0 and responder_ate between now() + interval '119 min' and now() + interval '121 min'
+  from public.pedidos where id = (select pedido from t)), 'agenda com profissional ocupado, sem taxa de urgência e 2 horas para responder');
+select pg_temp.admin();
+select pg_temp.ok((select titulo like '% quer agendar: %' from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000a5' and tipo = 'pedido_novo'
+  order by id desc limit 1), 'profissional recebe o pedido com o dia e a hora');
+update public.app_config set valor = '30' where chave = 'dias_max_combinado';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((public.criar_pedido('00000000-0000-0000-0000-0000000000a6', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()),
+  'combinado', null, '', null, now() + interval '20 days')).status = 'solicitado', 'limite de dias configurável (30 = agenda mensal)');
+select pg_temp.admin();
+update public.app_config set valor = '7' where chave = 'dias_max_combinado';
+update public.pedidos set status = 'cancelado' where profissional_id = '00000000-0000-0000-0000-0000000000a6' and status = 'solicitado';
+
+-- Profissional sugere outro horário; ele não pode mais aceitar, só o cliente confirma.
+select pg_temp.como('00000000-0000-0000-0000-0000000000a5');
+select public.propor_horario((select pedido from t), date_trunc('hour', now()) + interval '4 days 9 hours');
+do $$ begin
+  perform public.responder_pedido((select pedido from t), true);
+  raise exception 'FALHOU: aceitou depois de sugerir';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - depois de sugerir, a vez é do cliente';
+end $$;
+do $$ begin
+  perform public.propor_horario((select pedido from t), now() + interval '8 days');
+  raise exception 'FALHOU: segunda sugestão';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - uma sugestão por vez';
+end $$;
+select pg_temp.admin();
+select pg_temp.ok((select count(*) = 1 from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000000c1' and tipo = 'pedido_proposta'),
+  'cliente é avisado do horário sugerido');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select proposta_para is not null from public.meus_pedidos('cliente', 'andamento') where id = (select pedido from t)), 'lista mostra o horário sugerido');
+select public.responder_proposta((select pedido from t), true);
+select pg_temp.admin();
+select pg_temp.ok((select status = 'aceito' and quando = 'combinado' and proposta_para is null
+  and combinado_para = date_trunc('hour', now()) + interval '4 days 9 hours' from public.pedidos where id = (select pedido from t)),
+  'cliente confirma e o pedido fica marcado no horário sugerido');
+select pg_temp.ok((select count(*) = 2 from public.notificacoes where tipo = 'agendamento_confirmado'
+  and dados->>'pedido_id' = (select pedido from t)::text), 'os dois recebem o aviso "Marcado"');
+select pg_temp.ok(public.tipo_tem_email('agendamento_confirmado') and public.tipo_tem_email('lembrete_agendamento')
+  and not public.tipo_tem_email('lembrete_agendamento_hora'), 'confirmação e véspera também vão por e-mail');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok(exists (select 1 from public.horarios_ocupados('00000000-0000-0000-0000-0000000000a5')
+  where inicio = date_trunc('hour', now()) + interval '4 days 9 hours'), 'cliente vê os horários já marcados do profissional');
+select pg_temp.admin();
+
+-- "Agora" que vira agendado: sem taxa de urgência.
+update public.profissionais set disponivel = true where id = '00000000-0000-0000-0000-0000000000a5';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+truncate t;
+insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora')).id;
+select pg_temp.como('00000000-0000-0000-0000-0000000000a5');
+select public.propor_horario((select pedido from t), now() + interval '5 hours');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select public.responder_proposta((select pedido from t), true);
+select pg_temp.admin();
+select pg_temp.ok((select quando = 'combinado' and taxa_urgencia = 0 and status = 'aceito' from public.pedidos where id = (select pedido from t)),
+  'pedido "agora" vira agendado e perde a taxa de urgência');
+
+-- Sugestão sem resposta do cliente expira sem contar como pedido perdido.
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+truncate t;
+insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a5', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()),
+  'combinado', null, '', null, now() + interval '2 days')).id;
+select pg_temp.como('00000000-0000-0000-0000-0000000000a5');
+select public.propor_horario((select pedido from t), now() + interval '3 days');
+select pg_temp.admin();
+create temp table perdidos as select pedidos_perdidos from public.profissionais where id = '00000000-0000-0000-0000-0000000000a5';
+update public.pedidos set responder_ate = now() - interval '1 second' where id = (select pedido from t);
+select public.expirar_pedidos();
+select pg_temp.ok((select p.status = 'expirado' and f.pedidos_perdidos = (select pedidos_perdidos from perdidos)
+  from public.pedidos p join public.profissionais f on f.id = p.profissional_id where p.id = (select pedido from t)),
+  'sugestão sem resposta expira sem prejudicar o profissional');
+
+-- Lembretes: véspera (com e-mail) e 1 hora antes, uma vez só.
+update public.pedidos set combinado_para = now() + interval '20 hours', aceito_em = now() - interval '2 days'
+where status = 'aceito' and quando = 'combinado' and profissional_id = '00000000-0000-0000-0000-0000000000a5'
+  and combinado_para > now() + interval '3 days';
+select public.lembrar_agendamentos();
+select public.lembrar_agendamentos();
+select pg_temp.ok((select count(*) = 2 from public.notificacoes where tipo = 'lembrete_agendamento'), 'lembrete da véspera para os dois, uma vez só');
+update public.pedidos set combinado_para = now() + interval '40 minutes' where lembrete_vespera_em is not null;
+select public.lembrar_agendamentos();
+select public.lembrar_agendamentos();
+select pg_temp.ok((select count(*) = 2 from public.notificacoes where tipo = 'lembrete_agendamento_hora'), 'lembrete 1 hora antes para os dois, uma vez só');
+select pg_temp.ok(public.texto_dia_hora(now() + interval '1 day') like 'amanhã às %', 'texto do dia em português');
+
 rollback;
