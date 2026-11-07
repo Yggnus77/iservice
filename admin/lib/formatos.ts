@@ -64,7 +64,8 @@ export function idade(nascimento?: string | null): string {
 }
 
 export function iniciais(nome?: string | null): string {
-  const p = (nome || '?').trim().split(/\s+/);
+  const p = (nome || '?').trim().split(/\s+/).filter((w) => /^\p{L}/u.test(w));
+  if (!p.length) return '?';
   return ((p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
 }
 
@@ -167,4 +168,6 @@ export const nomesAcao: Record<string, string> = {
   update_regioes: 'Alterou uma região',
   insert_app_config: 'Criou uma configuração',
   update_app_config: 'Alterou uma configuração',
+  convidar_equipe: 'Convidou para a equipe',
+  remover_equipe: 'Removeu da equipe',
 };
