@@ -544,3 +544,41 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .janela-baixar .escolha .outro { display: block; margin-top: 8px; font-size: 13px; font-weight: 600; }
 .janela-baixar > small { display: block; margin-top: 6px; font-size: 13px; color: var(--suave); }
 .janela-baixar .escolha > div { min-width: 0; }
+
+/* Cartões de serviço da página inicial levam à página da profissão */
+.cat { position: relative; }
+.cat b a { color: inherit; }
+.cat b a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+
+/* Páginas de profissão e para profissionais */
+.servico-cabeca .migalhas { font-size: 14px; margin-bottom: 20px; color: rgba(255, 255, 255, .75); }
+.servico-cabeca .migalhas a { color: #fff; }
+.selo-servico { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: rgba(255, 255, 255, .14); color: #fff; margin-bottom: 18px; }
+.selo-servico .ms { font-size: 30px; }
+.servico-cabeca p { max-width: 720px; font-size: 18px; }
+.servico-cabeca .chamadas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.servico-corpo { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; padding-block: 56px 96px; align-items: start; }
+.servico-corpo article h2 { font-size: 26px; font-weight: 800; margin: 44px 0 14px; }
+.servico-corpo article h2:first-child { margin-top: 0; }
+.servico-corpo article h3 { font-size: 17px; margin: 20px 0 10px; }
+.servico-corpo article p, .servico-corpo article li { line-height: 1.65; }
+.especialidades { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.especialidades li { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: 14px; background: #fff; color: var(--tinta); font-weight: 600; }
+.especialidades .ms { color: var(--azul); font-size: 22px; flex: none; }
+.passos-servico { padding-left: 22px; display: grid; gap: 10px; }
+.passos-servico b { color: var(--tinta); }
+.regioes { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.regioes li { padding: 6px 12px; border-radius: 999px; background: var(--fundo-2); font-size: 14px; }
+.outros-servicos { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.servico-corpo article .outros-servicos { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.servico-corpo .faq { margin-top: 8px; }
+.cartao-lateral { position: sticky; top: 104px; border: 1px solid var(--linha); border-radius: 18px; padding: 22px; background: #fff; margin-bottom: 16px; }
+.cartao-lateral + .cartao-lateral { position: static; }
+.cartao-lateral b { display: block; color: var(--tinta); font-size: 17px; margin-bottom: 6px; }
+.cartao-lateral p { margin: 0 0 16px; font-size: 15px; }
+.cartao-lateral .btn { width: 100%; }
+@media (max-width: 900px) {
+  .servico-corpo { grid-template-columns: 1fr; gap: 24px; padding-top: 40px; }
+  .cartao-lateral { position: static; }
+  .especialidades { grid-template-columns: 1fr; }
+}
