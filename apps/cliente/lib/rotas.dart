@@ -100,6 +100,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
           profissaoId: e.pathParameters['id']!,
           especialidadeId: int.tryParse(e.uri.queryParameters['esp'] ?? ''),
           urgencia24h: e.uri.queryParameters['urgencia'] == '1',
+          excluirId: e.uri.queryParameters['excluir'],
         ),
       ),
       GoRoute(

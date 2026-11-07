@@ -59,6 +59,15 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
     }
   }
 
+  /// Com pressa: cancela este pedido (não conta contra o profissional) e abre os
+  /// próximos mais bem avaliados da mesma profissão, já sem quem não respondeu.
+  Future<void> _pedirAOutro() => _acao(() async {
+        await ref.read(pedidosRepo).cancelar(p.id, motivo: 'O cliente pediu a outro profissional');
+        ref.invalidate(pedidosClienteProvider);
+        if (!mounted) return;
+        context.pushReplacement('/profissao/${p.profissaoId}/lista?excluir=${p.outraParteId ?? ''}');
+      });
+
   Future<void> _cancelar() async {
     final motivo = await showModalBottomSheet<String>(
       context: context,
@@ -150,6 +159,17 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             ]),
           ),
         ),
+        if (p.status == StatusPedido.solicitado && p.quando != QuandoPedido.combinado) ...[
+          const SizedBox(height: 12),
+          Text('Com pressa? Peça a outro profissional em um toque. Este pedido é cancelado sem custo.',
+              style: t.bodySmall, textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _ocupado ? null : _pedirAOutro,
+            icon: const Icon(Symbols.person_search_rounded),
+            label: const Text('Pedir a outro profissional'),
+          ),
+        ],
         const SizedBox(height: 16),
         _Linha(Symbols.schedule_rounded, 'Quando', p.quandoTexto),
         _Linha(Symbols.location_on_rounded, 'Onde', p.enderecoTexto),

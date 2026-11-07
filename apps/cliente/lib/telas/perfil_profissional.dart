@@ -105,6 +105,22 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
             ),
           ),
         ),
+        if (p.tempoRespostaSeg != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 12, Medidas.margemTela, 0),
+              child: Row(children: [
+                Icon(Symbols.bolt_rounded, size: 18, color: p.tempoRespostaSeg! <= 120 ? c.sucesso : c.textoSuave, fill: 1),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Costuma responder em ${tempoResposta(p.tempoRespostaSeg!)}',
+                    style: t.bodySmall?.copyWith(color: p.tempoRespostaSeg! <= 120 ? c.sucesso : null),
+                  ),
+                ),
+              ]),
+            ),
+          ),
         if (p.verificado)
           SliverToBoxAdapter(
             child: Padding(

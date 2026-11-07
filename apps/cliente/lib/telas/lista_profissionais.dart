@@ -13,12 +13,15 @@ final _precosProvider = FutureProvider.autoDispose.family<Map<String, PrecoBusca
 /// Profissionais de uma profissão perto do cliente.
 /// Ordem padrão: mais bem avaliados primeiro (com rodízio justo para os novos).
 class TelaListaProfissionais extends ConsumerStatefulWidget {
-  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId, this.urgencia24h = false});
+  const TelaListaProfissionais({super.key, required this.profissaoId, this.especialidadeId, this.urgencia24h = false, this.excluirId});
   final String profissaoId;
   final int? especialidadeId;
 
   /// Veio do botão Urgência 24h: só quem atende a qualquer hora.
   final bool urgencia24h;
+
+  /// Veio de "Pedir a outro profissional": esconde quem não respondeu a tempo.
+  final String? excluirId;
 
   @override
   ConsumerState<TelaListaProfissionais> createState() => _TelaListaProfissionaisState();
@@ -41,7 +44,10 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
   @override
   Widget build(BuildContext context) {
     final profissao = ref.watch(profissaoPorIdProvider(widget.profissaoId));
-    final lista = ref.watch(buscaProvider(_filtro));
+    final lista = ref.watch(buscaProvider(_filtro)).whenData((l) => [
+          for (final p in l)
+            if (p.id != widget.excluirId) p,
+        ]);
     final local = ref.watch(localBuscaProvider);
     final ids = (lista.value ?? const <ProfissionalResumo>[]).map((p) => p.id).join(',');
     final precos = ref.watch(_precosProvider((ids, widget.profissaoId, _esp))).value ?? const <String, PrecoBusca>{};
@@ -115,6 +121,17 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
                     ),
                   ]
                 : [
+                    if (widget.excluirId != null)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 4, Medidas.margemTela, 10),
+                          child: Row(children: [
+                            Icon(Symbols.bolt_rounded, size: 18, color: c.acaoTexto, fill: 1),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text('Pedido anterior cancelado. Estes são os próximos mais bem avaliados perto de você.', style: t.bodySmall)),
+                          ]),
+                        ),
+                      ),
                     if (_esp != null && precos.isNotEmpty)
                       SliverToBoxAdapter(child: _FaixaDaRegiao(especialidadeId: _esp!, precos: precos.values)),
                     if (l.first.faseLancamento && !_porDistancia)

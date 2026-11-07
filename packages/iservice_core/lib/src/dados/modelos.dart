@@ -424,11 +424,16 @@ class PerfilProfissional {
     this.anosExperiencia,
     this.regiao,
     this.membroDesde,
+    this.tempoRespostaSeg,
   });
   final String id;
   final String nome;
   final String? fotoUrl;
   final String? bio;
+
+  /// Mediana das últimas respostas a pedidos (aceitar ou recusar). Nulo enquanto
+  /// ele tem poucas respostas para a conta ser justa.
+  final int? tempoRespostaSeg;
   final int? anosExperiencia;
   final bool verificado;
   final bool disponivel;
@@ -459,6 +464,7 @@ class PerfilProfissional {
         novo: j['novo'] ?? false,
         regiao: j['regiao'],
         membroDesde: _data(j['membro_desde']),
+        tempoRespostaSeg: (j['tempo_resposta_seg'] as num?)?.toInt(),
         favorito: j['favorito'] ?? false,
         profissoes: [
           for (final p in (j['profissoes'] as List? ?? const []))

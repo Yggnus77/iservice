@@ -38,7 +38,7 @@ class _Pagina {
 const _paginas = [
   _Pagina('Encontre', 'Profissionais de confiança perto de você, em Brasília e no Entorno.', Symbols.location_on_rounded, Cores.azul),
   _Pagina('Escolha', 'Compare avaliações, especialidades e preços. Os mais bem avaliados aparecem primeiro.', Symbols.verified_user_rounded, Cores.verde),
-  _Pagina('Contrate', 'O pedido vai só para quem você escolheu. Resposta em até 10 minutos.', Symbols.bolt_rounded, Cores.laranja),
+  _Pagina('Contrate', 'O pedido vai só para quem você escolheu. Resposta em até 5 minutos.', Symbols.bolt_rounded, Cores.laranja),
   _Pagina('Avalie', 'Sua avaliação ajuda outros clientes e valoriza o bom profissional.', Symbols.star_rounded, Cores.estrela),
 ];
 
