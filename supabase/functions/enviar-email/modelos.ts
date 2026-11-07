@@ -10,7 +10,7 @@ export const SITE = "https://iservice.app.br";
 export const SUPORTE_EMAIL = "iserviceapp86@gmail.com";
 export const SUPORTE_WHATSAPP = "(98) 98551-6037";
 export const SUPORTE_WHATSAPP_LINK = "https://wa.me/5598985516037";
-export const INSTAGRAM = "https://instagram.com/iservice.app";
+export const INSTAGRAM = "https://www.instagram.com/iserviceapp.br/";
 
 const COR = {
   azul: "#0052CC",
