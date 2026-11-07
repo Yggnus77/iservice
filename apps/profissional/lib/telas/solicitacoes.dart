@@ -8,7 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
 
-/// Pedidos direcionados a este profissional. Ele tem 10 minutos para aceitar um
+/// Pedidos direcionados a este profissional. Ele tem o prazo de app_config.prazo_resposta_min para aceitar um
 /// pedido para agora (mais tempo para um agendado) e pode sugerir outro horário;
 /// se recusar ou não responder, o pedido termina (não vai para outro).
 class TelaSolicitacoes extends ConsumerWidget {
