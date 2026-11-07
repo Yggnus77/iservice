@@ -22,6 +22,12 @@ String distancia(num? km) {
   return '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
 }
 
+/// "menos de 1 min" · "cerca de 3 min"
+String tempoResposta(int segundos) {
+  if (segundos < 60) return 'menos de 1 min';
+  return 'cerca de ${(segundos / 60).ceil()} min';
+}
+
 String primeiroNome(String nome) => nome.trim().split(RegExp(r'\s+')).first;
 
 String hora(DateTime d) => DateFormat.Hm('pt_BR').format(d.toLocal());

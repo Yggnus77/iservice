@@ -220,8 +220,8 @@ grant all on t to authenticated;
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a2', 'eletricista',
   (select id from public.enderecos where usuario_id = auth.uid()), 'agora', null, 'Chuveiro parou')).id;
-select pg_temp.ok((select status = 'solicitado' and taxa_urgencia = 15 and responder_ate between now() + interval '9 min' and now() + interval '11 min'
-  from public.pedidos where id = (select pedido from t)), 'pedido "agora" vai só ao escolhido, com taxa de urgência e 10 min para responder');
+select pg_temp.ok((select status = 'solicitado' and taxa_urgencia = 15 and responder_ate between now() + interval '4 min' and now() + interval '6 min'
+  from public.pedidos where id = (select pedido from t)), 'pedido "agora" vai só ao escolhido, com taxa de urgência e 5 min para responder');
 do $$ begin
   perform public.criar_pedido('00000000-0000-0000-0000-0000000000a3', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora');
   raise exception 'FALHOU: dois pedidos aguardando';
@@ -277,10 +277,51 @@ insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a3'
 select pg_temp.admin();
 update public.pedidos set responder_ate = now() - interval '1 second' where id = (select pedido from t);
 select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
-select pg_temp.ok((public.responder_pedido((select pedido from t), true)).status = 'expirado', 'não dá para aceitar depois dos 10 minutos');
+select pg_temp.ok((public.responder_pedido((select pedido from t), true)).status = 'expirado', 'não dá para aceitar depois do prazo');
 select pg_temp.admin();
 select pg_temp.ok((select status = 'expirado' from public.pedidos where id = (select pedido from t)), 'pedido sem resposta expira');
 select pg_temp.ok((select count(*) from public.pedidos where cliente_id = '00000000-0000-0000-0000-0000000000c1') = 2, 'pedido expirado não é repassado a ninguém');
+
+-- Tempo de resposta: aceite, recusa e expiração contam; cancelamento do cliente não.
+select pg_temp.ok((select respondido_em is not null from public.pedidos where id = (select pedido from t)), 'expirar conta como resposta no prazo inteiro');
+select pg_temp.ok((select respostas_medidas = 1 and tempo_resposta_seg is not null from public.profissionais where id = '00000000-0000-0000-0000-0000000000a2'),
+  'aceite mede o tempo de resposta do profissional');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+truncate t;
+insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a1', 'eletricista',
+  (select id from public.enderecos where usuario_id = auth.uid()), 'agora')).id;
+select public.cancelar_pedido((select pedido from t), 'Pediu a outro profissional');
+select pg_temp.admin();
+select pg_temp.ok((select respondido_em is null from public.pedidos where id = (select pedido from t))
+  and (select respostas_medidas = 0 and pedidos_perdidos = 0 from public.profissionais where id = '00000000-0000-0000-0000-0000000000a1'),
+  'pedir a outro profissional cancela sem contar contra o primeiro');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a3', 'eletricista',
+  (select id from public.enderecos where usuario_id = auth.uid()), 'agora')).id;
+select pg_temp.ok(true, 'depois de cancelar, já pode pedir a outro na hora');
+select pg_temp.admin();
+update public.pedidos set status = 'cancelado', encerrado_em = now() where id in (select pedido from t);
+
+-- Peso leve no ranking: com a mesma nota, quem responde rápido vem antes; a nota continua mandando.
+update public.profissionais set nota_media = 4.8, total_avaliacoes = 40, tempo_resposta_seg = 290, respostas_medidas = 10 where id = '00000000-0000-0000-0000-0000000000a2';
+update public.profissionais set nota_media = 4.8, total_avaliacoes = 12, tempo_resposta_seg = 30, respostas_medidas = 10 where id = '00000000-0000-0000-0000-0000000000a3';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select right(profissional_id::text, 2) from public.buscar_profissionais('eletricista', -15.8150, -47.8960) where posicao = 1) = 'a3',
+  'com a mesma nota, quem responde mais rápido aparece primeiro');
+select pg_temp.ok((select right(profissional_id::text, 2) from public.top_regiao(-15.8150, -47.8960) where posicao = 1) = 'a3',
+  'e também no Top da região');
+select pg_temp.ok((public.perfil_profissional('00000000-0000-0000-0000-0000000000a3') ->> 'tempo_resposta_seg')::int = 30,
+  'perfil mostra quanto tempo costuma levar para responder');
+select pg_temp.ok((public.perfil_profissional('00000000-0000-0000-0000-0000000000a1') ->> 'tempo_resposta_seg') is null,
+  'sem respostas suficientes o perfil não mostra o tempo');
+select pg_temp.admin();
+update public.profissionais set nota_media = 5.0 where id = '00000000-0000-0000-0000-0000000000a2';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select right(profissional_id::text, 2) from public.buscar_profissionais('eletricista', -15.8150, -47.8960) where posicao = 1) = 'a2',
+  'nota bem maior ainda vence a velocidade');
+select pg_temp.admin();
+update public.profissionais set nota_media = 1, total_avaliacoes = 1, tempo_resposta_seg = null, respostas_medidas = 0 where id = '00000000-0000-0000-0000-0000000000a2';
+update public.profissionais set nota_media = 4.9, total_avaliacoes = 12, tempo_resposta_seg = null, respostas_medidas = 0 where id = '00000000-0000-0000-0000-0000000000a3';
 
 -- Horário combinado: até 7 dias, e aceito não tira o profissional da busca até sair para o local.
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
