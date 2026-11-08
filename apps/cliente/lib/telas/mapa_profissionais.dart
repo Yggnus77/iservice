@@ -165,9 +165,11 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
                     Marker(
                       point: posicoes[p.id]!,
                       width: 48,
-                      height: 48,
+                      height: 56,
                       alignment: Alignment.topCenter,
                       child: _Pin(
+                        nome: p.nome,
+                        fotoUrl: p.fotoUrl,
                         rotulo: '${p.nome}, ${p.novo ? 'novo' : 'nota ${nota(p.notaMedia)}'}',
                         aoTocar: () => _selecionar(p.id, centralizar: posicoes[p.id], rolarLista: true),
                       ),
@@ -177,9 +179,11 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
                   Marker(
                     point: posicoes[selecionado.id]!,
                     width: 160,
-                    height: 92,
+                    height: 104,
                     alignment: Alignment.topCenter,
                     child: _PinSelecionado(
+                      nome: selecionado.nome,
+                      fotoUrl: selecionado.fotoUrl,
                       rotulo: '${primeiroNome(selecionado.nome)} · ${selecionado.novo ? 'Novo' : nota(selecionado.notaMedia)}',
                     ),
                   ),
@@ -416,32 +420,62 @@ class _VoceAqui extends StatelessWidget {
       );
 }
 
-class _FormaPin extends CustomPainter {
-  const _FormaPin(this.cor, this.miolo);
+/// Pin com a foto do profissional, no estilo de Uber e iFood: foto redonda
+/// com aro colorido e uma ponta embaixo marcando o lugar no mapa.
+class _FotoPin extends StatelessWidget {
+  const _FotoPin({required this.nome, required this.fotoUrl, required this.tamanho, required this.cor});
+  final String nome;
+  final String? fotoUrl;
+  final double tamanho;
   final Color cor;
-  final Color miolo;
+
+  @override
+  Widget build(BuildContext context) {
+    final aro = tamanho * .08;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: tamanho,
+        height: tamanho,
+        padding: EdgeInsets.all(aro),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: cor,
+          boxShadow: const [BoxShadow(color: Color(0x520A1F44), blurRadius: 8, offset: Offset(0, 3))],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+          child: Avatar(nome: nome, url: fotoUrl, tamanho: tamanho - aro * 2 - 4),
+        ),
+      ),
+      CustomPaint(size: Size(tamanho * .3, tamanho * .2), painter: _Ponta(cor)),
+    ]);
+  }
+}
+
+/// Triângulo embaixo da foto, que aponta o local no mapa.
+class _Ponta extends CustomPainter {
+  const _Ponta(this.cor);
+  final Color cor;
 
   @override
   void paint(Canvas canvas, Size s) {
-    final w = s.width;
-    final h = s.height;
     final path = Path()
-      ..moveTo(w / 2, h)
-      ..cubicTo(w * .5, h, 0, h * .62, 0, w / 2)
-      ..arcToPoint(Offset(w, w / 2), radius: Radius.circular(w / 2))
-      ..cubicTo(w, h * .62, w * .5, h, w / 2, h)
+      ..moveTo(0, 0)
+      ..lineTo(s.width, 0)
+      ..lineTo(s.width / 2, s.height)
       ..close();
-    canvas.drawShadow(path, const Color(0xFF0A1F44), 3, false);
     canvas.drawPath(path, Paint()..color = cor);
-    canvas.drawCircle(Offset(w / 2, w / 2), w * .2, Paint()..color = miolo);
   }
 
   @override
-  bool shouldRepaint(_FormaPin old) => old.cor != cor || old.miolo != miolo;
+  bool shouldRepaint(_Ponta old) => old.cor != cor;
 }
 
 class _Pin extends StatelessWidget {
-  const _Pin({required this.rotulo, required this.aoTocar});
+  const _Pin({required this.nome, required this.fotoUrl, required this.rotulo, required this.aoTocar});
+  final String nome;
+  final String? fotoUrl;
   final String rotulo;
   final VoidCallback aoTocar;
 
@@ -452,16 +486,18 @@ class _Pin extends StatelessWidget {
         child: GestureDetector(
           onTap: aoTocar,
           behavior: HitTestBehavior.opaque,
-          child: const Align(
+          child: Align(
             alignment: Alignment.bottomCenter,
-            child: CustomPaint(size: Size(28, 38), painter: _FormaPin(Cores.azul, Colors.white)),
+            child: _FotoPin(nome: nome, fotoUrl: fotoUrl, tamanho: 44, cor: Cores.azul),
           ),
         ),
       );
 }
 
 class _PinSelecionado extends StatelessWidget {
-  const _PinSelecionado({required this.rotulo});
+  const _PinSelecionado({required this.nome, required this.fotoUrl, required this.rotulo});
+  final String nome;
+  final String? fotoUrl;
   final String rotulo;
 
   @override
@@ -480,8 +516,8 @@ class _PinSelecionado extends StatelessWidget {
           child: Text(rotulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: t.labelMedium?.copyWith(color: Cores.azulEscuro)),
         ),
         const SizedBox(height: 4),
-        // Laranja com miolo azul-escuro: o laranja nunca leva branco.
-        const CustomPaint(size: Size(38, 50), painter: _FormaPin(Cores.laranja, Cores.azulEscuro)),
+        // Aro laranja do selecionado, maior que os outros.
+        _FotoPin(nome: nome, fotoUrl: fotoUrl, tamanho: 58, cor: Cores.laranja),
       ]),
     );
   }
