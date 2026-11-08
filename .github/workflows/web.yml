@@ -1,0 +1,59 @@
+# Compila as versões web dos dois apps e publica no ramo gh-pages, em
+# iservice.app.br/cliente/ e /profissional/. Troca só essas duas pastas:
+# o site da raiz, o painel em /admin/ e o arquivo CNAME ficam como estão.
+# Roda pelo botão "Run workflow" na aba Actions.
+name: Apps web (publicar)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+      # Endereço do Supabase e chave publicável (pública por natureza).
+      - name: Configuração
+        run: |
+          cat > config/dev.json <<'JSON'
+          {
+            "SUPABASE_URL": "https://aurjqwqqrxaexmwozezr.supabase.co",
+            "SUPABASE_ANON_KEY": "sb_publishable_Gc3o5rwSwK-ID6cYTGPmZA_8NO1hqkW"
+          }
+          JSON
+      - run: flutter pub get
+      - name: Compilar
+        run: |
+          for app in cliente profissional; do
+            (cd apps/$app && flutter build web --release --base-href /$app/ \
+              --dart-define-from-file=../../config/dev.json)
+          done
+      - name: Publicar no gh-pages
+        run: |
+          git fetch origin gh-pages
+          git worktree add ../pages origin/gh-pages
+          cd ../pages
+          test -f CNAME || { echo "CNAME sumiu do gh-pages; parando."; exit 1; }
+          for app in cliente profissional; do
+            git rm -rq --ignore-unmatch "$app"
+            rm -rf "$app"
+            cp -r "$GITHUB_WORKSPACE/apps/$app/build/web" "$app"
+            git add "$app"
+          done
+          test -f CNAME && test -f index.html && test -d admin
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Apps web: republica Cliente e Profissional (${GITHUB_SHA::7})" || exit 0
+          git push origin HEAD:gh-pages
