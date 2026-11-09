@@ -271,7 +271,7 @@ function Revisao() {
         }} />
       <DialogoTexto aberto={recusarCadastro} fechar={() => setRecusarCadastro(false)} titulo="Pedir ajustes no cadastro"
         texto="O profissional vê este texto no app e pode corrigir e reenviar." rotulo="Motivo" botao="Enviar pedido de ajuste" tom="perigo"
-        sugestoes={['Os dados do documento não batem com o cadastro.', 'Complete as especialidades e os preços.', 'Escolha uma área de atendimento dentro do DF e Entorno.']}
+        sugestoes={['Os dados do documento não batem com o cadastro.', 'Complete as especialidades e os preços.', 'Escolha uma área de atendimento dentro das cidades atendidas.']}
         confirmar={async (v) => {
           const ok = await executar(() => rpc('admin_decidir_cadastro', { p_profissional: perfil.id, p_aprovar: false, p_motivo: v }), 'Pedido de ajuste enviado.');
           if (ok) fim();
