@@ -13,7 +13,7 @@ type Celula = {
 };
 
 const nomesFaixa = ['', 'Faixa 1', 'Faixa 2', 'Faixa 3', 'Faixa 4', 'Faixa 5'];
-const exemplosFaixa = ['', 'Plano Piloto, Lagos, Sudoeste', 'Guará, Águas Claras, Cruzeiro', 'Taguatinga, Sobradinho, Paranoá', 'Ceilândia, Samambaia, Gama', 'Entorno (GO)'];
+const exemplosFaixa = ['', 'Plano Piloto, Lagos, Sudoeste', 'Guará, Águas Claras, Cruzeiro', 'Taguatinga, Sobradinho, Paranoá', 'Ceilândia, Samambaia, Gama', 'Entorno (GO) e Vitorino Freire (MA)'];
 const cobrancas = [['servico', 'Por serviço'], ['hora', 'Por hora'], ['diaria', 'Por diária']] as const;
 type Cobranca = (typeof cobrancas)[number][0];
 const real = (v: number) => `R$ ${Math.round(Number(v)).toLocaleString('pt-BR')}`;

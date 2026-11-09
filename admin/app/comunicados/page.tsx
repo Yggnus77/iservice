@@ -79,7 +79,7 @@ export default function Comunicados() {
               <div className="campo">
                 <label htmlFor="c-reg">Região</label>
                 <select id="c-reg" className="entrada" value={regiao} onChange={(e) => setRegiao(e.target.value)}>
-                  <option value="">Brasília e Entorno (todas)</option>
+                  <option value="">Todas as cidades</option>
                   {opcoes.dados?.regioes.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
                 </select>
               </div>

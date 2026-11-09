@@ -192,7 +192,7 @@ function Sugeridas() {
   );
 }
 
-const faixas: Record<number, string> = { 1: '1 · Plano Piloto e Lagos', 2: '2', 3: '3', 4: '4', 5: '5 · Entorno' };
+const faixas: Record<number, string> = { 1: '1 · Plano Piloto e Lagos', 2: '2', 3: '3', 4: '4', 5: '5 · Entorno e Vitorino Freire' };
 
 function Regioes() {
   const { dados, erro, carregando, recarregar, setDados } = useCarregar(() => q<Regiao[]>(db().from('regioes').select('id, nome, uf, faixa_preco, ativa, ordem').order('ordem')), []);
@@ -216,7 +216,7 @@ function Regioes() {
               {dados.map((r) => (
                 <tr key={r.id}>
                   <td><span className="linha-flex"><MapPin size={15} color="#7a879d" /><strong>{r.nome}</strong></span></td>
-                  <td>{r.uf === 'GO' ? <Selo tom="roxo">GO</Selo> : <Selo tom="azul">DF</Selo>}</td>
+                  <td>{r.uf === 'DF' ? <Selo tom="azul">DF</Selo> : <Selo tom="roxo">{r.uf}</Selo>}</td>
                   <td>
                     <select className="entrada" style={{ height: 34 }} value={r.faixa_preco} aria-label={`Faixa de ${r.nome}`}
                       onChange={(e) => mudar(r, { faixa_preco: Number(e.target.value) }, `${r.nome} agora está na faixa ${e.target.value}.`)}>
