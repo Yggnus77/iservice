@@ -45,7 +45,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
 select pg_temp.ok((select count(*) from public.perfis) = 7, 'perfil criado junto com o usuário');
 select pg_temp.ok((select count(*) from public.profissionais) = 6, 'cadastro de profissional criado pelo app Profissional');
 
-update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'https://exemplo.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
+update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', foto_url = 'https://aurjqwqqrxaexmwozezr.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
   cpf = pg_temp.cpf(lpad((row_number_cpf)::text, 9, '1'))
 from (select id as pid, row_number() over (order by id) + 100000000 as row_number_cpf from public.perfis) n where n.pid = perfis.id;
 
