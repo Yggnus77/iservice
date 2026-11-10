@@ -142,6 +142,8 @@ class ContaRepo {
             data: {
               'nome': nome.trim(),
               'app': app.name,
+              // Aceite dos Termos marcado na tela de cadastro; o banco guarda a data.
+              'termos': ConfigIService.versaoTermos,
               if (codigoIndicacao != null && codigoIndicacao.isNotEmpty) 'indicacao': codigoIndicacao.trim(),
             },
           ));
@@ -201,6 +203,9 @@ class ContaRepo {
         await _db.auth.signOut();
         return DateTime.parse(r as String).toLocal();
       });
+
+  /// Registra o aceite da versão atual dos Termos e da Política de Privacidade.
+  Future<void> aceitarTermos() => _tentar(() => _db.rpc('aceitar_termos', params: {'p_versao': ConfigIService.versaoTermos}));
 
   Future<void> cancelarExclusao() => _tentar(() => _db.rpc('cancelar_exclusao_conta'));
 

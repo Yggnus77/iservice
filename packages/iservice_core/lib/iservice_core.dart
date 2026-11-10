@@ -15,6 +15,7 @@ export 'src/telas/denunciar.dart';
 export 'src/telas/meus_dados.dart';
 export 'src/telas/notificacoes.dart';
 export 'src/telas/nova_senha.dart';
+export 'src/telas/termos.dart';
 export 'src/tema/cores.dart';
 export 'src/tema/tema.dart';
 export 'src/util/formatos.dart';

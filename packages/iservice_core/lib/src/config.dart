@@ -18,6 +18,14 @@ class ConfigIService {
 
   static String urlDoApp(AppIService app) => '$urlSite/${app.name}/';
 
+  /// Versão dos Termos de Uso e da Política de Privacidade em vigor (data da
+  /// "Última atualização" em site/termos.html e site/privacidade.html). Ao
+  /// mudar os textos de forma relevante, troque a data aqui: quem aceitou a
+  /// versão anterior vê a tela de aceite de novo ao abrir o app.
+  static const versaoTermos = '2026-10-27';
+  static const urlTermos = '$urlSite/termos.html';
+  static const urlPrivacidade = '$urlSite/privacidade.html';
+
   /// Botão "Entrar com Google". Fica desligado até o Google estar configurado
   /// no Supabase (Authentication > Sign In / Providers > Google). Ligar com
   /// --dart-define=LOGIN_GOOGLE=true.

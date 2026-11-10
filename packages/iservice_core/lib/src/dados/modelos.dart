@@ -244,9 +244,13 @@ class MeuPerfil {
     this.profissional,
     this.exclusaoSolicitadaEm,
     this.telefoneVerificado = false,
+    this.termosVersao,
   });
   final String id;
   final String nome;
+
+  /// Versão dos Termos e da Política de Privacidade que a pessoa aceitou (null = nenhuma).
+  final String? termosVersao;
   final String? email;
 
   /// Quando o usuário pediu para excluir a conta (null = conta ativa).
@@ -290,6 +294,7 @@ class MeuPerfil {
       profissional: j['profissional'] == null ? null : MeuCadastroProfissional.fromJson(j['profissional']),
       pontos: (j['pontos'] as num?)?.toInt() ?? 0,
       exclusaoSolicitadaEm: p['exclusao_solicitada_em'] == null ? null : DateTime.parse(p['exclusao_solicitada_em']),
+      termosVersao: p['termos_versao'],
     );
   }
 }
