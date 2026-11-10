@@ -39,7 +39,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000b1', 'carlos@teste.com', '{"nome":"Carlos Silva","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000b2', 'joana@teste.com', '{"nome":"Joana Lima","app":"profissional"}');
 update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', e_cliente = true,
-  foto_url = 'https://exemplo.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
+  foto_url = 'https://aurjqwqqrxaexmwozezr.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
   cpf = pg_temp.cpf(lpad((n)::text, 9, '2'))
 from (select id as pid, row_number() over (order by id) + 200000000 as n from public.perfis) x where x.pid = perfis.id;
 insert into public.enderecos (usuario_id, logradouro, regiao_id, localizacao, principal)
