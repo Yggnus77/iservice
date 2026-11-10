@@ -44,6 +44,10 @@ final rotasProvider = Provider<GoRouter>((ref) {
       final p = perfil.value;
       if (p == null) return null;
 
+      // Aceite dos Termos em vigor (quem entrou com o Google, contas antigas ou Termos atualizados).
+      if (p.termosVersao != ConfigIService.versaoTermos) return local == '/termos' ? null : '/termos';
+      if (local == '/termos') return '/';
+
       final pro = p.profissional;
       // Conta criada no app Cliente: começa o cadastro de profissional do passo 1.
       if (pro == null) return local.startsWith('/cadastro') ? null : '/cadastro/1';
@@ -63,6 +67,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (_, _) => const TelaAbertura()),
       GoRoute(path: '/boas-vindas', builder: (_, _) => const TelaBoasVindas()),
+      GoRoute(path: '/termos', builder: (_, _) => const TelaAceitarTermos()),
       GoRoute(
         path: '/entrar',
         builder: (context, _) => TelaEntrar(aoCriarConta: () => context.push('/cadastro/1'), aoEntrar: () => context.go('/')),

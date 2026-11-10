@@ -13,6 +13,7 @@ import '../tema/tema.dart';
 import '../util/formatos.dart';
 import '../util/validacao.dart';
 import '../widgets/componentes.dart';
+import 'termos.dart';
 
 /// Cabeçalho dos passos do cadastro: barra de progresso, título e explicação.
 class CabecalhoPasso extends StatelessWidget {
@@ -587,7 +588,7 @@ class _PassoContaState extends ConsumerState<PassoConta> {
             onChanged: (v) => setState(() => _aceite = v ?? false),
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
-            title: Text('Li e aceito os Termos de Uso e a Política de Privacidade.', style: Theme.of(context).textTheme.bodySmall),
+            title: const TextoAceiteTermos(),
           ),
         ],
       ),
