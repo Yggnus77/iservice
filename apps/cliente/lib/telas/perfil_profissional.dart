@@ -54,7 +54,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
 
     void solicitar([int? esp]) {
       if (profissao == null) return;
-      unawaited(context.push('/solicitar/${p.id}?profissao=${profissao.id}${esp == null ? '' : '&esp=$esp'}'));
+      unawaited(context.push('/solicitar/${p.id}?profissao=${profissao.id}${esp == null ? '' : '&esp=$esp'}${p.disponivel ? '' : '&agendar=1'}'));
     }
 
     return Scaffold(
@@ -158,7 +158,7 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
                     title: Text(e.nome, style: t.titleSmall),
                     subtitle: e.preco == null ? const Text('Valor combinado no local') : _PrecoEFaixa(e),
                     trailing: Icon(Symbols.arrow_forward_rounded, color: c.acaoTexto),
-                    onTap: p.disponivel && prof.id == profissao?.id ? () => solicitar(e.id) : null,
+                    onTap: prof.id == profissao?.id ? () => solicitar(e.id) : null,
                   ),
                 );
               },
@@ -232,16 +232,18 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
             ),
           ),
         ],
-        const SliverToBoxAdapter(child: SizedBox(height: 110)),
+        SliverToBoxAdapter(child: SizedBox(height: p.disponivel ? 110 : 170)),
       ]),
       bottomSheet: Container(
         padding: EdgeInsets.fromLTRB(Medidas.margemTela, 12, Medidas.margemTela, 12 + MediaQuery.paddingOf(context).bottom),
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border(top: BorderSide(color: c.linha))),
         child: p.disponivel
             ? BotaoPrincipal(rotulo: 'Solicitar serviço', icone: Symbols.bolt_rounded, aoTocar: solicitar)
-            : Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('Atendendo outro cliente agora', style: t.titleSmall),
-                Text('Escolha outro profissional ou volte mais tarde.', style: t.bodySmall),
+            : Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text('Ocupado agora', style: t.titleSmall, textAlign: TextAlign.center),
+                Text('Agende um dia com ${primeiroNome(p.nome)} ou escolha outro profissional.', style: t.bodySmall, textAlign: TextAlign.center),
+                const SizedBox(height: 10),
+                BotaoPrincipal(rotulo: 'Agendar outro horário', icone: Symbols.event_rounded, aoTocar: solicitar),
               ]),
       ),
     );

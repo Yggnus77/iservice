@@ -96,6 +96,15 @@ function tons(tom: Tom) {
   }[tom];
 }
 
+// "sexta-feira, 14 de novembro, às 09:00" (horário de Brasília).
+function diaHoraLongo(v: unknown): string {
+  const d = new Date(texto(v));
+  if (isNaN(d.getTime())) return "";
+  const dia = d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Sao_Paulo" });
+  const h = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+  return `${dia}, às ${h}`;
+}
+
 function dataBr(v: unknown): string {
   const s = texto(v);
   if (!s) return "";
@@ -292,6 +301,66 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
       depois: status === "resolvida" || status === "encerrada"
         ? ["Se ainda restar alguma dúvida, é só responder este e-mail."]
         : undefined,
+    };
+  },
+
+  agendamento_confirmado: (c) => {
+    const pro = c.app === "profissional";
+    const quando = diaHoraLongo(c.dados.combinado_para);
+    const com = texto(c.dados.com);
+    return {
+      assunto: `Marcado: ${c.titulo.replace(/^Marcado: /, "")}${texto(c.dados.servico) ? ` · ${texto(c.dados.servico)}` : ""}`,
+      previa: pro ? `Atendimento com ${com} está na sua Agenda.` : `${com} confirmou o atendimento. Avisamos você na véspera.`,
+      app: c.app,
+      selo: { texto: "Agendado", tom: "verde" },
+      titulo: pro ? "Atendimento marcado na sua Agenda" : "Seu atendimento está marcado",
+      paragrafos: [
+        pro
+          ? `Você e <b>${esc(com)}</b> confirmaram o atendimento. Ele já está na aba Agenda do app.`
+          : `<b>${esc(com)}</b> confirmou o atendimento. Esteja no local, ou deixe alguém responsável, no horário marcado.`,
+      ],
+      destaque: { rotulo: "Quando", texto: quando, tom: c.app === "profissional" ? "laranja" : "azul" },
+      detalhes: [
+        [pro ? "Cliente" : "Profissional", com],
+        ["Serviço", texto(c.dados.servico)],
+        ["Endereço", texto(c.dados.endereco)],
+        ["Pedido", texto(c.dados.codigo) ? `#${texto(c.dados.codigo)}` : ""],
+      ],
+      passosTitulo: "Os próximos avisos",
+      passos: [
+        { texto: "Lembrete na véspera, por e-mail e no app." },
+        { texto: "Lembrete 1 hora antes, no app." },
+        { texto: pro ? "Toque em \"Estou a caminho\" quando sair. O cliente acompanha pelo mapa." : "Você acompanha pelo mapa quando o profissional sair." },
+      ],
+      botao: { texto: pro ? "Ver minha Agenda" : "Ver o agendamento", link: urlApp(c.app) },
+      nota: "Se precisar mudar, converse pelo chat do pedido ou cancele com antecedência pelo app.",
+    };
+  },
+
+  lembrete_agendamento: (c) => {
+    const pro = c.app === "profissional";
+    const quando = diaHoraLongo(c.dados.combinado_para);
+    const com = texto(c.dados.com);
+    return {
+      assunto: `Lembrete: ${c.titulo.replace(/^Lembrete: /, "")}`,
+      previa: pro ? `Atendimento com ${com} em ${texto(c.dados.endereco)}.` : `${com} vai até você no horário marcado.`,
+      app: c.app,
+      selo: { texto: "Lembrete", tom: "laranja" },
+      titulo: pro ? "Seu atendimento é amanhã" : "Seu atendimento está chegando",
+      paragrafos: [
+        pro
+          ? `Lembrete do atendimento com <b>${esc(com)}</b>. Confira o endereço e organize o material.`
+          : `Lembrete do atendimento com <b>${esc(com)}</b>. Esteja no local, ou deixe alguém responsável, no horário marcado.`,
+      ],
+      destaque: { rotulo: "Quando", texto: quando, tom: c.app === "profissional" ? "laranja" : "azul" },
+      detalhes: [
+        [pro ? "Cliente" : "Profissional", com],
+        ["Serviço", texto(c.dados.servico)],
+        ["Endereço", texto(c.dados.endereco)],
+        ["Pedido", texto(c.dados.codigo) ? `#${texto(c.dados.codigo)}` : ""],
+      ],
+      botao: { texto: "Abrir no app", link: urlApp(c.app) },
+      nota: "Se não puder mais, avise pelo chat do pedido e cancele pelo app o quanto antes.",
     };
   },
 

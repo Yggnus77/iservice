@@ -8,7 +8,8 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado.dart';
 
-/// Pedidos direcionados a este profissional. Ele tem 10 minutos para aceitar;
+/// Pedidos direcionados a este profissional. Ele tem o prazo de app_config.prazo_resposta_min para aceitar um
+/// pedido para agora (mais tempo para um agendado) e pode sugerir outro horário;
 /// se recusar ou não responder, o pedido termina (não vai para outro).
 class TelaSolicitacoes extends ConsumerWidget {
   const TelaSolicitacoes({super.key});
@@ -82,6 +83,8 @@ Future<void> responderChamado(BuildContext context, WidgetRef ref, Pedido p, {re
     if (!context.mounted) return;
     if (r.status == StatusPedido.expirado) {
       mostrarMensagem(context, 'O tempo para responder acabou.');
+    } else if (aceitar && r.agendado) {
+      mostrarMensagem(context, 'Marcado para ${r.quandoTexto.toLowerCase()}. Está na sua Agenda e avisamos o cliente.');
     } else if (aceitar) {
       unawaited(context.push('/pedido/${p.id}'));
     } else {
@@ -92,8 +95,68 @@ Future<void> responderChamado(BuildContext context, WidgetRef ref, Pedido p, {re
   }
 }
 
+/// Sugere outro dia e horário ao cliente (ocupado agora, ou o horário pedido não dá).
+/// Os horários já marcados na agenda ficam bloqueados.
+Future<void> sugerirHorario(BuildContext context, WidgetRef ref, Pedido p) async {
+  final config = await ref.read(configProvider.future).catchError((_) => <String, dynamic>{});
+  final agenda = await ref.read(pedidosProProvider('andamento').future).catchError((_) => <Pedido>[]);
+  if (!context.mounted) return;
+  final diasMax = (config['dias_max_combinado'] as num?)?.toInt() ?? 7;
+  final ocupados = [
+    for (final o in agenda)
+      if (o.id != p.id && o.agendado && o.status != StatusPedido.solicitado) o.combinadoPara!.toLocal(),
+  ];
+  final h = await escolherHorarioAgenda(
+    context,
+    diasMax: diasMax,
+    titulo: 'Sugerir outro horário',
+    subtitulo: '${primeiroNome(p.outraParteNome ?? 'O cliente')} recebe a sugestão e confirma pelo app. Nos próximos $diasMax dias.',
+    ocupados: ocupados,
+    inicial: p.agendado ? p.combinadoPara : null,
+    rotuloConfirmar: 'Sugerir',
+  );
+  if (h == null || !context.mounted) return;
+  try {
+    final r = await ref.read(pedidosRepo).proporHorario(p.id, h);
+    ref.invalidate(pedidosProProvider);
+    if (!context.mounted) return;
+    mostrarMensagem(
+      context,
+      r.status == StatusPedido.expirado ? 'O tempo para responder acabou.' : 'Sugestão enviada. Avisamos quando ${primeiroNome(p.outraParteNome ?? 'o cliente')} confirmar.',
+    );
+  } catch (e) {
+    if (context.mounted) mostrarErro(context, e);
+  }
+}
+
+/// Aviso no lugar dos botões enquanto o cliente decide sobre o horário sugerido.
+class AguardandoCliente extends StatelessWidget {
+  const AguardandoCliente({super.key, required this.p});
+  final Pedido p;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: c.acaoSuave, borderRadius: BorderRadius.circular(Medidas.raioControle)),
+      child: Row(children: [
+        Icon(Symbols.edit_calendar_rounded, color: c.acaoTexto),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Você sugeriu ${diaRelativoEHora(p.propostaPara!).toLowerCase()}. Aguardando ${primeiroNome(p.outraParteNome ?? 'o cliente')} confirmar.',
+            style: t.bodyMedium,
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
 Future<String?> _perguntarMotivo(BuildContext context) {
-  const motivos = ['Estou ocupado agora', 'Fora da minha área', 'Não faço esse serviço', 'Horário não dá', 'Outro motivo'];
+  const motivos = ['Fora da minha área', 'Não faço esse serviço', 'Horário não dá e não tenho outro', 'Outro motivo'];
   return showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
@@ -105,7 +168,7 @@ Future<String?> _perguntarMotivo(BuildContext context) {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 8),
-          child: Text('O cliente é avisado. Recusas frequentes baixam sua confiabilidade.', style: Theme.of(ctx).textTheme.bodySmall),
+          child: Text('O cliente é avisado. Recusas frequentes baixam sua confiabilidade. Se só o horário não dá, sugira outro.', style: Theme.of(ctx).textTheme.bodySmall),
         ),
         for (final m in motivos) ListTile(title: Text(m), onTap: () => Navigator.pop(ctx, m)),
         const SizedBox(height: 8),
@@ -178,7 +241,11 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
             Text(p.descricao, style: t.bodyMedium),
           ],
           const SizedBox(height: 12),
-          _Info(icone: p.quando == QuandoPedido.agora ? Symbols.bolt_rounded : Symbols.schedule_rounded, texto: p.quandoTexto, destaque: p.quando == QuandoPedido.agora),
+          _Info(
+            icone: switch (p.quando) { QuandoPedido.agora => Symbols.bolt_rounded, QuandoPedido.hoje => Symbols.schedule_rounded, QuandoPedido.combinado => Symbols.event_rounded },
+            texto: p.agendado ? 'Agendar para ${p.quandoTexto.toLowerCase()}' : p.quandoTexto,
+            destaque: p.quando != QuandoPedido.hoje,
+          ),
           _Info(icone: Symbols.location_on_rounded, texto: [p.enderecoTexto, if (p.distanciaKm != null) distancia(p.distanciaKm)].join(' · ')),
           _Info(
             icone: Symbols.payments_rounded,
@@ -188,20 +255,37 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
             ].join(' '),
           ),
           const SizedBox(height: 14),
-          Row(children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _ocupado || expirou ? null : () => _responder(false),
-                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: c.perigo),
-                child: const Text('Recusar'),
+          if (p.aguardandoCliente)
+            AguardandoCliente(p: p)
+          else ...[
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _ocupado || expirou ? null : () => _responder(false),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: c.perigo),
+                  child: const Text('Recusar'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: BotaoPrincipal(
+                  rotulo: p.agendado ? 'Confirmar horário' : 'Aceitar',
+                  icone: Symbols.check_rounded,
+                  carregando: _ocupado,
+                  aoTocar: expirou ? null : () => _responder(true),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            Center(
+              child: TextButton.icon(
+                onPressed: _ocupado || expirou ? null : () => sugerirHorario(context, ref, p),
+                icon: const Icon(Symbols.edit_calendar_rounded),
+                label: const Text('Sugerir outro horário'),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: BotaoPrincipal(rotulo: 'Aceitar', icone: Symbols.check_rounded, carregando: _ocupado, aoTocar: expirou ? null : () => _responder(true)),
-            ),
-          ]),
+          ],
         ]),
       ),
     );

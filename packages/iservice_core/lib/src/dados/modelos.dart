@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import '../util/formatos.dart';
+
 // Modelos dos dados que vêm do backend (tabelas e funções do Supabase).
 
 double _d(Object? v) => v == null ? 0 : (v as num).toDouble();
@@ -517,7 +519,7 @@ class PrecoBusca {
 enum QuandoPedido {
   agora('agora', 'Agora'),
   hoje('hoje', 'Hoje'),
-  combinado('combinado', 'Horário combinado');
+  combinado('combinado', 'Agendado');
 
   const QuandoPedido(this.valor, this.rotulo);
   final String valor;
@@ -571,6 +573,7 @@ class Pedido {
     this.outraParteFoto,
     this.avaliado = false,
     this.naoLidas = 0,
+    this.propostaPara,
   });
   final String id;
   final String codigo;
@@ -595,6 +598,18 @@ class Pedido {
   final bool avaliado;
   final int naoLidas;
 
+  /// Horário sugerido pelo profissional, aguardando o cliente confirmar.
+  final DateTime? propostaPara;
+
+  /// O profissional sugeriu outro horário e agora é a vez do cliente.
+  bool get aguardandoCliente => status == StatusPedido.solicitado && propostaPara != null;
+
+  /// Atendimento marcado para um dia e horário (agenda).
+  bool get agendado => quando == QuandoPedido.combinado && combinadoPara != null;
+
+  /// Quando o atendimento acontece (para ordenar a agenda).
+  DateTime get dataAtendimento => (agendado ? combinadoPara! : criadoEm).toLocal();
+
   /// Tempo que falta para o profissional responder (zero se já passou).
   Duration get tempoParaResponder {
     final r = responderAte.difference(DateTime.now());
@@ -604,14 +619,8 @@ class Pedido {
   String get quandoTexto => switch (quando) {
         QuandoPedido.agora => 'Agora',
         QuandoPedido.hoje => 'Hoje${janela == null ? '' : ', $janela'}',
-        QuandoPedido.combinado => combinadoPara == null ? 'Combinado' : _diaHora(combinadoPara!),
+        QuandoPedido.combinado => combinadoPara == null ? 'Agendado' : diaRelativoEHora(combinadoPara!),
       };
-
-  static String _diaHora(DateTime d) {
-    final l = d.toLocal();
-    String dois(int n) => n.toString().padLeft(2, '0');
-    return '${dois(l.day)}/${dois(l.month)} às ${dois(l.hour)}:${dois(l.minute)}';
-  }
 
   /// Linha vinda de meus_pedidos().
   factory Pedido.fromLista(Map<String, dynamic> j) => Pedido(
@@ -637,6 +646,7 @@ class Pedido {
         outraParteFoto: j['outra_parte_foto'],
         avaliado: j['avaliado'] ?? false,
         naoLidas: j['nao_lidas'] ?? 0,
+        propostaPara: _data(j['proposta_para']),
       );
 
   /// Linha crua da tabela pedidos (tempo real). Mantém os dados da outra parte de [base].
@@ -663,6 +673,7 @@ class Pedido {
         outraParteFoto: base?.outraParteFoto,
         avaliado: base?.avaliado ?? false,
         naoLidas: base?.naoLidas ?? 0,
+        propostaPara: _data(j['proposta_para']),
       );
 }
 
