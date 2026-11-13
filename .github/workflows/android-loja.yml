@@ -10,9 +10,6 @@ name: Pacotes para a Play Store (Android)
 
 on:
   workflow_dispatch:
-  # TEMPORÁRIO: para testar no ramo antes de mesclar. Remover antes do merge.
-  push:
-    branches: [claude/project-thread-lhrom5]
 
 permissions:
   contents: read
