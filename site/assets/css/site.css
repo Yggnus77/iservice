@@ -680,14 +680,25 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (max-width: 1020px) { .qs-valores { grid-template-columns: repeat(2, 1fr); } .qs-linha { grid-template-columns: 1fr 1fr; row-gap: 40px; } .qs-linha::before { display: none; } }
 @media (max-width: 860px) { .qs-historia, .qs-mv, .qs-casa { grid-template-columns: 1fr; gap: 28px; } }
 @media (max-width: 560px) { .qs-valores, .qs-linha { grid-template-columns: 1fr; } .qs-cartao { padding: 28px 24px; } .qs-valores li { padding: 24px; } }
-.qs-sem-topo { padding-top: 0; }
-.qs-fundador { display: grid; grid-template-columns: 220px 1fr; gap: 48px; align-items: center; max-width: 960px; }
-.qs-foto { width: 220px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: linear-gradient(160deg, var(--azul), var(--marinho)); box-shadow: 0 0 0 6px #fff, 0 0 0 9px var(--laranja), var(--sombra); }
-.qs-foto img { width: 100%; height: 100%; object-fit: cover; }
-.qs-foto span { color: #fff; font-weight: 800; font-size: 64px; letter-spacing: -.02em; }
-.qs-fundador .etiqueta { display: block; color: var(--azul); margin-bottom: 14px; }
-.qs-fundador blockquote { margin: 0; font-size: clamp(20px, 2.2vw, 27px); font-weight: 700; color: var(--tinta); line-height: 1.4; letter-spacing: -.01em; }
-.qs-assina { margin: 22px 0 0; display: flex; flex-direction: column; gap: 2px; }
-.qs-assina b { color: var(--tinta); font-size: 17px; }
+.qs-fundador { display: grid; grid-template-columns: 300px 1fr; gap: 64px; align-items: start; }
+.qs-perfil { position: sticky; top: 110px; text-align: center; }
+.qs-foto { width: 240px; aspect-ratio: 1; margin: 9px auto 0; border-radius: 50%; overflow: hidden; background: var(--marinho); box-shadow: 0 0 0 6px #fff, 0 0 0 9px var(--laranja), var(--sombra); }
+.qs-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qs-assina { margin: 28px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.qs-assina b { color: var(--tinta); font-size: 20px; font-weight: 800; }
 .qs-assina span { color: var(--suave); font-size: 15px; }
-@media (max-width: 700px) { .qs-fundador { grid-template-columns: 1fr; gap: 28px; text-align: center; justify-items: center; } .qs-foto { width: 168px; } .qs-foto span { font-size: 48px; } }
+.qs-fatos { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; justify-items: center; }
+.qs-fatos li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #fff; border: 1px solid var(--linha); font-size: 14px; font-weight: 600; color: var(--tinta); }
+.qs-fatos .ms { font-size: 18px; color: var(--azul); }
+.qs-bio .etiqueta { display: block; color: var(--azul); margin-bottom: 12px; }
+.qs-bio h2 { font-size: clamp(30px, 3.4vw, 42px); font-weight: 800; letter-spacing: -.03em; margin-bottom: 24px; }
+.qs-bio blockquote { margin: 32px 0 0; padding: 30px 32px; border-radius: var(--raio); background: linear-gradient(160deg, var(--azul), var(--marinho)); color: #fff; font-size: clamp(18px, 1.9vw, 22px); font-weight: 700; line-height: 1.45; }
+.qs-bio cite { display: block; margin-top: 14px; font-style: normal; font-size: 15px; font-weight: 600; color: var(--laranja); }
+@media (max-width: 860px) { .qs-fundador { grid-template-columns: 1fr; gap: 36px; } .qs-perfil { position: static; } .qs-foto { width: 180px; } .qs-bio blockquote { padding: 24px; } }
+.qs-historia .cabeca { position: sticky; top: 110px; }
+.qs-ano { display: flex; align-items: baseline; gap: 12px; margin-top: 28px !important; }
+.qs-ano b { font-size: 44px; font-weight: 800; color: var(--laranja); letter-spacing: -.03em; line-height: 1; }
+.qs-ano span { font-size: 15px; color: var(--suave); }
+.qs-essencia { margin-top: 30px !important; padding: 26px 28px; border-radius: var(--raio); background: var(--azul-claro); border-left: 5px solid var(--azul); font-size: 19px !important; font-weight: 700; color: var(--tinta); line-height: 1.45; }
+.qs-essencia span { display: block; margin-top: 10px; font-size: 16px; font-weight: 600; color: var(--azul); }
+@media (max-width: 860px) { .qs-historia .cabeca { position: static; } }
