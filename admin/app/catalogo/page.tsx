@@ -192,7 +192,7 @@ function Sugeridas() {
   );
 }
 
-const faixas: Record<number, string> = { 1: '1 · Plano Piloto e Lagos', 2: '2', 3: '3', 4: '4', 5: '5 · Entorno e Vitorino Freire' };
+const faixas: Record<number, string> = { 1: '1 · Plano Piloto e Lagos', 2: '2', 3: '3', 4: '4', 5: '5 · Entorno' };
 
 function Regioes() {
   const { dados, erro, carregando, recarregar, setDados } = useCarregar(() => q<Regiao[]>(db().from('regioes').select('id, nome, uf, faixa_preco, ativa, ordem').order('ordem')), []);

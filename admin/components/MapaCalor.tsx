@@ -37,7 +37,7 @@ export default function MapaCalor({ pontos }: { pontos: Ponto[] }) {
         { radius: 28, blur: 22, maxZoom: 13, minOpacity: 0.35, gradient: { 0.2: '#ffe2bd', 0.45: '#ffb35c', 0.7: '#ff8a00', 0.9: '#c25400', 1: '#7a2e00' } },
       );
       heat.addTo(mapa.current);
-      // Enquadra as buscas: elas podem estar no DF ou em Vitorino Freire (MA), cidade dos testes.
+      // Enquadra as buscas no mapa, onde quer que estejam.
       mapa.current.fitBounds(L.latLngBounds(pontos.map((p) => [p.lat, p.lng] as [number, number])), { padding: [30, 30], maxZoom: 12 });
       camadas.current.push(heat);
       // Pontos invisíveis maiores que a mancha, só para mostrar os números ao passar o mouse.
