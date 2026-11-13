@@ -1,3 +1,10 @@
+// Paliativo contra clickjacking: aberto dentro de um iframe de outro site, a
+// página some e tenta abrir no lugar dela. O bloqueio definitivo é o cabeçalho HTTP.
+if (window.top !== window.self) {
+  document.documentElement.style.setProperty('display', 'none', 'important');
+  try { window.top.location.replace(window.location.href); } catch (e) { /* bloqueado */ }
+}
+
 /* Contatos e links das lojas: preencha aqui e o site inteiro se atualiza.
    Campo vazio mostra "Em breve". */
 const CONTATO = {
