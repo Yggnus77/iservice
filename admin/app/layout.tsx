@@ -18,6 +18,10 @@ export const viewport: Viewport = { themeColor: '#0a1f44', width: 'device-width'
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={fonte.variable}>
+      <head>
+        {/* Antes de tudo: esconde o painel se ele for aberto dentro de um iframe de outro site. */}
+        <script src="/admin/anti-enquadramento.js" />
+      </head>
       <body>
         <Painel>{children}</Painel>
       </body>
