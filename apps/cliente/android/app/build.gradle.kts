@@ -1,8 +1,27 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Chave de upload da Play Store (nunca vai para o git).
+// Lida de android/key.properties (no computador) ou de variáveis de ambiente
+// (no GitHub Actions: ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_SENHA, ANDROID_KEY_ALIAS).
+// Sem a chave, o release continua assinado com a chave debug (só para testes).
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) FileInputStream(f).use { load(it) }
+}
+fun chave(prop: String, env: String): String? =
+    (keyProps.getProperty(prop) ?: System.getenv(env))?.takeIf { it.isNotBlank() }
+val keystorePath = chave("storeFile", "ANDROID_KEYSTORE_PATH")
+val keystoreSenha = chave("storePassword", "ANDROID_KEYSTORE_SENHA")
+val aliasChave = chave("keyAlias", "ANDROID_KEY_ALIAS") ?: "upload"
+val senhaChave = chave("keyPassword", "ANDROID_KEY_SENHA") ?: keystoreSenha
+val temChaveUpload = keystorePath != null && keystoreSenha != null && file(keystorePath).exists()
 
 android {
     namespace = "br.app.iservice.cliente"
@@ -15,7 +34,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "br.app.iservice.cliente"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -29,11 +47,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (temChaveUpload) {
+            create("upload") {
+                storeFile = file(keystorePath!!)
+                storePassword = keystoreSenha
+                keyAlias = aliasChave
+                keyPassword = senhaChave
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (temChaveUpload) {
+                signingConfigs.getByName("upload")
+            } else {
+                logger.warn("iService: chave de upload ausente; release assinado com a chave debug (não serve para a Play Store).")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
