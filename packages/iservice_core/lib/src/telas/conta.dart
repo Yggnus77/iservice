@@ -469,7 +469,6 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
 /// Centros aproximados das regiões, usados quando o usuário não marca o GPS.
 /// (os mesmos do catálogo do banco)
 const _centros = <String, (double, double)>{
-  'vitorino-freire': (-4.2800, -45.2500), // cidade dos testes (MA)
   'asa-sul': (-15.8150, -47.8960), 'asa-norte': (-15.7630, -47.8820), 'sudoeste': (-15.7990, -47.9250),
   'noroeste': (-15.7400, -47.9100), 'lago-sul': (-15.8400, -47.8500), 'lago-norte': (-15.7300, -47.8400),
   'park-way': (-15.8950, -47.9600), 'cruzeiro': (-15.7900, -47.9400), 'guara': (-15.8300, -47.9800),
