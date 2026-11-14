@@ -22,6 +22,7 @@ PROFISSOES = [
   ('dedetizador', 'Dedetizador', 'pest_control', 180, '#8bc34a', '#4e8a1e', ['Baratas e formigas', 'Cupins', 'Ratos', 'Escorpiões', 'Pulgas e carrapatos', 'Mosquitos e pernilongos', 'Percevejos', 'Pombos e morcegos'], ['barata', 'cupim', 'rato', 'escorpião', 'formiga', 'inseto', 'praga', 'dedetização', 'pulga', 'mosquito']),
   ('barbeiro', 'Barbeiro', 'content_cut', 60, '#8d6e63', '#5d4037', ['Corte masculino', 'Barba', 'Corte e barba', 'Corte infantil', 'Pezinho e acabamento', 'Sobrancelha', 'Pigmentação', 'Atendimento para idosos e acamados'], ['cabelo', 'barba', 'corte', 'barbearia', 'cabeleireiro', 'domicílio', 'bigode']),
   ('borracheiro', 'Borracheiro', 'tire_repair', 50, '#607d8b', '#263238', ['Conserto de pneu furado', 'Troca pelo estepe', 'Calibragem e enchimento', 'Pneu de moto', 'Câmara de ar e válvula', 'Socorro na rua ou na estrada', 'Montagem e troca de pneus', 'Pneu de caminhonete e utilitário'], ['pneu', 'pneu furado', 'furo', 'estepe', 'roda', 'calibrar', 'borracharia', 'câmara de ar', 'socorro', 'moto']),
+  ('promotor', 'Promotor de eventos', 'campaign', 150, '#26c6da', '#00838f', ['Promoção em PDV e supermercado', 'Degustação', 'Recepção e hostess', 'Panfletagem e divulgação', 'Staff de eventos', 'Demonstração de produtos', 'Credenciamento e controle de acesso', 'Feiras e exposições'], ['promotor', 'promotora', 'evento', 'festa', 'feira', 'degustação', 'recepção', 'recepcionista', 'hostess', 'panfletagem', 'panfleto', 'staff', 'pdv', 'supermercado', 'ativação', 'divulgação']),
 ]
 EXIGE_ANTECEDENTES = {'baba'}
 CERTIFICACOES = {
@@ -36,6 +37,7 @@ CERTIFICACOES = {
   'dedetizador': ['Licença da Vigilância Sanitária', 'Curso de controle de pragas'],
   'barbeiro': ['Curso de barbeiro'],
   'borracheiro': ['Curso de borracheiro'],
+  'promotor': ['Curso de atendimento ao cliente', 'Curso de promotor de vendas'],
 }
 # (id, nome, uf, faixa de preço 1..5, lat, lng)
 REGIOES = [
