@@ -449,6 +449,69 @@ class EtiquetaStatus extends StatelessWidget {
   }
 }
 
+/// Relógio do tempo de trabalho: conta desde [desde], de segundo em segundo (00:42, 1:05:09).
+class Cronometro extends StatefulWidget {
+  const Cronometro({super.key, required this.desde, this.estilo});
+  final DateTime desde;
+  final TextStyle? estilo;
+
+  @override
+  State<Cronometro> createState() => _CronometroState();
+}
+
+class _CronometroState extends State<Cronometro> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var d = DateTime.now().difference(widget.desde);
+    if (d.isNegative) d = Duration.zero;
+    final h = d.inHours;
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return Text(h > 0 ? '$h:$m:$s' : '$m:$s',
+        style: (widget.estilo ?? const TextStyle()).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+        semanticsLabel: h > 0 ? '$h horas e ${d.inMinutes % 60} minutos' : '${d.inMinutes} minutos');
+  }
+}
+
+/// Faixa "Tempo de trabalho 00:42" mostrada ao cliente e ao profissional enquanto o serviço corre.
+class FaixaTempoDeTrabalho extends StatelessWidget {
+  const FaixaTempoDeTrabalho({super.key, required this.desde, this.rotulo = 'Tempo de trabalho'});
+  final DateTime desde;
+  final String rotulo;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: c.acaoSuave, borderRadius: BorderRadius.circular(Medidas.raioPilula)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Symbols.timer_rounded, size: 18, color: c.acaoTexto),
+        const SizedBox(width: 6),
+        Text('$rotulo ', style: t.labelMedium?.copyWith(color: c.acaoTexto)),
+        Cronometro(desde: desde, estilo: t.labelLarge?.copyWith(color: c.acaoTexto)),
+      ]),
+    );
+  }
+}
+
 /// Contagem regressiva mm:ss até [ate]. Chama [aoAcabar] uma vez.
 class ContagemRegressiva extends StatefulWidget {
   const ContagemRegressiva({super.key, required this.ate, this.estilo, this.aoAcabar});

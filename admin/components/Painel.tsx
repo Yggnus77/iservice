@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
-  ShieldAlert, ShieldCheck, Siren, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound,
+  ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -45,6 +45,7 @@ const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; co
   { href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
   { href: '/emergencias/', rotulo: 'Emergências', icone: <Siren />, contador: (r) => r.emergencias_abertas, alerta: true },
   { href: '/garantia/', rotulo: 'Garantia iService', icone: <ShieldCheck />, contador: (r) => r.reclamacoes_abertas },
+  { href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
   { href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },

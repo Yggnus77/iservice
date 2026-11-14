@@ -46,7 +46,34 @@ class _Conteudo extends ConsumerStatefulWidget {
 class _ConteudoState extends ConsumerState<_Conteudo> {
   bool _ocupado = false;
 
+  /// Pedidos cuja avaliação já abrimos sozinhos nesta sessão (para não insistir).
+  static final _avaliacaoOferecida = <String>{};
+
   Pedido get p => widget.p;
+
+  @override
+  void initState() {
+    super.initState();
+    // Abriu o pedido logo depois de concluído (ex.: pelo aviso): já sobe a avaliação.
+    final recente = p.concluidoEm != null && DateTime.now().difference(p.concluidoEm!) < const Duration(hours: 6);
+    if (p.status == StatusPedido.concluido && !p.avaliado && recente) _oferecerAvaliacao();
+  }
+
+  @override
+  void didUpdateWidget(covariant _Conteudo antigo) {
+    super.didUpdateWidget(antigo);
+    // O profissional acabou de tocar em "Concluir": a avaliação sobe na tela do cliente.
+    if (antigo.p.status != StatusPedido.concluido && p.status == StatusPedido.concluido && !p.avaliado) _oferecerAvaliacao();
+  }
+
+  void _oferecerAvaliacao() {
+    if (!_avaliacaoOferecida.add(p.id)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await context.push('/pedido/${p.id}/avaliar');
+      if (mounted) ref.invalidate(_pedidoBase(p.id));
+    });
+  }
 
   Future<void> _acao(Future<void> Function() f) async {
     setState(() => _ocupado = true);
@@ -320,7 +347,7 @@ class _Cabecalho extends StatelessWidget {
         ('Marcado: ${p.quandoTexto.toLowerCase()}', '$nome confirmou. Avisamos vocês dois na véspera e 1 hora antes.', Symbols.event_available_rounded),
       StatusPedido.aceito => ('$nome aceitou!', 'Ele vai sair para o seu endereço em breve.', Symbols.thumb_up_rounded),
       StatusPedido.aCaminho => ('$nome está a caminho', 'Fique de olho no chat.', Symbols.directions_car_rounded),
-      StatusPedido.emAtendimento => ('Em atendimento', '$nome chegou e começou o serviço.', Symbols.construction_rounded),
+      StatusPedido.emAtendimento => ('Realizando o serviço', '$nome está trabalhando no seu pedido agora.', Symbols.construction_rounded),
       StatusPedido.concluido => ('Serviço concluído', 'Obrigado por usar o iService!', Symbols.task_alt_rounded),
       StatusPedido.recusado when p.agendado => ('$nome não pode nesse horário', 'O pedido foi encerrado e não foi enviado a mais ninguém. Agende outro dia ou escolha outro profissional.', Symbols.event_busy_rounded),
       StatusPedido.recusado => ('$nome não pode atender agora', 'O pedido foi encerrado e não foi enviado a mais ninguém. Escolha outro profissional.', Symbols.event_busy_rounded),
@@ -341,6 +368,13 @@ class _Cabecalho extends StatelessWidget {
       Text(titulo, style: t.headlineSmall, textAlign: TextAlign.center),
       const SizedBox(height: 4),
       Text(texto, style: t.bodyMedium?.copyWith(color: c.textoSuave), textAlign: TextAlign.center),
+      if (p.trabalhoEmCurso) ...[
+        const SizedBox(height: 12),
+        FaixaTempoDeTrabalho(desde: p.inicioDoTrabalho!),
+      ] else if (p.status == StatusPedido.concluido && p.minutosTrabalhados != null) ...[
+        const SizedBox(height: 8),
+        Text('Tempo de trabalho: ${duracaoServico(p.minutosTrabalhados!)}', style: t.labelLarge?.copyWith(color: c.textoSuave)),
+      ],
       if (p.status == StatusPedido.solicitado) ...[
         const SizedBox(height: 12),
         Container(

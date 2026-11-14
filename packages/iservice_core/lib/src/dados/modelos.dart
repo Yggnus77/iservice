@@ -419,6 +419,7 @@ class PerfilProfissional {
     required this.notaMedia,
     required this.totalAvaliacoes,
     required this.servicosConcluidos,
+    this.minutosTrabalhados = 0,
     required this.novo,
     required this.favorito,
     required this.profissoes,
@@ -447,6 +448,7 @@ class PerfilProfissional {
   final double notaMedia;
   final int totalAvaliacoes;
   final int servicosConcluidos;
+  final int minutosTrabalhados;
   final bool novo;
   final String? regiao;
   final DateTime? membroDesde;
@@ -468,6 +470,7 @@ class PerfilProfissional {
         notaMedia: _d(j['nota_media']),
         totalAvaliacoes: j['total_avaliacoes'] ?? 0,
         servicosConcluidos: j['servicos_concluidos'] ?? 0,
+        minutosTrabalhados: (j['minutos_trabalhados'] as num?)?.toInt() ?? 0,
         novo: j['novo'] ?? false,
         regiao: j['regiao'],
         membroDesde: _data(j['membro_desde']),
@@ -549,6 +552,22 @@ enum StatusPedido {
 }
 
 /// Pedido como aparece nas listas (meus_pedidos()) e no acompanhamento.
+/// Nota do cliente dada pelos profissionais.
+class ResumoCliente {
+  const ResumoCliente({required this.nota, required this.total, this.jaAvaliei = false, this.minhaNota});
+  final double nota;
+  final int total;
+  final bool jaAvaliei;
+  final int? minhaNota;
+
+  factory ResumoCliente.fromJson(Map<String, dynamic> j) => ResumoCliente(
+        nota: _d(j['nota_cliente']),
+        total: (j['avaliacoes_cliente'] as num?)?.toInt() ?? 0,
+        jaAvaliei: j['ja_avaliei'] ?? false,
+        minhaNota: (j['minha_nota'] as num?)?.toInt(),
+      );
+}
+
 class Pedido {
   const Pedido({
     required this.id,
@@ -574,6 +593,10 @@ class Pedido {
     this.avaliado = false,
     this.naoLidas = 0,
     this.propostaPara,
+    this.aceitoEm,
+    this.aCaminhoEm,
+    this.iniciadoEm,
+    this.minutosTrabalhados,
   });
   final String id;
   final String codigo;
@@ -600,6 +623,24 @@ class Pedido {
 
   /// Horário sugerido pelo profissional, aguardando o cliente confirmar.
   final DateTime? propostaPara;
+
+  /// Marcos do atendimento (chegam pela linha em tempo real).
+  final DateTime? aceitoEm;
+  final DateTime? aCaminhoEm;
+  final DateTime? iniciadoEm;
+
+  /// Tempo de trabalho registrado pelo banco ao concluir.
+  final int? minutosTrabalhados;
+
+  /// Quando o relógio do trabalho começa: no aceite (agora/hoje) ou ao sair
+  /// para o endereço (agendados). Mesma regra de public.inicio_do_trabalho.
+  DateTime? get inicioDoTrabalho =>
+      quando == QuandoPedido.combinado ? (aCaminhoEm ?? iniciadoEm ?? aceitoEm) : (aceitoEm ?? aCaminhoEm ?? iniciadoEm);
+
+  /// O relógio está correndo (do aceite ou saída até concluir).
+  bool get trabalhoEmCurso =>
+      inicioDoTrabalho != null &&
+      (status == StatusPedido.aCaminho || status == StatusPedido.emAtendimento || (status == StatusPedido.aceito && !agendado));
 
   /// O profissional sugeriu outro horário e agora é a vez do cliente.
   bool get aguardandoCliente => status == StatusPedido.solicitado && propostaPara != null;
@@ -674,6 +715,10 @@ class Pedido {
         avaliado: base?.avaliado ?? false,
         naoLidas: base?.naoLidas ?? 0,
         propostaPara: _data(j['proposta_para']),
+        aceitoEm: _data(j['aceito_em']),
+        aCaminhoEm: _data(j['a_caminho_em']),
+        iniciadoEm: _data(j['iniciado_em']),
+        minutosTrabalhados: (j['minutos_trabalhados'] as num?)?.toInt(),
       );
 }
 

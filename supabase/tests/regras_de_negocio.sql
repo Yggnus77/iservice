@@ -269,6 +269,30 @@ select pg_temp.ok((select total_avaliacoes = 1 and nota_media = 1 and servicos_c
   'avaliação recalcula a nota a partir das avaliações reais');
 select pg_temp.ok((select sum(pontos) from public.pontos where usuario_id = '00000000-0000-0000-0000-0000000000c1') = 10, 'cliente ganha pontos ao concluir');
 
+-- Tempo de trabalho e avaliação do cliente pelo profissional.
+select pg_temp.ok((select minutos_trabalhados >= 1 from public.pedidos where id = (select pedido from t)), 'pedido concluído guarda os minutos trabalhados');
+select pg_temp.ok((select minutos_trabalhados >= 1 from public.profissionais where id = '00000000-0000-0000-0000-0000000000a2'), 'horas trabalhadas somam no profissional');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((public.perfil_profissional('00000000-0000-0000-0000-0000000000a2') ->> 'minutos_trabalhados')::int >= 1, 'cliente vê as horas trabalhadas no perfil');
+do $$ begin
+  perform public.avaliar_cliente((select pedido from t), 5::smallint, 'Eu mesmo');
+  raise exception 'FALHOU: cliente avaliou a si mesmo';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - só o profissional do pedido avalia o cliente';
+end $$;
+select pg_temp.ok(public.resumo_cliente_do_pedido((select pedido from t)) is null, 'cliente não lê o resumo reservado ao profissional');
+select pg_temp.admin();
+select pg_temp.como('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.ok((public.resumo_cliente_do_pedido((select pedido from t)) ->> 'ja_avaliei')::boolean = false, 'profissional ainda não avaliou o cliente');
+select public.avaliar_cliente((select pedido from t), 4::smallint, 'Educado, mas atrasou para abrir o portão');
+select public.avaliar_cliente((select pedido from t), 5::smallint, null);
+select pg_temp.ok((public.resumo_cliente_do_pedido((select pedido from t)) ->> 'minha_nota')::int = 5, 'profissional pode corrigir a nota que deu');
+select pg_temp.admin();
+select pg_temp.ok((select nota_cliente = 5 and avaliacoes_cliente = 1 from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'), 'nota como cliente vira a média das avaliações');
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select count(*) from public.avaliacoes_cliente) = 0, 'cliente não lê os comentários dos profissionais');
+select pg_temp.ok((public.minha_nota_cliente() ->> 'nota_cliente')::numeric = 5, 'cliente vê a própria nota');
+select pg_temp.admin();
+
 -- Recusa e prazo: o pedido encerra e não vai a mais ninguém.
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 truncate t;
@@ -569,5 +593,24 @@ select public.lembrar_agendamentos();
 select public.lembrar_agendamentos();
 select pg_temp.ok((select count(*) = 2 from public.notificacoes where tipo = 'lembrete_agendamento_hora'), 'lembrete 1 hora antes para os dois, uma vez só');
 select pg_temp.ok(public.texto_dia_hora(now() + interval '1 day') like 'amanhã às %', 'texto do dia em português');
+
+-- Painel: ranking de avaliações nos dois sentidos (só a equipe).
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
+do $$ begin
+  perform public.admin_ranking_avaliacoes();
+  raise exception 'FALHOU: cliente viu o ranking do painel';
+exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok - ranking de avaliações é só da equipe';
+end $$;
+select pg_temp.admin();
+update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000c1';
+select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
+select pg_temp.ok((select id from public.admin_ranking_avaliacoes('profissionais', 'melhores') limit 1) is not null, 'painel lista os profissionais mais bem avaliados');
+select pg_temp.ok((select nota from public.admin_ranking_avaliacoes('profissionais', 'piores') limit 1)
+  <= (select nota from public.admin_ranking_avaliacoes('profissionais', 'melhores') limit 1), 'piores avaliados vêm primeiro na ordem inversa');
+select pg_temp.ok((select nota = 5 from public.admin_ranking_avaliacoes('clientes', 'melhores') where id = '00000000-0000-0000-0000-0000000000c1'), 'painel lista os clientes com a nota dada pelos profissionais');
+select pg_temp.ok((select count(*) from public.admin_avaliacoes_recentes() where direcao = 'profissional_avalia') >= 1
+  and (select count(*) from public.admin_avaliacoes_recentes() where direcao = 'cliente_avalia') >= 1, 'avaliações recentes nos dois sentidos');
+select pg_temp.ok((public.admin_resumo_avaliacoes() ->> 'total_clientes')::int >= 1, 'resumo de avaliações do painel');
+select pg_temp.admin();
 
 rollback;

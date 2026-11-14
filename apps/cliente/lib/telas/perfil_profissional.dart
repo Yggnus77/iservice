@@ -99,7 +99,8 @@ class _TelaPerfilProfissionalState extends ConsumerState<TelaPerfilProfissional>
                 child: Row(children: [
                   _Numero(valor: p.novo ? 'Novo' : nota(p.notaMedia), rotulo: p.novo ? 'no iService' : '${p.totalAvaliacoes} avaliações', icone: Symbols.star_rounded),
                   _Numero(valor: '${p.servicosConcluidos}', rotulo: 'serviços', icone: Symbols.task_alt_rounded),
-                  _Numero(valor: '${p.anosExperiencia ?? 0}', rotulo: 'anos de experiência', icone: Symbols.workspace_premium_rounded),
+                  _Numero(valor: horasTrabalhadas(p.minutosTrabalhados), rotulo: 'trabalhadas', icone: Symbols.timer_rounded),
+                  _Numero(valor: '${p.anosExperiencia ?? 0}', rotulo: 'anos de exp.', icone: Symbols.workspace_premium_rounded),
                 ]),
               ),
             ),
