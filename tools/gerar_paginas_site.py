@@ -145,6 +145,12 @@ PROFISSOES = [
          quando=['O pneu furou e você está na rua.', 'Precisa trocar pelo estepe e não tem como.', 'O pneu da moto murchou.'],
          faq=[('O borracheiro vai até onde estou?', 'Sim. O endereço do pedido pode ser onde o carro ou a moto está. "Socorro na rua ou na estrada" é uma especialidade.'),
               ('Atende moto?', 'Sim, quem tem a especialidade "Pneu de moto" no perfil atende.')]),
+    dict(slug='promotor-de-eventos', nome='Promotor de eventos', busca='promotor de eventos', icone='campaign',
+         esp=['Promoção em PDV e supermercado', 'Degustação', 'Recepção e hostess', 'Panfletagem e divulgação', 'Staff de eventos', 'Demonstração de produtos', 'Credenciamento e controle de acesso', 'Feiras e exposições'],
+         abre='Vai fazer uma ação no supermercado, uma degustação ou um evento? Encontre promotores e recepcionistas perto de você em Brasília e no Entorno, com avaliações de outros clientes.',
+         quando=['Sua marca vai fazer degustação ou ação de vendas no supermercado.', 'Precisa de recepção, credenciamento ou staff para um evento ou uma festa.', 'Quer divulgar o seu negócio com panfletagem ou estande em feira.'],
+         faq=[('Como é cobrado o promotor de eventos?', 'O mais comum é por diária, mas cada profissional define o próprio valor e a forma de cobrança. Você vê o preço antes de confirmar, e o app mostra a faixa da sua região como referência.'),
+              ('Dá para contratar mais de um promotor para o mesmo evento?', 'Sim. Cada pedido vai para um profissional que você escolhe, então basta fazer um pedido para cada pessoa da equipe e combinar os detalhes pelo chat.')]),
     dict(slug='maquiadora', nome='Maquiadora', busca='maquiadora', icone='face_retouching_natural',
          esp=['Social', 'Noiva', 'Formatura', 'Penteado', 'Debutante', 'Maquiagem artística'],
          abre='Tem um evento hoje? Encontre uma maquiadora que atende em casa, perto de você em Brasília e no Entorno.',
@@ -291,7 +297,7 @@ def pagina_profissionais(cabeca, rodape):
     url = DOMINIO + 'profissionais.html'
     titulo = 'Trabalhe como autônomo em Brasília: receba clientes perto de você | iService'
     descricao = ('Profissional autônomo em Brasília ou no Entorno? Cadastre-se grátis no iService, defina seu preço e receba '
-                 'pedidos de clientes perto de você. Eletricista, encanador, diarista, chaveiro e mais 15 profissões.')
+                 'pedidos de clientes perto de você. Eletricista, encanador, diarista, chaveiro e mais 16 profissões.')
     faq = [
         ('Quanto custa para o profissional?', 'Nada no lançamento. O cadastro e o uso do app são grátis para profissionais.'),
         ('Quem define o preço do serviço?', 'Você. O app mostra a faixa de preço da região só como referência para o cliente.'),
