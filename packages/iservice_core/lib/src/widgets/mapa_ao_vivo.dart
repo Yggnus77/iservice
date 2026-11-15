@@ -13,10 +13,15 @@ import '../tema/cores.dart';
 import '../tema/tema.dart';
 import 'componentes.dart';
 
-/// Endereço dos "azulejos" do mapa. O padrão é o OpenStreetMap, bom para testes;
-/// no lançamento troque por um provedor com contrato (MapTiler, Stadia, Mapbox)
-/// passando URL_MAPA na compilação.
-const urlMapa = String.fromEnvironment('URL_MAPA', defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+/// Mapa da Stadia Maps (plano comercial, escolhido em 14/11/2026). Na web a conta autoriza o
+/// domínio iservice.app.br, então não vai chave; no Android/iPhone a chave entra na compilação
+/// por CHAVE_MAPA (segredo STADIA_API_KEY no GitHub). URL_MAPA troca o provedor inteiro, se preciso.
+const _chaveMapa = String.fromEnvironment('CHAVE_MAPA');
+const urlMapa = String.fromEnvironment('URL_MAPA',
+    defaultValue: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png${_chaveMapa == '' ? '' : '?api_key=$_chaveMapa'}');
+
+/// Crédito exigido pelos termos dos mapas.
+const creditoMapa = SimpleAttributionWidget(source: Text('© Stadia Maps © OpenMapTiles © OpenStreetMap'));
 
 final _posicaoProvider = StreamProvider.autoDispose.family<PosicaoAoVivo?, String>(
   (ref, pedidoId) => ref.read(pedidosRepo).posicaoAoVivo(pedidoId),
@@ -91,7 +96,7 @@ class _MapaAoVivoState extends ConsumerState<MapaAoVivo> {
                     interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                   ),
                   children: [
-                    TileLayer(urlTemplate: urlMapa, userAgentPackageName: 'br.app.iservice'),
+                    TileLayer(urlTemplate: urlMapa, userAgentPackageName: 'br.app.iservice', retinaMode: RetinaMode.isHighDensity(context)),
                     PolylineLayer(polylines: [
                       Polyline(
                         points: [LatLng(pos.lat, pos.lng), LatLng(pos.destinoLat, pos.destinoLng)],
@@ -122,7 +127,7 @@ class _MapaAoVivoState extends ConsumerState<MapaAoVivo> {
                         ),
                       ),
                     ]),
-                    const SimpleAttributionWidget(source: Text('OpenStreetMap')),
+                    creditoMapa,
                   ],
                 ),
         ),

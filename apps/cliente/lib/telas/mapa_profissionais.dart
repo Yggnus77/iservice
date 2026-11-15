@@ -157,7 +157,7 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
               interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
             ),
             children: [
-              TileLayer(urlTemplate: urlMapa, userAgentPackageName: 'br.app.iservice'),
+              TileLayer(urlTemplate: urlMapa, userAgentPackageName: 'br.app.iservice', retinaMode: RetinaMode.isHighDensity(context)),
               MarkerLayer(markers: [
                 Marker(point: LatLng(local.lat, local.lng), width: 40, height: 40, child: const _VoceAqui()),
                 for (final p in profissionais)
@@ -188,7 +188,7 @@ class _TelaMapaProfissionaisState extends ConsumerState<TelaMapaProfissionais> {
                     ),
                   ),
               ]),
-              const SimpleAttributionWidget(source: Text('OpenStreetMap')),
+              creditoMapa,
             ],
           ),
         ),
