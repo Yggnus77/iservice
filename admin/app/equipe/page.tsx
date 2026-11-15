@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Crown, Hourglass, KeyRound, Loader2, Mail, MailCheck, MessageCircle, ShieldCheck, Trash2, UserPlus, UsersRound } from 'lucide-react';
-import { Cabecalho } from '@/components/Painel';
+import { Camera, Copy, Crown, Hourglass, KeyRound, Loader2, Mail, MailCheck, MessageCircle, ShieldCheck, Trash2, UserPlus, UsersRound } from 'lucide-react';
+import { Cabecalho, usePainel } from '@/components/Painel';
+import { DialogoFoto } from '@/components/FotoPerfil';
 import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
 import { rpc } from '@/lib/supabase';
 import { data, haQuanto } from '@/lib/formatos';
@@ -54,6 +55,10 @@ export default function Equipe() {
   const [email, setEmail] = useState('');
   const [enviar, setEnviar] = useState<{ nome: string; email: string; situacao: Membro['situacao']; novo?: boolean } | null>(null);
   const [remover, setRemover] = useState<Membro | null>(null);
+  const [foto, setFoto] = useState<Membro | null>(null);
+  const painel = usePainel();
+  // A própria foto sempre; a de um colega só depois do primeiro acesso, e a do dono só ele mesmo.
+  const podeFoto = (m: Membro) => !!m.usuario_id && (m.voce || (m.papel !== 'dono' && m.situacao === 'ativo'));
 
   const ativos = dados?.filter((m) => m.situacao === 'ativo').length ?? 0;
   const pendentes = dados?.filter((m) => m.situacao === 'convite_pendente').length ?? 0;
@@ -101,7 +106,7 @@ export default function Equipe() {
                   <tbody>
                     {dados.map((m) => (
                       <tr key={m.email}>
-                        <td><Pessoa nome={m.voce ? `${m.nome} (você)` : m.nome} foto={m.foto_url} sub={m.email} /></td>
+                        <td><Pessoa nome={m.voce ? `${m.nome} (você)` : m.nome} foto={m.voce ? painel.foto : m.foto_url} sub={m.email} /></td>
                         <td>
                           <div className="linha-flex" style={{ gap: 6 }}>
                             {m.papel === 'dono' ? <Selo tom="azul" icone={<Crown />}>Dono</Selo> : null}
@@ -112,6 +117,12 @@ export default function Equipe() {
                         <td className="fraco" style={{ whiteSpace: 'nowrap' }}>{m.ultimo_acesso ? haQuanto(m.ultimo_acesso) : 'Nunca'}</td>
                         <td>
                           <div className="linha-flex" style={{ gap: 6, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+                            {podeFoto(m) ? (
+                              <button className="botao contorno pequeno" onClick={() => setFoto(m)}
+                                title={m.voce ? 'Sua foto de perfil' : `Foto de perfil de ${m.nome}`} aria-label={m.voce ? 'Trocar sua foto de perfil' : `Trocar a foto de ${m.nome}`}>
+                                <Camera /> Foto
+                              </button>
+                            ) : null}
                             {m.papel !== 'dono' ? (
                               <button className="botao contorno pequeno" onClick={() => setEnviar(m)} title="Mandar as instruções de acesso">
                                 <MailCheck /> {m.situacao === 'ativo' ? 'Instruções' : 'Reenviar'}
@@ -175,6 +186,11 @@ export default function Equipe() {
         rodape={<button className="botao primario" onClick={() => setEnviar(null)}>Concluir</button>}>
         {enviar ? <Compartilhar m={enviar} /> : null}
       </Dialogo>
+
+      <DialogoFoto
+        pessoa={foto?.usuario_id ? { id: foto.usuario_id, nome: foto.nome, foto: foto.voce ? painel.foto : foto.foto_url } : null}
+        propria={!!foto?.voce} fechar={() => setFoto(null)}
+        salvo={(url) => { if (foto?.voce) painel.mudarFoto(url); recarregar(); }} />
 
       <Dialogo aberto={!!remover} fechar={() => setRemover(null)} icone={<Trash2 />}
         titulo={remover?.situacao === 'ativo' ? `Remover ${remover?.nome} da equipe?` : `Cancelar o convite de ${remover?.nome}?`}

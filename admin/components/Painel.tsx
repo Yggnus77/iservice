@@ -6,10 +6,11 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
-  ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound,
+  ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
+import { DialogoFoto } from './FotoPerfil';
 
 export type Resumo = {
   dia: string;
@@ -35,8 +36,11 @@ export type Resumo = {
   profissionais_por_profissao: { id: string; nome: string; ativa: boolean; aprovados: number; em_analise: number }[];
 };
 
-type Ctx = { resumo: Resumo | null; atualizarResumo: () => void; usuarioId: string; nome: string };
-const PainelCtx = createContext<Ctx>({ resumo: null, atualizarResumo: () => {}, usuarioId: '', nome: '' });
+type Ctx = {
+  resumo: Resumo | null; atualizarResumo: () => void; usuarioId: string; nome: string;
+  foto: string | null; mudarFoto: (url: string | null) => void;
+};
+const PainelCtx = createContext<Ctx>({ resumo: null, atualizarResumo: () => {}, usuarioId: '', nome: '', foto: null, mudarFoto: () => {} });
 export const usePainel = () => useContext(PainelCtx);
 
 const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; contador?: (r: Resumo) => number; alerta?: boolean }[] = [
@@ -252,6 +256,8 @@ export default function Painel({ children }: { children: ReactNode }) {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined);
   const [acesso, setAcesso] = useState<'verificando' | 'ok' | 'nao_admin' | 'sql_pendente'>('verificando');
   const [nome, setNome] = useState('');
+  const [foto, setFoto] = useState<string | null>(null);
+  const [editarFoto, setEditarFoto] = useState(false);
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [menuAberto, setMenuAberto] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
@@ -279,8 +285,9 @@ export default function Painel({ children }: { children: ReactNode }) {
       try {
         const admin = await rpc<boolean>('e_admin');
         if (!admin) { setAcesso('nao_admin'); return; }
-        const { data } = await db().from('perfis').select('nome').eq('id', sessao.user.id).maybeSingle();
+        const { data } = await db().from('perfis').select('nome, foto_url').eq('id', sessao.user.id).maybeSingle();
         setNome(data?.nome || sessao.user.email || '');
+        setFoto(data?.foto_url || null);
         const r = await rpc<Resumo>('admin_resumo');
         setResumo(r);
         setAcesso('ok');
@@ -308,7 +315,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   if (acesso !== 'ok') return <SemAcesso motivo={acesso} sair={sair} />;
 
   return (
-    <PainelCtx.Provider value={{ resumo, atualizarResumo, usuarioId: sessao.user.id, nome }}>
+    <PainelCtx.Provider value={{ resumo, atualizarResumo, usuarioId: sessao.user.id, nome, foto, mudarFoto: setFoto }}>
       <Avisos>
         <div className="casca">
           {menuAberto ? <div className="veu" onClick={() => setMenuAberto(false)} /> : null}
@@ -333,7 +340,11 @@ export default function Painel({ children }: { children: ReactNode }) {
               })}
             </nav>
             <div className="rodape">
-              <Avatar nome={nome} tamanho={34} />
+              <button className="avatar-botao" onClick={() => setEditarFoto(true)}
+                title={foto ? 'Trocar sua foto' : 'Colocar sua foto'} aria-label={foto ? 'Trocar sua foto de perfil' : 'Colocar sua foto de perfil'}>
+                <Avatar nome={nome} foto={foto} tamanho={34} />
+                <span className="lapis"><Camera /></span>
+              </button>
               <div className="quem"><strong>{nome}</strong><span>Equipe iService</span></div>
               <button onClick={sair} title="Sair" aria-label="Sair"><LogOut size={16} /></button>
             </div>
@@ -348,6 +359,8 @@ export default function Painel({ children }: { children: ReactNode }) {
             {children}
           </main>
         </div>
+        <DialogoFoto pessoa={editarFoto ? { id: sessao.user.id, nome, foto } : null} propria
+          fechar={() => setEditarFoto(false)} salvo={setFoto} />
       </Avisos>
     </PainelCtx.Provider>
   );
