@@ -159,3 +159,103 @@ const METRICAS = {
     gaveta.querySelectorAll('a').forEach((a) => a.addEventListener('click', fechar));
   }
 })();
+
+// "Por dentro da plataforma": abas Clientes/Profissionais e carrossel de telas reais.
+(function () {
+  const secao = document.getElementById('por-dentro');
+  if (!secao) return;
+  const DURACAO = 6000;
+  const reduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let visivel = false;
+
+  const carrosseis = [...secao.querySelectorAll('[data-carrossel]')].map((painel) => {
+    const telas = [...painel.querySelectorAll('.tela')];
+    const passos = [...painel.querySelectorAll('.telas-passos li')];
+    const pontos = [...painel.querySelectorAll('.pontos button')];
+    const pausa = painel.querySelector('[data-pausa]');
+    const total = telas.length;
+    let atual = 0, timer = null, pausado = reduzido, sobre = false;
+
+    const parar = () => { clearTimeout(timer); timer = null; };
+    const podeRodar = () => !pausado && !sobre && visivel && !painel.hidden;
+    const barra = () => {
+      painel.querySelectorAll('.barra').forEach((b) => b.classList.remove('correndo'));
+      if (!podeRodar()) return;
+      const b = passos[atual].querySelector('.barra');
+      void b.offsetWidth; // reinicia a animação
+      b.style.setProperty('--duracao', `${DURACAO}ms`);
+      b.classList.add('correndo');
+    };
+    const agendar = () => {
+      parar();
+      barra();
+      if (podeRodar()) timer = setTimeout(() => ir(atual + 1), DURACAO);
+    };
+    function ir(i) {
+      atual = (i + total) % total;
+      telas.forEach((t, k) => { t.classList.toggle('ativa', k === atual); t.setAttribute('aria-hidden', String(k !== atual)); });
+      passos.forEach((p, k) => {
+        p.classList.toggle('ativo', k === atual);
+        const b = p.querySelector('button');
+        if (k === atual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      });
+      pontos.forEach((p, k) => { if (k === atual) p.setAttribute('aria-current', 'step'); else p.removeAttribute('aria-current'); });
+      agendar();
+    }
+    const mostrarPausa = () => {
+      painel.classList.toggle('pausado', pausado);
+      pausa.querySelector('.ms').textContent = pausado ? 'play_arrow' : 'pause';
+      pausa.setAttribute('aria-label', pausado ? 'Retomar a troca automática' : 'Pausar a troca automática');
+    };
+
+    painel.querySelectorAll('[data-ir]').forEach((b) => b.addEventListener('click', () => ir(Number(b.dataset.ir))));
+    painel.querySelector('[data-anterior]').addEventListener('click', () => ir(atual - 1));
+    painel.querySelector('[data-proximo]').addEventListener('click', () => ir(atual + 1));
+    pausa.addEventListener('click', () => { pausado = !pausado; mostrarPausa(); agendar(); });
+    const celular = painel.querySelector('.telas-celular');
+    celular.addEventListener('mouseenter', () => { sobre = true; agendar(); });
+    celular.addEventListener('mouseleave', () => { sobre = false; agendar(); });
+
+    // Arrastar a tela para o lado troca de passo (celular).
+    const moldura = painel.querySelector('.moldura');
+    let x0 = null;
+    moldura.addEventListener('pointerdown', (e) => { x0 = e.clientX; });
+    moldura.addEventListener('pointerup', (e) => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) ir(atual + (dx < 0 ? 1 : -1));
+    });
+    moldura.addEventListener('pointercancel', () => { x0 = null; });
+
+    mostrarPausa();
+    return { painel, ir: () => ir(0), agendar, parar };
+  });
+
+  // Abas acessíveis: clique e setas do teclado.
+  const abas = [...secao.querySelectorAll('[role="tab"]')];
+  const escolher = (aba, foco) => {
+    abas.forEach((a) => {
+      const sel = a === aba;
+      a.setAttribute('aria-selected', String(sel));
+      a.tabIndex = sel ? 0 : -1;
+      document.getElementById(a.getAttribute('aria-controls')).hidden = !sel;
+    });
+    carrosseis.forEach((c) => (c.painel.hidden ? c.parar() : c.ir()));
+    if (foco) aba.focus();
+  };
+  abas.forEach((a, i) => {
+    a.addEventListener('click', () => escolher(a));
+    a.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); escolher(abas[(i + d + abas.length) % abas.length], true); }
+    });
+  });
+
+  // Só troca sozinho quando a seção está na tela.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => {
+      visivel = e.isIntersecting;
+      carrosseis.forEach((c) => c.agendar());
+    }, { threshold: 0.35 }).observe(secao);
+  }
+})();
