@@ -399,7 +399,7 @@ class _Cabecalho extends StatelessWidget {
                   decoration: BoxDecoration(color: i <= idx ? c.acao : c.linha, borderRadius: BorderRadius.circular(6)),
                 ),
                 const SizedBox(height: 6),
-                Text(_etapas[i].rotulo.replaceFirst('Aguardando resposta', 'Solicitado'), style: t.labelSmall?.copyWith(color: i <= idx ? c.acaoTexto : c.textoSuave, fontSize: 10), textAlign: TextAlign.center),
+                Text(_rotuloEtapa(_etapas[i]), style: t.labelSmall?.copyWith(color: i <= idx ? c.acaoTexto : c.textoSuave, fontSize: 10), textAlign: TextAlign.center),
               ]),
             ),
             if (i < _etapas.length - 1) const SizedBox(width: 4),
@@ -434,3 +434,10 @@ class _Linha extends StatelessWidget {
     );
   }
 }
+
+/// Rótulos curtos da barra de etapas: cada um cabe em ~60 px sem quebrar no meio da palavra.
+String _rotuloEtapa(StatusPedido s) => switch (s) {
+      StatusPedido.solicitado => 'Solicitado',
+      StatusPedido.emAtendimento => 'Em serviço',
+      _ => s.rotulo,
+    };

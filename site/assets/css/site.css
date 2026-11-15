@@ -702,3 +702,72 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .qs-essencia { margin-top: 30px !important; padding: 26px 28px; border-radius: var(--raio); background: var(--azul-claro); border-left: 5px solid var(--azul); font-size: 19px !important; font-weight: 700; color: var(--tinta); line-height: 1.45; }
 .qs-essencia span { display: block; margin-top: 10px; font-size: 16px; font-weight: 600; color: var(--azul); }
 @media (max-width: 860px) { .qs-historia .cabeca { position: static; } }
+
+/* Por dentro da plataforma: carrossel de telas reais (clientes e profissionais) */
+.telas { background: radial-gradient(120% 90% at 85% 0%, #17407F 0%, var(--marinho) 55%, #071530 100%); color: #C9D6EA; overflow: hidden; }
+.telas .cabeca h2 { color: #fff; }
+.telas .cabeca p { color: #C9D6EA; }
+.telas .cabeca .etiqueta { color: #8FB6FF; }
+.telas-abas { display: flex; width: max-content; max-width: 100%; margin: -16px auto 48px; padding: 5px; gap: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); }
+.telas-abas button { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; border: 0; border-radius: 999px; padding: 11px 20px; font: 700 15px/1 var(--fonte); color: #C9D6EA; background: transparent; cursor: pointer; transition: background .25s, color .25s; }
+.telas-abas button .ms { font-size: 20px; }
+.telas-abas button:hover { color: #fff; }
+.telas-abas button[aria-selected="true"] { background: #fff; color: var(--azul); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .5); }
+#aba-profissionais[aria-selected="true"] { color: #C25E00; }
+
+.telas-painel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "celular passos" "celular controles"; grid-template-rows: auto 1fr; column-gap: 72px; align-items: start; max-width: 1000px; margin-inline: auto; }
+.telas-celular { grid-area: celular; justify-self: end; position: relative; }
+.telas-celular::before { content: ""; position: absolute; inset: 12% -18% 8%; background: radial-gradient(closest-side, rgba(61, 139, 255, .45), transparent); filter: blur(10px); z-index: 0; }
+.telas-painel#telas-profissionais .telas-celular::before { background: radial-gradient(closest-side, rgba(255, 138, 0, .35), transparent); }
+.moldura { position: relative; z-index: 1; width: 300px; aspect-ratio: 390 / 844; box-sizing: content-box; border: 10px solid #0B1220; border-radius: 48px; background: #0B1220; box-shadow: 0 0 0 1.5px #2A3A57, 0 40px 80px -30px rgba(0, 0, 0, .7); overflow: hidden; touch-action: pan-y; }
+.telas-imgs { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; border-radius: 38px; overflow: hidden; background: #F4F7FC; }
+.tela { position: absolute; inset: 0; opacity: 0; transform: scale(1.015); transition: opacity .45s ease, transform .6s ease; }
+.tela.ativa { opacity: 1; transform: none; }
+.tela img { width: 100%; height: 100%; object-fit: cover; }
+
+.telas-passos { grid-area: passos; list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: none; }
+.telas-passos button { position: relative; overflow: hidden; display: grid; grid-template-columns: 36px 1fr; gap: 14px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid transparent; border-radius: 16px; background: transparent; color: inherit; font: inherit; cursor: pointer; transition: background .25s, border-color .25s; }
+.telas-passos button:hover { background: rgba(255, 255, 255, .05); }
+.telas-passos .num { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #8FB6FF; border: 1.5px solid rgba(143, 182, 255, .4); transition: background .25s, color .25s, border-color .25s; }
+.telas-passos .txt b { display: block; color: #fff; font-size: 17px; font-weight: 700; line-height: 1.3; margin-top: 6px; }
+.telas-passos .txt span { display: block; max-height: 0; overflow: hidden; opacity: 0; font-size: 15px; line-height: 1.55; transition: max-height .4s ease, opacity .3s ease, margin .3s ease; }
+.telas-passos .ativo button { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .14); }
+.telas-passos .ativo .num { background: var(--azul); border-color: var(--azul); color: #fff; }
+#telas-profissionais .telas-passos .ativo .num { background: var(--laranja); border-color: var(--laranja); }
+#telas-profissionais .telas-passos .num { color: #FFC27A; border-color: rgba(255, 194, 122, .45); }
+.telas-passos .ativo .txt span { max-height: 8em; opacity: 1; margin-top: 4px; }
+.telas-passos .barra { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: #8FB6FF; }
+#telas-profissionais .telas-passos .barra { background: #FFC27A; }
+.telas-passos .ativo .barra.correndo { animation: barra-tela var(--duracao, 6s) linear forwards; }
+.telas-painel.pausado .telas-passos .barra.correndo { animation-play-state: paused; }
+@keyframes barra-tela { to { width: 100%; } }
+
+.telas-controles { grid-area: controles; display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-left: 16px; }
+.telas-controles .seta, .telas-controles .pausa { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); color: #fff; cursor: pointer; transition: background .2s; }
+.telas-controles .seta:hover, .telas-controles .pausa:hover { background: rgba(255, 255, 255, .14); }
+.telas-controles .pausa { margin-left: auto; }
+.pontos { display: flex; gap: 2px; }
+.pontos button { width: 24px; height: 44px; border: 0; padding: 0; background: transparent; cursor: pointer; position: relative; }
+.pontos button::after { content: ""; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 99px; background: rgba(255, 255, 255, .3); transition: width .3s, margin .3s, background .3s; }
+.pontos button[aria-current="step"]::after { width: 20px; margin-left: -10px; background: #fff; }
+.telas-nota { text-align: center; margin-top: 48px; font-size: 13.5px; color: #8EA3C4; }
+
+@media (max-width: 860px) {
+  .telas-painel { grid-template-columns: 1fr; grid-template-areas: "celular" "passos" "controles"; row-gap: 0; }
+  .telas-celular { justify-self: center; }
+  .moldura { width: min(280px, 68vw); border-width: 8px; border-radius: 42px; }
+  .telas-imgs { border-radius: 34px; }
+  .telas-passos { margin-top: 28px; min-height: 9.5em; }
+  .telas-passos li:not(.ativo) { display: none; }
+  .telas-passos button { background: transparent !important; border-color: transparent !important; text-align: center; grid-template-columns: 1fr; justify-items: center; gap: 8px; padding: 0 4px; cursor: default; }
+  .telas-passos .barra { display: none; }
+  .telas-controles { justify-content: center; padding-left: 0; margin-top: 8px; }
+  .telas-controles .pausa { margin-left: 0; }
+  .telas-abas { margin-bottom: 36px; }
+  .telas-abas button { padding: 11px 16px; font-size: 14px; }
+}
+@media (max-width: 440px) { .telas-abas button .ms { display: none; } .telas-abas button { padding: 11px 15px; } }
+@media (prefers-reduced-motion: reduce) {
+  .tela, .telas-passos .txt span { transition: none; }
+  .telas-passos .barra { display: none; }
+}

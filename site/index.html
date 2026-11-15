@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=ac_unit,add,arrow_forward,article,badge,bar_chart,battery_full,bolt,calendar_today,campaign,car_repair,chair,chat,check_circle,child_care,cleaning_services,close,construction,content_cut,download,emoji_events,expand_more,face_retouching_natural,favorite,format_paint,gpp_good,handyman,home,how_to_reg,inbox,info,key,local_shipping,location_on,mail,menu,more_horiz,near_me,notifications,open_in_browser,payments,person,person_check,person_search,pest_control,pets,photo_library,plumbing,receipt_long,reviews,schedule,search,sell,share_location,signal_cellular_alt,sos,star,tire_repair,toggle_on,touch_app,verified,verified_user,weekend,wifi,workspace_premium,yard&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=ac_unit,add,arrow_forward,article,badge,bar_chart,battery_full,bolt,calendar_today,campaign,car_repair,chair,chat,check_circle,chevron_left,chevron_right,child_care,cleaning_services,close,construction,content_cut,download,emoji_events,expand_more,face_retouching_natural,favorite,format_paint,gpp_good,handyman,home,how_to_reg,inbox,info,key,local_shipping,location_on,mail,menu,more_horiz,near_me,notifications,open_in_browser,pause,payments,person,person_check,person_search,pest_control,pets,photo_library,play_arrow,plumbing,receipt_long,reviews,schedule,search,sell,share_location,signal_cellular_alt,sos,star,tire_repair,toggle_on,touch_app,verified,verified_user,weekend,wifi,workspace_premium,yard&display=block">
 <link rel="stylesheet" href="assets/css/site.css">
 <script type="application/ld+json">
 {
@@ -225,6 +225,75 @@
       <li class="passo"><span class="bola"><span class="ms">near_me</span></span><div><h3>Contrate</h3><p>O pedido vai só para quem você escolheu. Converse pelo chat e acompanhe a chegada.</p></div></li>
       <li class="passo"><span class="bola"><span class="ms">star</span></span><div><h3>Avalie</h3><p>Conte como foi, com nota e foto. Sua avaliação ajuda os melhores a aparecerem primeiro.</p></div></li>
     </ol>
+  </div>
+</section>
+
+<section class="secao telas" id="por-dentro" aria-labelledby="titulo-telas">
+  <div class="envolve">
+    <div class="cabeca centro">
+      <span class="etiqueta">Por dentro da plataforma</span>
+      <h2 id="titulo-telas">Veja o iService funcionando, tela por tela</h2>
+      <p>O cliente escolhe, o profissional atende e a plataforma acompanha os dois lados, do pedido até a avaliação.</p>
+    </div>
+    <div class="telas-abas" role="tablist" aria-label="Escolha o lado da plataforma">
+      <button type="button" role="tab" id="aba-clientes" aria-controls="telas-clientes" aria-selected="true"><span class="ms">person_search</span> Para clientes</button>
+      <button type="button" role="tab" id="aba-profissionais" aria-controls="telas-profissionais" aria-selected="false" tabindex="-1"><span class="ms">construction</span> Para profissionais</button>
+    </div>
+    <div class="telas-painel" id="telas-clientes" role="tabpanel" aria-labelledby="aba-clientes" data-carrossel>
+      <div class="telas-celular">
+        <div class="moldura">
+          <ul class="telas-imgs">
+          <li class="tela ativa"><img src="assets/img/telas/c-inicio.webp" srcset="assets/img/telas/c-inicio.webp 1x, assets/img/telas/c-inicio@2x.webp 2x" width="390" height="844" decoding="async" alt="Tela inicial do app Cliente com busca, botão de urgência 24h, categorias e o Top da sua região"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/c-mapa.webp" srcset="assets/img/telas/c-mapa.webp 1x, assets/img/telas/c-mapa@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Mapa com eletricistas próximos e a lista dos mais bem avaliados"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/c-perfil.webp" srcset="assets/img/telas/c-perfil.webp 1x, assets/img/telas/c-perfil@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Perfil do eletricista com nota 4,9, horas trabalhadas, documento conferido e preços por especialidade"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/c-caminho.webp" srcset="assets/img/telas/c-caminho.webp 1x, assets/img/telas/c-caminho@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Pedido com o profissional a caminho no mapa e o tempo estimado de chegada"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/c-servico.webp" srcset="assets/img/telas/c-servico.webp 1x, assets/img/telas/c-servico@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Pedido em atendimento com o aviso Realizando o serviço e o tempo de trabalho"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/c-avaliar.webp" srcset="assets/img/telas/c-avaliar.webp 1x, assets/img/telas/c-avaliar@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Tela de avaliação com cinco estrelas e um comentário do cliente"></li>
+          </ul>
+        </div>
+      </div>
+      <ol class="telas-passos">
+        <li class="ativo"><button type="button" data-ir="0" aria-current="step"><span class="num">1</span><span class="txt"><b>Diga do que precisa</b><span>Na tela inicial você escolhe a profissão ou busca o serviço. Os mais bem avaliados da sua região aparecem primeiro.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="1"><span class="num">2</span><span class="txt"><b>Veja quem está perto</b><span>O mapa mostra os profissionais disponíveis perto do seu endereço, com nota, distância e o botão para chamar.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="2"><span class="num">3</span><span class="txt"><b>Compare e escolha</b><span>Avaliações, serviços feitos, tempo de resposta, preço médio de cada serviço e a faixa comum da região, tudo antes de chamar.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="3"><span class="num">4</span><span class="txt"><b>Acompanhe a chegada</b><span>O pedido vai só para quem você escolheu. Quando ele sai, você vê no mapa onde ele está e quanto falta para chegar.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="4"><span class="num">5</span><span class="txt"><b>Serviço em andamento</b><span>A plataforma mostra "Realizando o serviço" e o tempo de trabalho. Chat, compartilhamento e botão de emergência ficam à mão.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="5"><span class="num">6</span><span class="txt"><b>Avalie como foi</b><span>No fim, você dá nota, comenta e pode mandar fotos. Sua avaliação ajuda os melhores a aparecerem primeiro.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+      </ol>
+      <div class="telas-controles">
+        <button type="button" class="seta" data-anterior aria-label="Tela anterior"><span class="ms">chevron_left</span></button>
+        <div class="pontos"><button type="button" data-ir="0" aria-label="Passo 1: Diga do que precisa" aria-current="step"></button><button type="button" data-ir="1" aria-label="Passo 2: Veja quem está perto"></button><button type="button" data-ir="2" aria-label="Passo 3: Compare e escolha"></button><button type="button" data-ir="3" aria-label="Passo 4: Acompanhe a chegada"></button><button type="button" data-ir="4" aria-label="Passo 5: Serviço em andamento"></button><button type="button" data-ir="5" aria-label="Passo 6: Avalie como foi"></button></div>
+        <button type="button" class="seta" data-proximo aria-label="Próxima tela"><span class="ms">chevron_right</span></button>
+        <button type="button" class="pausa" data-pausa aria-label="Pausar a troca automática"><span class="ms">pause</span></button>
+      </div>
+    </div>
+    <div class="telas-painel" id="telas-profissionais" role="tabpanel" aria-labelledby="aba-profissionais" data-carrossel hidden>
+      <div class="telas-celular">
+        <div class="moldura">
+          <ul class="telas-imgs">
+          <li class="tela ativa"><img src="assets/img/telas/p-inicio.webp" srcset="assets/img/telas/p-inicio.webp 1x, assets/img/telas/p-inicio@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Painel do profissional com modo disponível ligado e um chamado novo de chuveiro elétrico"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/p-pedido-novo.webp" srcset="assets/img/telas/p-pedido-novo.webp 1x, assets/img/telas/p-pedido-novo@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Detalhe de um pedido novo com a descrição do problema e os botões Aceitar e Recusar"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/p-servico.webp" srcset="assets/img/telas/p-servico.webp 1x, assets/img/telas/p-servico@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Atendimento em andamento com as etapas, o tempo de trabalho e o botão Concluir serviço"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/p-agenda.webp" srcset="assets/img/telas/p-agenda.webp 1x, assets/img/telas/p-agenda@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Agenda com os atendimentos de hoje, amanhã e da próxima semana"></li>
+          <li class="tela" aria-hidden="true"><img src="assets/img/telas/p-ganhos.webp" srcset="assets/img/telas/p-ganhos.webp 1x, assets/img/telas/p-ganhos@2x.webp 2x" width="390" height="844" loading="lazy" decoding="async" alt="Tela de ganhos com o total da semana, gráfico por dia e o limite do MEI"></li>
+          </ul>
+        </div>
+      </div>
+      <ol class="telas-passos">
+        <li class="ativo"><button type="button" data-ir="0" aria-current="step"><span class="num">1</span><span class="txt"><b>Fique disponível</b><span>Ligue o modo disponível e receba chamados da sua região. Na tela inicial você vê o pedido novo e o tempo para responder.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="1"><span class="num">2</span><span class="txt"><b>Receba o pedido</b><span>Cada pedido chega só para você, com o serviço, o endereço e a nota do cliente. Aceite, recuse ou sugira outro horário.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="2"><span class="num">3</span><span class="txt"><b>Atenda com cronômetro</b><span>Do aceite até concluir, o cronômetro marca o seu tempo de trabalho e o cliente acompanha cada etapa.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="3"><span class="num">4</span><span class="txt"><b>Organize a agenda</b><span>Os atendimentos dos próximos 7 dias ficam em ordem, com horário, distância e endereço de cada cliente.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+        <li><button type="button" data-ir="4"><span class="num">5</span><span class="txt"><b>Acompanhe seus ganhos</b><span>Veja quanto ganhou no dia, na semana e no ano, com o limite do MEI sempre à vista.</span></span><i class="barra" aria-hidden="true"></i></button></li>
+      </ol>
+      <div class="telas-controles">
+        <button type="button" class="seta" data-anterior aria-label="Tela anterior"><span class="ms">chevron_left</span></button>
+        <div class="pontos"><button type="button" data-ir="0" aria-label="Passo 1: Fique disponível" aria-current="step"></button><button type="button" data-ir="1" aria-label="Passo 2: Receba o pedido"></button><button type="button" data-ir="2" aria-label="Passo 3: Atenda com cronômetro"></button><button type="button" data-ir="3" aria-label="Passo 4: Organize a agenda"></button><button type="button" data-ir="4" aria-label="Passo 5: Acompanhe seus ganhos"></button></div>
+        <button type="button" class="seta" data-proximo aria-label="Próxima tela"><span class="ms">chevron_right</span></button>
+        <button type="button" class="pausa" data-pausa aria-label="Pausar a troca automática"><span class="ms">pause</span></button>
+      </div>
+    </div>
+    <p class="telas-nota">Telas reais da plataforma, com pessoas e dados ilustrativos.</p>
   </div>
 </section>
 
