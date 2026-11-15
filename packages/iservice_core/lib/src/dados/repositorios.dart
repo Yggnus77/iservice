@@ -482,6 +482,22 @@ class PedidosRepo {
   Future<void> avaliar(String pedidoId, int nota, {String? comentario, List<String> fotos = const []}) =>
       _tentar(() => _db.rpc('avaliar_pedido', params: {'p_pedido': pedidoId, 'p_nota': nota, 'p_comentario': comentario, 'p_fotos': fotos}));
 
+  /// O profissional avalia o cliente do pedido (1 a 5 estrelas; o comentário só a equipe vê).
+  Future<void> avaliarCliente(String pedidoId, int nota, {String? comentario}) =>
+      _tentar(() => _db.rpc('avaliar_cliente', params: {'p_pedido': pedidoId, 'p_nota': nota, 'p_comentario': comentario}));
+
+  /// Para o profissional do pedido: nota do cliente e se já o avaliou.
+  Future<ResumoCliente?> resumoCliente(String pedidoId) => _tentar(() async {
+        final r = await _db.rpc('resumo_cliente_do_pedido', params: {'p_pedido': pedidoId});
+        return r == null ? null : ResumoCliente.fromJson(r as Map<String, dynamic>);
+      });
+
+  /// A nota do próprio cliente (perfil do app Cliente).
+  Future<ResumoCliente?> minhaNotaCliente() => _tentar(() async {
+        final r = await _db.rpc('minha_nota_cliente');
+        return r == null ? null : ResumoCliente.fromJson(r as Map<String, dynamic>);
+      });
+
   Future<void> emergencia({String? pedidoId, double? lat, double? lng}) =>
       _tentar(() => _db.rpc('acionar_emergencia', params: {'p_pedido': pedidoId, 'p_lat': lat, 'p_lng': lng}));
 

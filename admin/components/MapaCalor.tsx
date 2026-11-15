@@ -22,10 +22,10 @@ export default function MapaCalor({ pontos }: { pontos: Ponto[] }) {
       if (!vivo || !elemento.current) return;
       if (!mapa.current) {
         mapa.current = L.map(elemento.current, { zoomControl: true, scrollWheelZoom: true }).setView(CENTRO, 10);
-        // Blocos do OpenStreetMap (o mesmo dos apps): não pedem chave. O CARTO passou a exigir chave.
+        // Stadia Maps (o mesmo dos apps). Na web a conta autoriza o domínio iservice.app.br, sem chave.
         // O tom claro vem do CSS (.mapa .leaflet-tile-pane), para a mancha de calor se destacar.
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+        L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 20,
         }).addTo(mapa.current);
       }
       camadas.current.forEach((c) => c.remove());

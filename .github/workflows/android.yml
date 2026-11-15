@@ -32,7 +32,8 @@ jobs:
           cat > config/dev.json <<'JSON'
           {
             "SUPABASE_URL": "https://aurjqwqqrxaexmwozezr.supabase.co",
-            "SUPABASE_ANON_KEY": "sb_publishable_Gc3o5rwSwK-ID6cYTGPmZA_8NO1hqkW"
+            "SUPABASE_ANON_KEY": "sb_publishable_Gc3o5rwSwK-ID6cYTGPmZA_8NO1hqkW",
+            "CHAVE_MAPA": "${{ secrets.STADIA_API_KEY }}"
           }
           JSON
       - run: flutter pub get

@@ -15,6 +15,19 @@ String faixaReais(num minimo, num maximo) => '${reais(minimo)} – ${reais(maxim
 /// 4,9
 String nota(num valor) => valor.toStringAsFixed(1).replaceAll('.', ',');
 
+/// Horas trabalhadas no perfil: "45 min", "12 h", "1.240 h".
+String horasTrabalhadas(int minutos) {
+  if (minutos < 60) return '$minutos min';
+  return '${NumberFormat.decimalPattern('pt_BR').format(minutos ~/ 60)} h';
+}
+
+/// Duração de um serviço: "45 min", "2 h 10 min".
+String duracaoServico(int minutos) {
+  if (minutos < 60) return '$minutos min';
+  final m = minutos % 60;
+  return m == 0 ? '${minutos ~/ 60} h' : '${minutos ~/ 60} h $m min';
+}
+
 /// 850 m · 2,3 km
 String distancia(num? km) {
   if (km == null) return '';

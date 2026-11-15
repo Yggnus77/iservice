@@ -16,6 +16,8 @@ final _pedidoBase = FutureProvider.autoDispose.family<Pedido?, String>((ref, id)
   return lista.where((p) => p.id == id).firstOrNull;
 });
 
+final _resumoCliente = FutureProvider.autoDispose.family<ResumoCliente?, String>((ref, id) => ref.read(pedidosRepo).resumoCliente(id));
+
 final _pedidoAoVivo = StreamProvider.autoDispose.family<Pedido, Pedido>((ref, base) => ref.read(pedidosRepo).acompanhar(base));
 
 /// Atendimento do pedido pelo profissional: a caminho, iniciar, concluir com o valor, chat e cancelar.
@@ -79,8 +81,28 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
       builder: (_) => _FolhaConcluir(sugestao: p.precoInformado == null ? null : p.precoInformado! + p.taxaUrgencia),
     );
     if (r == null) return;
-    await _acao(() => ref.read(pedidosRepo).avancar(p.id, StatusPedido.concluido, valor: r.$1, formaPagamento: r.$2));
-    if (mounted) mostrarMensagem(context, 'Serviço concluído. Bom trabalho!');
+    var ok = false;
+    await _acao(() async {
+      await ref.read(pedidosRepo).avancar(p.id, StatusPedido.concluido, valor: r.$1, formaPagamento: r.$2);
+      ok = true;
+    });
+    if (!ok || !mounted) return;
+    mostrarMensagem(context, 'Serviço concluído. Bom trabalho!');
+    await _avaliarCliente();
+  }
+
+  /// O profissional conta como foi atender o cliente (1 a 5 estrelas).
+  Future<void> _avaliarCliente([int inicial = 0]) async {
+    final enviado = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _FolhaAvaliarCliente(pedidoId: p.id, nome: primeiroNome(p.outraParteNome ?? 'o cliente'), foto: p.outraParteFoto, inicial: inicial),
+    );
+    if (enviado == true) {
+      ref.invalidate(_resumoCliente(p.id));
+      if (mounted) mostrarMensagem(context, 'Obrigado! Sua avaliação ajuda a manter o iService seguro.');
+    }
   }
 
   Future<void> _cancelar() async {
@@ -139,6 +161,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
     final c = context.cores;
     final profissao = ref.watch(profissaoPorIdProvider(p.profissaoId));
     final ativo = p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho || p.status == StatusPedido.emAtendimento;
+    final resumo = p.status.encerradoSemServico ? null : ref.watch(_resumoCliente(p.id)).value;
 
     return Scaffold(
       appBar: AppBar(
@@ -150,6 +173,13 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
         _Etapas(status: p.status),
+        if (p.trabalhoEmCurso) ...[
+          const SizedBox(height: 12),
+          Center(child: FaixaTempoDeTrabalho(desde: p.inicioDoTrabalho!)),
+        ] else if (p.status == StatusPedido.concluido && p.minutosTrabalhados != null) ...[
+          const SizedBox(height: 12),
+          Center(child: Text('Tempo de trabalho: ${duracaoServico(p.minutosTrabalhados!)}', style: t.labelLarge?.copyWith(color: c.textoSuave))),
+        ],
         TransmissorPosicao(pedidoId: p.id, ativo: p.status == StatusPedido.aCaminho),
         const SizedBox(height: 16),
         Card(
@@ -161,6 +191,12 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(p.outraParteNome ?? 'Cliente', style: t.titleMedium),
+                  if (resumo != null && resumo.total > 0)
+                    Row(children: [
+                      const Icon(Symbols.star_rounded, size: 16, fill: 1, color: Cores.estrela),
+                      const SizedBox(width: 2),
+                      Text('${nota(resumo.nota)} como cliente (${resumo.total})', style: t.bodySmall),
+                    ]),
                   const SizedBox(height: 4),
                   EtiquetaStatus(status: p.status),
                 ]),
@@ -202,6 +238,23 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         if (p.aguardandoCliente) ...[
           const SizedBox(height: 12),
           AguardandoCliente(p: p),
+        ],
+        if (p.status == StatusPedido.concluido && resumo != null) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(children: [
+                Text(resumo.jaAvaliei ? 'Sua avaliação do cliente' : 'Como foi atender ${primeiroNome(p.outraParteNome ?? 'o cliente')}?', style: t.titleMedium),
+                const SizedBox(height: 8),
+                Estrelas(valor: (resumo.minhaNota ?? 0).toDouble(), tamanho: 34, aoEscolher: _avaliarCliente),
+                if (!resumo.jaAvaliei) ...[
+                  const SizedBox(height: 4),
+                  Text('Só a equipe iService vê o seu comentário.', style: t.bodySmall),
+                ],
+              ]),
+            ),
+          ),
         ],
         if (p.status == StatusPedido.solicitado) ...[
           const SizedBox(height: 12),
@@ -398,6 +451,73 @@ class _FolhaConcluirState extends State<_FolhaConcluir> {
         ]),
         const SizedBox(height: 20),
         BotaoPrincipal(rotulo: 'Confirmar conclusão', aoTocar: _confirmar),
+      ]),
+    );
+  }
+}
+
+/// Folha de avaliação do cliente: estrelas e um comentário que só a equipe vê.
+class _FolhaAvaliarCliente extends ConsumerStatefulWidget {
+  const _FolhaAvaliarCliente({required this.pedidoId, required this.nome, this.foto, this.inicial = 0});
+  final String pedidoId;
+  final String nome;
+  final String? foto;
+  final int inicial;
+
+  @override
+  ConsumerState<_FolhaAvaliarCliente> createState() => _FolhaAvaliarClienteState();
+}
+
+class _FolhaAvaliarClienteState extends ConsumerState<_FolhaAvaliarCliente> {
+  late int _nota = widget.inicial;
+  final _comentario = TextEditingController();
+  bool _enviando = false;
+
+  static const _textos = ['', 'Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
+
+  @override
+  void dispose() {
+    _comentario.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviar() async {
+    setState(() => _enviando = true);
+    try {
+      await ref.read(pedidosRepo).avaliarCliente(widget.pedidoId, _nota, comentario: _comentario.text.trim());
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) mostrarErro(context, e);
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, MediaQuery.viewInsetsOf(context).bottom + 20),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Avatar(nome: widget.nome, url: widget.foto, tamanho: 64),
+        const SizedBox(height: 12),
+        Text('Como foi atender ${widget.nome}?', style: t.titleLarge, textAlign: TextAlign.center),
+        const SizedBox(height: 4),
+        Text('Pontualidade, respeito, acesso ao local e pagamento.', style: t.bodySmall, textAlign: TextAlign.center),
+        const SizedBox(height: 12),
+        Estrelas(valor: _nota.toDouble(), tamanho: 40, aoEscolher: (n) => setState(() => _nota = n)),
+        SizedBox(height: 22, child: Text(_textos[_nota], style: t.labelLarge)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _comentario,
+          minLines: 2,
+          maxLines: 4,
+          maxLength: 1000,
+          decoration: const InputDecoration(hintText: 'Comentário (opcional, só a equipe vê)'),
+        ),
+        const SizedBox(height: 8),
+        BotaoPrincipal(rotulo: 'Enviar avaliação', icone: Symbols.star_rounded, carregando: _enviando, aoTocar: _nota == 0 ? null : _enviar),
+        TextButton(onPressed: _enviando ? null : () => Navigator.pop(context, false), child: const Text('Avaliar depois')),
       ]),
     );
   }

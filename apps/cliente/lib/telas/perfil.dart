@@ -8,6 +8,8 @@ import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+final _minhaNota = FutureProvider.autoDispose<ResumoCliente?>((ref) => ref.read(pedidosRepo).minhaNotaCliente());
+
 /// Perfil do cliente: dados, endereços, fidelidade, acessibilidade e ajuda.
 class TelaPerfil extends ConsumerWidget {
   const TelaPerfil({super.key});
@@ -18,6 +20,7 @@ class TelaPerfil extends ConsumerWidget {
     final config = ref.watch(configProvider).value ?? const {};
     final t = Theme.of(context).textTheme;
     final c = context.cores;
+    final minhaNota = ref.watch(_minhaNota).value;
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
       body: perfil.when(
@@ -35,6 +38,15 @@ class TelaPerfil extends ConsumerWidget {
                   Text(p.nome, style: t.titleLarge),
                   Text(p.email ?? '', style: t.bodySmall),
                   if (p.telefone != null) Text(telefoneFormatado(p.telefone!), style: t.bodySmall),
+                  if (minhaNota != null && minhaNota.total > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(children: [
+                        const Icon(Symbols.star_rounded, size: 16, fill: 1, color: Cores.estrela),
+                        const SizedBox(width: 2),
+                        Text('${nota(minhaNota.nota)} · sua nota como cliente', style: t.labelMedium),
+                      ]),
+                    ),
                 ]),
               ),
             ]),

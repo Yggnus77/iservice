@@ -23,7 +23,7 @@ function politica(hashes) {
     `script-src 'self' ${hashes.join(' ')}`.trim(),
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    "img-src 'self' data: blob: https://tile.openstreetmap.org " + SUPABASE,
+    "img-src 'self' data: blob: https://tiles.stadiamaps.com " + SUPABASE,
     `connect-src 'self' ${SUPABASE} wss://aurjqwqqrxaexmwozezr.supabase.co`,
     "worker-src 'self' blob:",
     "manifest-src 'self'",
