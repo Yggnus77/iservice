@@ -316,18 +316,15 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             label: const Text('Sugerir outro horário'),
           ),
         ]),
-      StatusPedido.aceito => Row(children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _ocupado ? null : () => _avancar(StatusPedido.emAtendimento),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao)),
-              child: const Text('Já estou lá'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: BotaoPrincipal(rotulo: 'Estou a caminho', icone: Symbols.directions_car_rounded, carregando: _ocupado, aoTocar: () => _avancar(StatusPedido.aCaminho)),
+      // Botão principal na largura toda e "Já estou lá" embaixo, para nenhum
+      // dos dois quebrar ou cortar o texto em celulares estreitos.
+      StatusPedido.aceito => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          BotaoPrincipal(rotulo: 'Estou a caminho', icone: Symbols.directions_car_rounded, carregando: _ocupado, aoTocar: () => _avancar(StatusPedido.aCaminho)),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            onPressed: _ocupado ? null : () => _avancar(StatusPedido.emAtendimento),
+            icon: const Icon(Symbols.where_to_vote_rounded),
+            label: const Text('Já estou lá, iniciar serviço'),
           ),
         ]),
       StatusPedido.aCaminho => BotaoPrincipal(rotulo: 'Cheguei, iniciar serviço', icone: Symbols.handyman_rounded, carregando: _ocupado, aoTocar: () => _avancar(StatusPedido.emAtendimento)),
@@ -365,7 +362,7 @@ class _Etapas extends StatelessWidget {
               child: Icon(i < atual ? Symbols.check_rounded : Symbols.circle, size: i < atual ? 18 : 10, fill: 1, color: i <= atual ? c.textoNaAcao : c.textoSuave),
             ),
             const SizedBox(height: 4),
-            SizedBox(width: 64, child: Text(s.rotulo, style: t.labelSmall, textAlign: TextAlign.center, maxLines: 2)),
+            SizedBox(width: 84, child: Text(s.rotulo, style: t.labelSmall, textAlign: TextAlign.center, maxLines: 2)),
           ]),
         ],
       ]),
