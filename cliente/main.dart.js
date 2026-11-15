@@ -128266,7 +128266,7 @@ s=n.bl($.eW(),t.td)
 if(s.gjV()!=null&&s.giZ()==null)return p==="/"?q:"/"
 r=s.gp()
 if(r==null)return q
-if(r.c!=="2026-10-27")return p==="/termos"?q:"/termos"
+if(r.c!=="2026-11-15")return p==="/termos"?q:"/termos"
 if(p==="/termos")return"/"
 if(!r.z){if(B.c.cp(p,"/cadastro"))return q
 if(!(r.w!=null&&r.x!=null&&r.f!=null))return"/cadastro/1"
@@ -131004,7 +131004,7 @@ A.at5.prototype={
 $0(){var s,r=this,q=r.a.a.gen(),p=B.c.co(r.b),o=r.d.b,n=A.u(t.N,t.z)
 n.n(0,"nome",B.c.co(r.e))
 n.n(0,"app",o)
-n.n(0,"termos","2026-10-27")
+n.n(0,"termos","2026-11-15")
 s=r.f
 if(s!=null&&s.length!==0)n.n(0,"indicacao",B.c.co(s))
 return q.Ah(n,p,"https://iservice.app.br/"+o+"/",r.c)},
@@ -131106,7 +131106,7 @@ case 2:return A.p(o.at(-1),r)}})
 return A.r($async$$0,r)},
 $S:898}
 A.at0.prototype={
-$0(){return this.a.a.h3("aceitar_termos",A.a0(["p_versao","2026-10-27"],t.N,t.z),t.H)},
+$0(){return this.a.a.h3("aceitar_termos",A.a0(["p_versao","2026-11-15"],t.N,t.z),t.H)},
 $S:59}
 A.at2.prototype={
 $0(){return this.a.a.F2("cancelar_exclusao_conta",t.H)},
