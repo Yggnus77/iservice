@@ -170,4 +170,6 @@ export const nomesAcao: Record<string, string> = {
   update_app_config: 'Alterou uma configuração',
   convidar_equipe: 'Convidou para a equipe',
   remover_equipe: 'Removeu da equipe',
+  foto_equipe: 'Trocou a foto de alguém da equipe',
+  remover_foto_equipe: 'Tirou a foto de alguém da equipe',
 };

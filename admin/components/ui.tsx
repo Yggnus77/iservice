@@ -18,6 +18,7 @@ export function SeloStatus({ mapa, valor }: { mapa: Record<string, { rotulo: str
 export function Avatar({ nome, foto, tamanho = 36 }: { nome?: string | null; foto?: string | null; tamanho?: number }) {
   const [falhou, setFalhou] = useState(false);
   const url = urlFoto(foto);
+  useEffect(() => setFalhou(false), [url]);
   return (
     <span className="avatar" style={{ width: tamanho, height: tamanho, fontSize: tamanho * 0.36 }}>
       {url && !falhou ? <img src={url} alt="" onError={() => setFalhou(true)} /> : iniciais(nome)}
