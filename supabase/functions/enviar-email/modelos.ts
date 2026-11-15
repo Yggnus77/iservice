@@ -7,7 +7,7 @@
 // programas de e-mail exigem) e na versão só texto.
 
 export const SITE = "https://iservice.app.br";
-export const SUPORTE_EMAIL = "iserviceapp86@gmail.com";
+export const SUPORTE_EMAIL = "suporte@iservice.app.br";
 export const SUPORTE_WHATSAPP = "(98) 98551-6037";
 export const SUPORTE_WHATSAPP_LINK = "https://wa.me/5598985516037";
 export const INSTAGRAM = "https://www.instagram.com/iserviceapp.br/";
