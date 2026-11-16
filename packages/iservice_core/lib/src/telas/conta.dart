@@ -13,6 +13,7 @@ import '../tema/tema.dart';
 import '../util/formatos.dart';
 import '../util/validacao.dart';
 import '../widgets/componentes.dart';
+import '../widgets/confirmar_local.dart';
 import 'termos.dart';
 
 /// Cabeçalho dos passos do cadastro: barra de progresso, título e explicação.
@@ -345,13 +346,13 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
   late final _logradouro = TextEditingController(text: _r.logradouro);
   late final _bloco = TextEditingController(text: _r.bloco);
   late final _complemento = TextEditingController(text: _r.complemento);
+  late final _bairro = TextEditingController(text: _r.bairro);
   late final _referencia = TextEditingController(text: _r.referencia);
-  late final _cep = TextEditingController(text: _r.cep);
+  late final _cep = TextEditingController(text: _r.cep == null ? null : mascaraCep().maskText(_r.cep!));
   late String? _regiaoId = _r.regiaoId;
-  late double? _lat = _r.lat;
-  late double? _lng = _r.lng;
-  bool _gps = false;
+  (double, double)? _gps;
   bool _lendoGps = false;
+  bool _localizando = false;
 
   Future<void> _usarGps() async {
     setState(() => _lendoGps = true);
@@ -362,25 +363,34 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
         return;
       }
       setState(() {
-        _lat = p.latitude;
-        _lng = p.longitude;
-        _gps = true;
+        _gps = (p.latitude, p.longitude);
+        // Sem região escolhida, sugere a do centro mais perto (o usuário pode trocar).
+        _regiaoId ??= regiaoMaisProxima(p.latitude, p.longitude);
       });
-      // Sem região escolhida, sugere a do centro mais perto (o usuário pode trocar).
-      _regiaoId ??= regiaoMaisProxima(p.latitude, p.longitude);
     } finally {
       if (mounted) setState(() => _lendoGps = false);
     }
   }
 
-  void _continuar() {
-    if (!_form.currentState!.validate()) return;
+  Future<void> _continuar() async {
     if (_regiaoId == null) {
       mostrarMensagem(context, 'Escolha a cidade ou região administrativa.');
       return;
     }
+    if (!_form.currentState!.validate()) return;
     final reg = (ref.read(regioesProvider).value ?? const <Regiao>[]).firstWhere((r) => r.id == _regiaoId);
-    final centro = _centros[_regiaoId];
+    setState(() => _localizando = true);
+    final ponto = await localizarEConfirmar(
+      context,
+      regiao: reg,
+      centro: centroDaRegiao(reg.id),
+      logradouro: _logradouro.text,
+      bloco: _bloco.text,
+      bairro: _bairro.text,
+      gps: _gps,
+    );
+    if (mounted) setState(() => _localizando = false);
+    if (ponto == null || !mounted) return;
     ref.read(rascunhoCadastroProvider.notifier).atualizar(_r.copiar(
           regiaoId: _regiaoId,
           cidade: reg.uf == 'DF' ? 'Brasília' : reg.nome,
@@ -388,10 +398,11 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
           logradouro: _logradouro.text.trim(),
           bloco: _bloco.text.trim(),
           complemento: _complemento.text.trim(),
+          bairro: _bairro.text.trim(),
           referencia: _referencia.text.trim(),
           cep: soDigitos(_cep.text),
-          lat: _gps ? _lat : (_lat ?? centro?.$1),
-          lng: _gps ? _lng : (_lng ?? centro?.$2),
+          lat: ponto.latitude,
+          lng: ponto.longitude,
         ));
     widget.aoContinuar();
   }
@@ -411,50 +422,27 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
           texto: widget.texto ?? 'É onde os profissionais vão atender. Você pode salvar outros depois.',
         ),
         rotuloBotao: 'Continuar',
+        carregando: _localizando,
         aoContinuar: _continuar,
         filhos: [
-          InkWell(
-            borderRadius: BorderRadius.circular(Medidas.raioControle),
-            onTap: () async {
-              final r = await escolherEmLista<Regiao>(context, titulo: 'Cidade ou região', opcoes: regioes, rotulo: (r) => r.nomeComUf, atual: reg);
-              if (r != null) setState(() => _regiaoId = r.id);
-            },
-            child: InputDecorator(
-              decoration: const InputDecoration(labelText: 'Cidade ou região administrativa', suffixIcon: Icon(Symbols.expand_more_rounded)),
-              isEmpty: reg == null,
-              child: Text(reg?.nomeComUf ?? ''),
-            ),
-          ),
+          CampoRegiao(regioes: regioes, atual: reg, aoEscolher: (r) => setState(() => _regiaoId = r.id)),
           _espaco,
-          TextFormField(
-            controller: _logradouro,
-            textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(labelText: 'Endereço', hintText: 'Ex.: SQS 308, QNL 12 Conj. B, Rua 10 Qd 5'),
-            validator: (v) => Validar.obrigatorio(v, 'O endereço'),
-          ),
-          _espaco,
-          Row(children: [
-            Expanded(child: TextFormField(controller: _bloco, decoration: const InputDecoration(labelText: 'Bloco / casa / lote'))),
-            const SizedBox(width: 12),
-            Expanded(child: TextFormField(controller: _complemento, decoration: const InputDecoration(labelText: 'Apto / complemento'))),
-          ]),
-          _espaco,
-          TextFormField(controller: _referencia, decoration: const InputDecoration(labelText: 'Ponto de referência (opcional)')),
-          _espaco,
-          TextFormField(
-            controller: _cep,
-            keyboardType: TextInputType.number,
-            inputFormatters: [mascaraCep()],
-            decoration: const InputDecoration(labelText: 'CEP (opcional)'),
-            validator: Validar.cep,
+          ...camposEndereco(
+            uf: reg?.uf,
+            logradouro: _logradouro,
+            bloco: _bloco,
+            complemento: _complemento,
+            bairro: _bairro,
+            cep: _cep,
+            referencia: _referencia,
           ),
           const SizedBox(height: 16),
           Card(
-            color: _gps ? c.sucessoSuave : c.superficieSuave,
+            color: _gps != null ? c.sucessoSuave : c.superficieSuave,
             child: ListTile(
-              leading: Icon(_gps ? Symbols.check_circle_rounded : Symbols.my_location_rounded, color: _gps ? c.sucesso : c.acaoTexto),
-              title: Text(_gps ? 'Localização marcada' : 'Usar minha localização'),
-              subtitle: Text(_gps ? 'A distância até os profissionais fica mais precisa.' : 'Recomendado se você está no endereço agora.'),
+              leading: Icon(_gps != null ? Symbols.check_circle_rounded : Symbols.my_location_rounded, color: _gps != null ? c.sucesso : c.acaoTexto),
+              title: Text(_gps != null ? 'Localização marcada' : 'Usar minha localização'),
+              subtitle: Text(_gps != null ? 'Você confere no mapa no próximo passo.' : 'Recomendado se você está no endereço agora.'),
               trailing: _lendoGps ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : null,
               onTap: _lendoGps ? null : _usarGps,
             ),
@@ -464,6 +452,91 @@ class _PassoEnderecoState extends ConsumerState<PassoEndereco> {
       ),
     );
   }
+}
+
+/// Escolha da cidade ou região administrativa (com busca, porque a lista é longa).
+class CampoRegiao extends StatelessWidget {
+  const CampoRegiao({super.key, required this.regioes, required this.atual, required this.aoEscolher});
+  final List<Regiao> regioes;
+  final Regiao? atual;
+  final ValueChanged<Regiao> aoEscolher;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        borderRadius: BorderRadius.circular(Medidas.raioControle),
+        onTap: () async {
+          final r = await escolherEmLista<Regiao>(
+            context,
+            titulo: 'Cidade ou região',
+            opcoes: regioes,
+            rotulo: (r) => r.nomeComUf,
+            atual: atual,
+            dicaBusca: 'Buscar (ex.: Ceilândia, Valparaíso)',
+          );
+          if (r != null) aoEscolher(r);
+        },
+        child: InputDecorator(
+          decoration: const InputDecoration(labelText: 'Cidade ou região administrativa', suffixIcon: Icon(Symbols.expand_more_rounded)),
+          isEmpty: atual == null,
+          child: Text(atual?.nomeComUf ?? ''),
+        ),
+      );
+}
+
+/// Campos do endereço, iguais no cadastro e em "Novo endereço". Em Goiás o bairro é obrigatório:
+/// a mesma "Rua 10 Qd 5" existe em vários bairros da cidade.
+List<Widget> camposEndereco({
+  required String? uf,
+  required TextEditingController logradouro,
+  required TextEditingController bloco,
+  required TextEditingController complemento,
+  required TextEditingController bairro,
+  required TextEditingController cep,
+  required TextEditingController referencia,
+}) {
+  final goias = uf == 'GO';
+  return [
+    TextFormField(
+      controller: logradouro,
+      textCapitalization: TextCapitalization.characters,
+      decoration: InputDecoration(
+        labelText: 'Endereço',
+        hintText: goias ? 'Ex.: Rua 10, Qd 5 ou Av. Goiás' : 'Ex.: SQS 308, QNL 12 Conj. B, Rua 10 Qd 5',
+      ),
+      validator: (v) => Validar.obrigatorio(v, 'O endereço'),
+    ),
+    _espaco,
+    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(
+        child: TextFormField(
+          controller: bloco,
+          decoration: InputDecoration(labelText: goias ? 'Lote / casa / nº' : 'Bloco / casa / lote'),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(child: TextFormField(controller: complemento, decoration: const InputDecoration(labelText: 'Complemento', hintText: 'Ex.: Apto 101'))),
+    ]),
+    _espaco,
+    TextFormField(
+      controller: bairro,
+      textCapitalization: TextCapitalization.words,
+      decoration: InputDecoration(
+        labelText: goias ? 'Bairro / setor' : 'Bairro / setor (opcional)',
+        hintText: goias ? 'Ex.: Jardim Ingá, Céu Azul, Parque da Barragem' : 'Ex.: Setor O, Vila Planalto',
+      ),
+      validator: goias ? (v) => Validar.obrigatorio(v, 'O bairro') : null,
+    ),
+    _espaco,
+    TextFormField(
+      controller: cep,
+      keyboardType: TextInputType.number,
+      inputFormatters: [mascaraCep()],
+      decoration: const InputDecoration(labelText: 'CEP (opcional)'),
+      validator: Validar.cep,
+    ),
+    _espaco,
+    TextFormField(controller: referencia, decoration: const InputDecoration(labelText: 'Ponto de referência (opcional)')),
+  ];
 }
 
 /// Centros aproximados das regiões, usados quando o usuário não marca o GPS.
@@ -480,6 +553,13 @@ const _centros = <String, (double, double)>{
   'brazlandia': (-15.6700, -48.2000), 'valparaiso': (-16.0650, -47.9750), 'aguas-lindas': (-15.7610, -48.2810),
   'luziania': (-16.2530, -47.9500), 'novo-gama': (-16.0590, -48.0410), 'cidade-ocidental': (-16.0780, -47.9250),
   'santo-antonio': (-15.9410, -48.2570), 'planaltina-go': (-15.4520, -47.6140), 'formosa': (-15.5370, -47.3340),
+  // Incluídos em 16/11/2026 (migração 20261116003100_enderecos_entorno.sql).
+  'sol-nascente': (-15.8050, -48.1400), 'estrutural': (-15.7830, -47.9930), 'itapoa': (-15.7480, -47.7650),
+  'varjao': (-15.7100, -47.8770), 'riacho-fundo-2': (-15.9130, -48.0500), 'arniqueira': (-15.8570, -48.0100),
+  'sobradinho-2': (-15.6400, -47.8250), 'fercal': (-15.6000, -47.8700), 'candangolandia': (-15.8520, -47.9510),
+  'sia': (-15.8020, -47.9550), 'agua-quente': (-15.9550, -48.1700), 'arapoanga': (-15.6400, -47.6500),
+  'alexania': (-16.0830, -48.5070), 'cristalina': (-16.7680, -47.6130), 'padre-bernardo': (-15.1600, -48.2830),
+  'cocalzinho': (-15.7930, -48.7750),
 };
 
 (double, double)? centroDaRegiao(String? id) => _centros[id];

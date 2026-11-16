@@ -24,7 +24,7 @@ export type Ficha = {
     telefone_verificado: boolean; e_cliente: boolean; e_profissional: boolean; e_admin: boolean; criado_em: string;
     suspenso_em: string | null; motivo_suspensao: string | null; exclusao_solicitada_em: string | null; codigo_indicacao: string | null;
   };
-  enderecos: { id: number; rotulo: string; logradouro: string; bloco: string | null; numero: string | null; complemento: string | null; cidade: string; uf: string; cep: string | null; regiao: string | null; principal: boolean }[];
+  enderecos: { id: number; rotulo: string; logradouro: string; bloco: string | null; numero: string | null; complemento: string | null; bairro?: string | null; cidade: string; uf: string; cep: string | null; regiao: string | null; principal: boolean }[];
   profissional: FichaProfissional | null;
   pedidos: { id: string; codigo: string; status: string; criado_em: string; profissao: string; papel: string; outra_parte: string; valor: number | null }[];
   denuncias_recebidas: { id: number; motivo: string; status: string; criada_em: string }[];
@@ -33,5 +33,5 @@ export type Ficha = {
 };
 
 export function enderecoTexto(e: Ficha['enderecos'][number]): string {
-  return [e.logradouro, e.bloco && `Bloco ${e.bloco}`, e.numero, e.complemento, e.regiao || e.cidade, e.uf].filter(Boolean).join(', ');
+  return [e.logradouro, e.bloco && `Bloco ${e.bloco}`, e.numero, e.complemento, e.bairro, e.regiao || e.cidade, e.uf].filter(Boolean).join(', ');
 }

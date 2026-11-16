@@ -23,4 +23,5 @@ export 'src/util/icones.dart';
 export 'src/util/validacao.dart';
 export 'src/widgets/agenda.dart';
 export 'src/widgets/componentes.dart';
+export 'src/widgets/confirmar_local.dart';
 export 'src/widgets/mapa_ao_vivo.dart';

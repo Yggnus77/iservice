@@ -557,29 +557,90 @@ class _ContagemRegressivaState extends State<ContagemRegressiva> {
 }
 
 /// Campo de seleção em lista (abre uma folha de baixo com as opções).
-Future<T?> escolherEmLista<T>(BuildContext context, {required String titulo, required List<T> opcoes, required String Function(T) rotulo, T? atual}) {
+Future<T?> escolherEmLista<T>(
+  BuildContext context, {
+  required String titulo,
+  required List<T> opcoes,
+  required String Function(T) rotulo,
+  T? atual,
+  String? dicaBusca,
+}) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
-    builder: (ctx) => DraggableScrollableSheet(
+    builder: (ctx) => _ListaParaEscolher<T>(titulo: titulo, opcoes: opcoes, rotulo: rotulo, atual: atual, dicaBusca: dicaBusca),
+  );
+}
+
+/// Sem acentos e em minúsculas, para a busca achar "aguas lindas" em "Águas Lindas".
+String semAcento(String s) {
+  const de = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
+  const para = 'aaaaaeeeeiiiiooooouuuucn';
+  final b = StringBuffer();
+  for (final ch in s.toLowerCase().split('')) {
+    final i = de.indexOf(ch);
+    b.write(i < 0 ? ch : para[i]);
+  }
+  return b.toString();
+}
+
+class _ListaParaEscolher<T> extends StatefulWidget {
+  const _ListaParaEscolher({required this.titulo, required this.opcoes, required this.rotulo, this.atual, this.dicaBusca});
+  final String titulo;
+  final List<T> opcoes;
+  final String Function(T) rotulo;
+  final T? atual;
+  final String? dicaBusca;
+
+  @override
+  State<_ListaParaEscolher<T>> createState() => _ListaParaEscolherState<T>();
+}
+
+class _ListaParaEscolherState<T> extends State<_ListaParaEscolher<T>> {
+  String _busca = '';
+
+  @override
+  Widget build(BuildContext context) {
+    // A busca aparece quando a lista é longa (ex.: cidades e regiões).
+    final comBusca = widget.dicaBusca != null || widget.opcoes.length > 12;
+    final termo = semAcento(_busca.trim());
+    final lista = termo.isEmpty ? widget.opcoes : widget.opcoes.where((o) => semAcento(widget.rotulo(o)).contains(termo)).toList();
+    return DraggableScrollableSheet(
       expand: false,
       initialChildSize: .7,
       maxChildSize: .95,
-      builder: (ctx, scroll) => Column(children: [
-        Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 8), child: Text(titulo, style: Theme.of(ctx).textTheme.titleLarge)),
-        Expanded(
-          child: ListView(controller: scroll, children: [
-            for (final o in opcoes)
-              ListTile(
-                title: Text(rotulo(o)),
-                trailing: o == atual ? Icon(Symbols.check_rounded, color: ctx.cores.acaoTexto) : null,
-                onTap: () => Navigator.pop(ctx, o),
+      builder: (ctx, scroll) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: Column(children: [
+          Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 8), child: Text(widget.titulo, style: Theme.of(ctx).textTheme.titleLarge)),
+          if (comBusca)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                onChanged: (v) => setState(() => _busca = v),
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(prefixIcon: const Icon(Symbols.search_rounded), hintText: widget.dicaBusca ?? 'Buscar'),
               ),
-          ]),
-        ),
-      ]),
-    ),
-  );
+            ),
+          Expanded(
+            child: lista.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text('Nada encontrado com "${_busca.trim()}".', textAlign: TextAlign.center, style: Theme.of(ctx).textTheme.bodyMedium),
+                  )
+                : ListView(controller: scroll, children: [
+                    for (final o in lista)
+                      ListTile(
+                        title: Text(widget.rotulo(o)),
+                        trailing: o == widget.atual ? Icon(Symbols.check_rounded, color: ctx.cores.acaoTexto) : null,
+                        onTap: () => Navigator.pop(ctx, o),
+                      ),
+                  ]),
+          ),
+        ]),
+      ),
+    );
+  }
 }
 
 /// Tela cheia com a imagem da marca: o profissional aparece no alto e vai escurecendo

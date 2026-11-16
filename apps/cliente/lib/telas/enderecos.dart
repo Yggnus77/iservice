@@ -29,7 +29,7 @@ class TelaEnderecos extends ConsumerWidget {
                     if (op == 'principal') {
                       await conta.salvarEndereco(
                         id: e.id, logradouro: e.logradouro, lat: e.lat, lng: e.lng, regiaoId: e.regiaoId, bloco: e.bloco, numero: e.numero,
-                        complemento: e.complemento, referencia: e.referencia, cep: e.cep, cidade: e.cidade, uf: e.uf, rotulo: e.rotulo,
+                        complemento: e.complemento, bairro: e.bairro, referencia: e.referencia, cep: e.cep, cidade: e.cidade, uf: e.uf, rotulo: e.rotulo,
                       );
                     } else {
                       await conta.apagarEndereco(e.id);
@@ -72,29 +72,44 @@ class _NovoEnderecoState extends ConsumerState<_NovoEndereco> {
   final _logradouro = TextEditingController();
   final _bloco = TextEditingController();
   final _complemento = TextEditingController();
+  final _bairro = TextEditingController();
+  final _cep = TextEditingController();
   final _referencia = TextEditingController();
   Regiao? _regiao;
   (double, double)? _gps;
   bool _salvando = false;
 
   Future<void> _salvar() async {
-    if (!_form.currentState!.validate() || _regiao == null) {
-      if (_regiao == null) mostrarMensagem(context, 'Escolha a cidade ou região.');
+    if (_regiao == null) {
+      mostrarMensagem(context, 'Escolha a cidade ou região.');
       return;
     }
-    final ponto = _gps ?? centroDaRegiao(_regiao!.id)!;
+    if (!_form.currentState!.validate()) return;
+    final regiao = _regiao!;
     setState(() => _salvando = true);
     try {
+      final ponto = await localizarEConfirmar(
+        context,
+        regiao: regiao,
+        centro: centroDaRegiao(regiao.id),
+        logradouro: _logradouro.text,
+        bloco: _bloco.text,
+        bairro: _bairro.text,
+        gps: _gps,
+      );
+      if (ponto == null) return;
       await ref.read(contaRepo).salvarEndereco(
             logradouro: _logradouro.text.trim(),
-            lat: ponto.$1,
-            lng: ponto.$2,
-            regiaoId: _regiao!.id,
+            lat: ponto.latitude,
+            lng: ponto.longitude,
+            regiaoId: regiao.id,
             bloco: _bloco.text.trim(),
             complemento: _complemento.text.trim(),
+            bairro: _bairro.text.trim(),
             referencia: _referencia.text.trim(),
-            cidade: _regiao!.uf == 'DF' ? 'Brasília' : _regiao!.nome,
-            uf: _regiao!.uf,
+            cep: soDigitos(_cep.text),
+            cidade: regiao.uf == 'DF' ? 'Brasília' : regiao.nome,
+            uf: regiao.uf,
             rotulo: _rotulo.text.trim().isEmpty ? 'Outro' : _rotulo.text.trim(),
             principal: false,
           );
@@ -117,27 +132,17 @@ class _NovoEnderecoState extends ConsumerState<_NovoEndereco> {
         child: ListView(padding: const EdgeInsets.all(Medidas.margemTela), children: [
           TextFormField(controller: _rotulo, decoration: const InputDecoration(labelText: 'Nome (ex.: Trabalho, Casa da mãe)')),
           const SizedBox(height: 14),
-          InkWell(
-            onTap: () async {
-              final r = await escolherEmLista<Regiao>(context, titulo: 'Cidade ou região', opcoes: regioes, rotulo: (r) => r.nomeComUf, atual: _regiao);
-              if (r != null) setState(() => _regiao = r);
-            },
-            child: InputDecorator(
-              decoration: const InputDecoration(labelText: 'Cidade ou região administrativa', suffixIcon: Icon(Symbols.expand_more_rounded)),
-              isEmpty: _regiao == null,
-              child: Text(_regiao?.nomeComUf ?? ''),
-            ),
+          CampoRegiao(regioes: regioes, atual: _regiao, aoEscolher: (r) => setState(() => _regiao = r)),
+          const SizedBox(height: 14),
+          ...camposEndereco(
+            uf: _regiao?.uf,
+            logradouro: _logradouro,
+            bloco: _bloco,
+            complemento: _complemento,
+            bairro: _bairro,
+            cep: _cep,
+            referencia: _referencia,
           ),
-          const SizedBox(height: 14),
-          TextFormField(controller: _logradouro, decoration: const InputDecoration(labelText: 'Endereço'), validator: (v) => Validar.obrigatorio(v, 'O endereço')),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: TextFormField(controller: _bloco, decoration: const InputDecoration(labelText: 'Bloco / casa'))),
-            const SizedBox(width: 12),
-            Expanded(child: TextFormField(controller: _complemento, decoration: const InputDecoration(labelText: 'Complemento'))),
-          ]),
-          const SizedBox(height: 14),
-          TextFormField(controller: _referencia, decoration: const InputDecoration(labelText: 'Ponto de referência')),
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: () async {

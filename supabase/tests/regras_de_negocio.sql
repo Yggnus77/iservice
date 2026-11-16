@@ -222,6 +222,8 @@ insert into t select (public.criar_pedido('00000000-0000-0000-0000-0000000000a2'
   (select id from public.enderecos where usuario_id = auth.uid()), 'agora', null, 'Chuveiro parou')).id;
 select pg_temp.ok((select status = 'solicitado' and taxa_urgencia = 15 and responder_ate between now() + interval '4 min' and now() + interval '6 min'
   from public.pedidos where id = (select pedido from t)), 'pedido "agora" vai só ao escolhido, com taxa de urgência e 5 min para responder');
+select pg_temp.ok((select endereco_texto from public.pedidos where id = (select pedido from t)) = 'SQS 308, Bloco C, Apto 101, Brasília/DF',
+  'endereço do pedido sem vírgulas sobrando de campos vazios');
 do $$ begin
   perform public.criar_pedido('00000000-0000-0000-0000-0000000000a3', 'eletricista', (select id from public.enderecos where usuario_id = auth.uid()), 'agora');
   raise exception 'FALHOU: dois pedidos aguardando';
