@@ -719,11 +719,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .telas-celular { grid-area: celular; justify-self: end; position: relative; }
 .telas-celular::before { content: ""; position: absolute; inset: 12% -18% 8%; background: radial-gradient(closest-side, rgba(61, 139, 255, .45), transparent); filter: blur(10px); z-index: 0; }
 .telas-painel#telas-profissionais .telas-celular::before { background: radial-gradient(closest-side, rgba(255, 138, 0, .35), transparent); }
-.moldura { position: relative; z-index: 1; width: 300px; aspect-ratio: 390 / 844; box-sizing: content-box; border: 10px solid #0B1220; border-radius: 48px; background: #0B1220; box-shadow: 0 0 0 1.5px #2A3A57, 0 40px 80px -30px rgba(0, 0, 0, .7); overflow: hidden; touch-action: pan-y; }
+.telas .moldura { position: relative; z-index: 1; width: 300px; aspect-ratio: 390 / 844; box-sizing: content-box; border: 10px solid #0B1220; border-radius: 48px; background: #0B1220; box-shadow: 0 0 0 1.5px #2A3A57, 0 40px 80px -30px rgba(0, 0, 0, .7); overflow: hidden; touch-action: pan-y; }
 .telas-imgs { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; border-radius: 38px; overflow: hidden; background: #F4F7FC; }
-.tela { position: absolute; inset: 0; opacity: 0; transform: scale(1.015); transition: opacity .45s ease, transform .6s ease; }
-.tela.ativa { opacity: 1; transform: none; }
-.tela img { width: 100%; height: 100%; object-fit: cover; }
+.telas-imgs .tela { position: absolute; inset: 0; opacity: 0; transform: scale(1.015); transition: opacity .45s ease, transform .6s ease; }
+.telas-imgs .tela.ativa { opacity: 1; transform: none; }
+.telas-imgs .tela img { width: 100%; height: 100%; object-fit: cover; }
 
 .telas-passos { grid-area: passos; list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: none; }
 .telas-passos button { position: relative; overflow: hidden; display: grid; grid-template-columns: 36px 1fr; gap: 14px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid transparent; border-radius: 16px; background: transparent; color: inherit; font: inherit; cursor: pointer; transition: background .25s, border-color .25s; }
@@ -755,7 +755,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (max-width: 860px) {
   .telas-painel { grid-template-columns: 1fr; grid-template-areas: "celular" "passos" "controles"; row-gap: 0; }
   .telas-celular { justify-self: center; }
-  .moldura { width: min(280px, 68vw); border-width: 8px; border-radius: 42px; }
+  .telas .moldura { width: min(280px, 68vw); border-width: 8px; border-radius: 42px; }
   .telas-imgs { border-radius: 34px; }
   .telas-passos { margin-top: 28px; min-height: 9.5em; }
   .telas-passos li:not(.ativo) { display: none; }
@@ -768,6 +768,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 }
 @media (max-width: 440px) { .telas-abas button .ms { display: none; } .telas-abas button { padding: 11px 15px; } }
 @media (prefers-reduced-motion: reduce) {
-  .tela, .telas-passos .txt span { transition: none; }
+  .telas-imgs .tela, .telas-passos .txt span { transition: none; }
   .telas-passos .barra { display: none; }
 }
