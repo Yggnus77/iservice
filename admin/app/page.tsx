@@ -20,11 +20,13 @@ function Numero({ rotulo, valor, detalhe, icone, cor, fundo, href }: {
       {detalhe ? <span className="detalhe">{detalhe}</span> : null}
     </>
   );
-  return href ? <Link href={href} className="cartao numero">{corpo}</Link> : <div className="cartao numero">{corpo}</div>;
+  // Sem acesso à página do cargo, o número aparece sem link.
+  const { podeRota } = usePainel();
+  return href && podeRota(href) ? <Link href={href} className="cartao numero">{corpo}</Link> : <div className="cartao numero">{corpo}</div>;
 }
 
 export default function Inicio() {
-  const { resumo, atualizarResumo, nome } = usePainel();
+  const { resumo, atualizarResumo, nome, pode } = usePainel();
   useEffect(() => { atualizarResumo(); }, [atualizarResumo]);
   if (!resumo) return <Carregando />;
 
@@ -42,7 +44,7 @@ export default function Inicio() {
       <Cabecalho titulo={`${saudacao}${primeiroNome ? ', ' + primeiroNome : ''}`}
         texto={`Resumo de hoje, ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })}.`} />
 
-      {resumo.emergencias_abertas > 0 ? (
+      {resumo.emergencias_abertas > 0 && pode('emergencias') ? (
         <Link href="/emergencias/" className="alerta-faixa vermelho" style={{ textDecoration: 'none' }}>
           <Siren size={26} />
           <div><strong>{resumo.emergencias_abertas} {resumo.emergencias_abertas === 1 ? 'emergência aberta' : 'emergências abertas'}</strong>
@@ -124,7 +126,11 @@ export default function Inicio() {
             <div className="corpo">
               {Object.keys(resumo.pedidos_por_status).length === 0 ? <span className="texto-suave">Nenhum pedido hoje até agora.</span> : (
                 <div className="linha-flex">
-                  {Object.entries(resumo.pedidos_por_status).map(([s, n]) => (
+                  {Object.entries(resumo.pedidos_por_status).map(([s, n]) => !pode('pedidos') ? (
+                    <span key={s} className={`selo ${statusPedido[s]?.tom ?? 'neutro'}`} style={{ fontSize: 13, padding: '6px 12px' }}>
+                      {statusPedido[s]?.rotulo ?? s}: {n}
+                    </span>
+                  ) : (
                     <Link key={s} href={`/pedidos/?status=${s}`} className={`selo ${statusPedido[s]?.tom ?? 'neutro'}`} style={{ fontSize: 13, padding: '6px 12px' }}>
                       {statusPedido[s]?.rotulo ?? s}: {n}
                     </Link>
@@ -167,7 +173,7 @@ export default function Inicio() {
             <div className="linha-flex texto-suave">
               <Users size={16} /> {numero(resumo.clientes)} clientes cadastrados
               <span className="espaco" />
-              <Star size={16} color="#ffb400" /> <Link href="/denuncias/?aba=avaliacoes">Avaliações suspeitas</Link>
+              {pode('denuncias') ? <><Star size={16} color="#ffb400" /> <Link href="/denuncias/?aba=avaliacoes">Avaliações suspeitas</Link></> : null}
             </div>
           </div>
         </section>

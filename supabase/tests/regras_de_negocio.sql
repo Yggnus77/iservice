@@ -103,6 +103,8 @@ end $$;
 select pg_temp.admin();
 
 update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000c1';
+insert into public.equipe (email, nome, papel, usuario_id) values ('dono@teste.com', 'Dono iService', 'dono', '00000000-0000-0000-0000-0000000000c1')
+on conflict (email) do update set papel = excluded.papel, usuario_id = excluded.usuario_id;
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 select public.admin_decidir_cadastro(id, true) from public.profissionais;
 select pg_temp.admin();
@@ -490,6 +492,8 @@ exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise n
 end $$;
 select pg_temp.admin();
 update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000c1';
+insert into public.equipe (email, nome, papel, usuario_id) values ('dono@teste.com', 'Dono iService', 'dono', '00000000-0000-0000-0000-0000000000c1')
+on conflict (email) do update set papel = excluded.papel, usuario_id = excluded.usuario_id;
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 select pg_temp.ok((select (public.admin_site(7)->'dias'->6->>'visitas')::int = 1 and (public.admin_site(7)->'por_plataforma'->>'cliente_android')::int = 1),
   'painel mostra visitas e downloads do dia');
@@ -603,6 +607,8 @@ exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise n
 end $$;
 select pg_temp.admin();
 update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000c1';
+insert into public.equipe (email, nome, papel, usuario_id) values ('dono@teste.com', 'Dono iService', 'dono', '00000000-0000-0000-0000-0000000000c1')
+on conflict (email) do update set papel = excluded.papel, usuario_id = excluded.usuario_id;
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 select pg_temp.ok((select id from public.admin_ranking_avaliacoes('profissionais', 'melhores') limit 1) is not null, 'painel lista os profissionais mais bem avaliados');
 select pg_temp.ok((select nota from public.admin_ranking_avaliacoes('profissionais', 'piores') limit 1)

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { AlertTriangle, Check, CheckCircle2, Columns2, ExternalLink, FileText, MapPin, MessageCircle, ShieldAlert, UserRound, X } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, Columns2, ExternalLink, FileText, Lock, MapPin, MessageCircle, ShieldAlert, UserRound, X } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Carregando, DialogoTexto, ErroCaixa, Miniatura, Pessoa, Selo, SeloStatus, Visor, useAcao, useCarregar, useUrlArquivo } from '@/components/ui';
 import { rpc } from '@/lib/supabase';
@@ -21,8 +21,29 @@ const sugestoesFoto = [
 
 const ordemDocs = ['selfie_documento', 'documento_frente', 'documento_verso', 'antecedentes', 'comprovante_endereco'];
 
-function CartaoDocumento({ doc, abrir, revisar, ocupado }: { doc: Documento; abrir: (url: string | null) => void; revisar: (d: Documento, aprovar: boolean) => void; ocupado: boolean }) {
+function CartaoDocumento({ doc, abrir, revisar, ocupado, decide }: {
+  doc: Documento; abrir: (url: string | null) => void; revisar: (d: Documento, aprovar: boolean) => void; ocupado: boolean; decide: boolean;
+}) {
   const { url, falhou } = useUrlArquivo('documentos', doc.arquivo_path);
+  if (!doc.arquivo_path) {
+    // Cargo sem acesso a documentos: mostra só a situação.
+    return (
+      <div className={`doc ${doc.status}`}>
+        <div className="imagem" style={{ cursor: 'default' }}>
+          <span style={{ color: '#cfdaf0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center', padding: 12 }}>
+            <Lock size={26} /> Documento protegido
+          </span>
+        </div>
+        <div className="info">
+          <div className="linha-flex" style={{ justifyContent: 'space-between' }}>
+            <strong>{tipoDocumento[doc.tipo] ?? doc.tipo}</strong>
+            <SeloStatus mapa={statusDocumento} valor={doc.status} />
+          </div>
+          <span className="texto-fraco">Só o Responsável de setor, o gerente e o dono abrem documentos.</span>
+        </div>
+      </div>
+    );
+  }
   const pdf = ePdf(doc.arquivo_path);
   return (
     <div className={`doc ${doc.status}`}>
@@ -38,7 +59,7 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado }: { doc: Documento; abr
         </div>
         <span className="texto-fraco">Enviado {haQuanto(doc.criado_em)}</span>
         {doc.observacao ? <span className="obs">{doc.observacao}</span> : null}
-        {doc.status === 'pendente' ? (
+        {!decide ? null : doc.status === 'pendente' ? (
           <div className="botoes">
             <button className="botao contorno perigo-texto pequeno" disabled={ocupado} onClick={() => revisar(doc, false)}><X /> Nova foto</button>
             <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => revisar(doc, true)}><Check /> Aprovar</button>
@@ -53,7 +74,8 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado }: { doc: Documento; abr
 
 function Revisao() {
   const id = useSearchParams().get('id') ?? '';
-  const { atualizarResumo } = usePainel();
+  const { atualizarResumo, pode } = usePainel();
+  const decide = pode('cadastros_decidir');
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Ficha>('admin_usuario', { p_id: id }), [id]);
   const { executar, ocupado } = useAcao();
   const [recusarDoc, setRecusarDoc] = useState<Documento | null>(null);
@@ -105,7 +127,7 @@ function Revisao() {
         </span>}
         acoes={<>
           <Link className="botao contorno" href={`/pessoa/?id=${perfil.id}`}><UserRound /> Ficha completa</Link>
-          {pro.status !== 'aprovado' && pro.status !== 'suspenso' ? <>
+          {decide && pro.status !== 'aprovado' && pro.status !== 'suspenso' ? <>
             <button className="botao contorno perigo-texto" disabled={ocupado} onClick={() => setRecusarCadastro(true)}><X /> Pedir ajustes</button>
             <button className="botao sucesso" disabled={ocupado || pendencias.length > 0} onClick={aprovarCadastro}
               title={pendencias.length ? 'Ainda há pendências no cadastro' : docsPendentes ? 'Aprova também os documentos que ainda estão pendentes' : ''}>
@@ -135,7 +157,7 @@ function Revisao() {
           <section className="cartao">
             <div className="titulo">
               <div><h2>Conferência de identidade</h2><p>Compare o rosto da foto de perfil e da selfie com a foto do documento.</p></div>
-              <button className="botao contorno pequeno" onClick={() => setComparar(true)}><Columns2 /> Comparar lado a lado</button>
+              {pode('dados_pessoais') ? <button className="botao contorno pequeno" onClick={() => setComparar(true)}><Columns2 /> Comparar lado a lado</button> : null}
             </div>
             <div className="corpo">
               <div className="documentos">
@@ -146,7 +168,7 @@ function Revisao() {
                   <div className="info"><strong>Foto de perfil</strong><span className="texto-fraco">Aparece para os clientes no app</span></div>
                 </div>
                 {docs.map((d) => (
-                  <CartaoDocumento key={d.id} doc={d} ocupado={ocupado} revisar={revisar}
+                  <CartaoDocumento key={d.id} doc={d} ocupado={ocupado} revisar={revisar} decide={decide}
                     abrir={(url) => setVisor([{ titulo: tipoDocumento[d.tipo] ?? d.tipo, url, caminho: d.arquivo_path }])} />
                 ))}
               </div>
@@ -187,7 +209,7 @@ function Revisao() {
                       </div>
                       {c.arquivo_path ? <div className="miniaturas"><Miniatura bucket="documentos" caminho={c.arquivo_path} titulo={c.nome} /></div> : null}
                       <SeloStatus mapa={statusDocumento} valor={c.status} />
-                      {c.status === 'pendente' ? <>
+                      {decide && c.status === 'pendente' ? <>
                         <button className="botao contorno perigo-texto pequeno" disabled={ocupado} onClick={() => revisarCert(c.id, false)}>Recusar</button>
                         <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => revisarCert(c.id, true)}>Aprovar</button>
                       </> : null}

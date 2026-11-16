@@ -474,3 +474,27 @@ table.tabela { width: 100%; border-collapse: collapse; }
   .caixa-msg { max-width: 94%; }
   .caixa-detalhe-cab, .caixa-acoes, .caixa-mensagens, .caixa-escrever { padding-left: 14px; padding-right: 14px; }
 }
+
+/* Cargos da equipe */
+.icone-cargo { flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; }
+.icone-cargo svg { width: 18px; height: 18px; }
+.icone-cargo.azul { background: var(--azul-suave); color: var(--azul-forte); }
+.icone-cargo.roxo { background: var(--roxo-suave); color: var(--roxo); }
+.icone-cargo.verde { background: var(--verde-suave); color: var(--verde-texto); }
+.icone-cargo.laranja { background: var(--laranja-suave); color: var(--laranja-texto); }
+.icone-cargo.neutro { background: var(--superficie-suave); color: var(--texto-suave); }
+.campo label.opcao-cargo, .opcao-cargo {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; cursor: pointer;
+  border: 1.5px solid var(--linha); border-radius: var(--raio-p); font-weight: 400; font-size: 14px; color: var(--texto);
+  transition: border-color .15s, background .15s;
+}
+.opcao-cargo:hover { background: var(--superficie-suave); }
+.opcao-cargo.marcada { border-color: var(--azul); background: var(--azul-suave); }
+.opcao-cargo input { position: absolute; opacity: 0; pointer-events: none; }
+.opcao-cargo:has(input:focus-visible) { outline: 2px solid var(--azul); outline-offset: 2px; }
+.opcao-cargo strong { display: block; font-size: 14px; color: var(--texto); }
+.opcao-cargo small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: var(--texto-suave); }
+.lista-cargos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.lista-cargos li { display: flex; gap: 12px; align-items: flex-start; }
+.lista-cargos strong { font-size: 14px; }
+.lista-cargos p { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--texto-suave); }

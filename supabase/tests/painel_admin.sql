@@ -57,6 +57,8 @@ select pg_temp.como('00000000-0000-0000-0000-0000000000b2');
 select public.enviar_cadastro_profissional();
 select pg_temp.admin();
 update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000ad';
+insert into public.equipe (email, nome, papel, usuario_id) values ('dono@teste.com', 'Dono iService', 'dono', '00000000-0000-0000-0000-0000000000ad')
+on conflict (email) do update set papel = excluded.papel, usuario_id = excluded.usuario_id;
 
 -- ------------------------------------------------------ acesso ao painel
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');

@@ -140,9 +140,12 @@ select pg_temp.ok(true, 'cadastro recusado pode corrigir o nome e reenviar');
 select pg_temp.como('00000000-0000-0000-0000-0000000000e1');
 select pg_temp.falha($$select public.admin_suspender('00000000-0000-0000-0000-0000000000d1', true, 'tentativa')$$,
   'suporte não consegue suspender o dono');
+select pg_temp.falha($$select public.admin_suspender('00000000-0000-0000-0000-0000000000c1', true, 'teste')$$,
+  'suporte não suspende contas (cargo sem a permissão)');
+select pg_temp.como('00000000-0000-0000-0000-0000000000d1');
 select public.admin_suspender('00000000-0000-0000-0000-0000000000c1', true, 'teste');
 select pg_temp.admin();
 select pg_temp.ok((select suspenso_em is not null from public.perfis where id = '00000000-0000-0000-0000-0000000000c1'),
-  'suporte ainda suspende clientes');
+  'dono suspende clientes');
 
 rollback;

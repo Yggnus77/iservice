@@ -43,31 +43,61 @@ export type ContagemEmails = {
   meus_nao_lidos: number; meus_pendentes: number; sem_responsavel: number; eu: string | null;
 };
 
+/** Permissões de cada cargo (a lista completa está no banco, em cargo_permissoes). */
+export type Permissao =
+  | 'inicio' | 'emails' | 'emails_todos' | 'cadastros' | 'cadastros_decidir' | 'dados_pessoais' | 'pedidos' | 'emergencias'
+  | 'garantia' | 'garantia_decidir' | 'avaliacoes' | 'avaliacoes_moderar' | 'denuncias' | 'pessoas' | 'pessoas_suspender'
+  | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo';
+
+export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing';
+export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[] };
+
 type Ctx = {
   resumo: Resumo | null; atualizarResumo: () => void; usuarioId: string; nome: string;
   foto: string | null; mudarFoto: (url: string | null) => void;
+  /** null enquanto o SQL dos cargos não foi aplicado: aí tudo continua liberado, como antes. */
+  acesso: MeuAcesso | null;
+  pode: (p: Permissao) => boolean;
+  podeRota: (href: string) => boolean;
 };
-const PainelCtx = createContext<Ctx>({ resumo: null, atualizarResumo: () => {}, usuarioId: '', nome: '', foto: null, mudarFoto: () => {} });
+const PainelCtx = createContext<Ctx>({
+  resumo: null, atualizarResumo: () => {}, usuarioId: '', nome: '', foto: null, mudarFoto: () => {},
+  acesso: null, pode: () => true, podeRota: () => true,
+});
 export const usePainel = () => useContext(PainelCtx);
 
-const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; contador?: (r: Resumo) => number; alerta?: boolean }[] = [
-  { href: '/', rotulo: 'Início', icone: <Gauge /> },
+/** Que permissão abre cada página do painel. */
+const rotas: [string, Permissao][] = [
+  ['/emails', 'emails'], ['/cadastros', 'cadastros'], ['/cadastro', 'cadastros'], ['/pedidos', 'pedidos'], ['/pedido', 'pedidos'],
+  ['/emergencias', 'emergencias'], ['/garantia', 'garantia'], ['/avaliacoes', 'avaliacoes'], ['/denuncias', 'denuncias'],
+  ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'],
+  ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
+  ['/equipe', 'equipe'], ['/registro', 'registro'],
+];
+export function permissaoDaRota(href: string): Permissao {
+  const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
+  const achou = rotas.find(([base]) => r === base);
+  return achou ? achou[1] : 'inicio';
+}
+
+const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; contador?: (r: Resumo) => number; alerta?: boolean }[] = [
+  { grupo: '', href: '/', rotulo: 'Início', icone: <Gauge /> },
   { grupo: 'Operação', href: '/emails/', rotulo: 'E-mails', icone: <Mail />, contador: (r) => (r.emails?.meus_pendentes ?? 0) + (r.emails?.sem_responsavel ?? 0) },
-  { href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
-  { href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
-  { href: '/emergencias/', rotulo: 'Emergências', icone: <Siren />, contador: (r) => r.emergencias_abertas, alerta: true },
-  { href: '/garantia/', rotulo: 'Garantia iService', icone: <ShieldCheck />, contador: (r) => r.reclamacoes_abertas },
-  { href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
-  { href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
-  { href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
+  { grupo: 'Operação', href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
+  { grupo: 'Operação', href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
+  { grupo: 'Operação', href: '/emergencias/', rotulo: 'Emergências', icone: <Siren />, contador: (r) => r.emergencias_abertas, alerta: true },
+  { grupo: 'Operação', href: '/garantia/', rotulo: 'Garantia iService', icone: <ShieldCheck />, contador: (r) => r.reclamacoes_abertas },
+  { grupo: 'Operação', href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
+  { grupo: 'Operação', href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
+  { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
-  { href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
-  { href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
+  { grupo: 'Crescimento', href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
+  { grupo: 'Crescimento', href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
-  { href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },
-  { href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
+  { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },
+  { grupo: 'Catálogo', href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
   { grupo: 'Equipe', href: '/equipe/', rotulo: 'Equipe', icone: <UsersRound /> },
-  { href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },
+  { grupo: 'Equipe', href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },
 ];
 
 // A caixa de e-mail tem SQL próprio: se ainda não foi aplicado, o resto do painel segue normal.
@@ -263,6 +293,19 @@ function SemAcesso({ motivo, sair }: { motivo: 'nao_admin' | 'sql_pendente'; sai
   );
 }
 
+function SemPermissao({ cargo }: { cargo?: string }) {
+  return (
+    <div className="cartao" style={{ maxWidth: 520, margin: '48px auto', textAlign: 'center', padding: 32 }}>
+      <Lock size={36} color="#64748b" />
+      <h1 style={{ fontSize: 22, margin: '12px 0 6px' }}>Esta parte não faz parte do seu cargo</h1>
+      <p style={{ color: 'var(--texto-suave)', margin: '0 0 20px' }}>
+        {cargo ? <>Você entrou como <strong>{cargo}</strong>. </> : null}Se precisar deste acesso, fale com o seu gerente ou com o dono do painel.
+      </p>
+      <Link href="/" className="botao contorno">Voltar para o Início</Link>
+    </div>
+  );
+}
+
 export default function Painel({ children }: { children: ReactNode }) {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined);
   const [acesso, setAcesso] = useState<'verificando' | 'ok' | 'nao_admin' | 'sql_pendente'>('verificando');
@@ -272,6 +315,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [menuAberto, setMenuAberto] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
+  const [meuAcesso, setMeuAcesso] = useState<MeuAcesso | null>(null);
   const rota = usePathname();
 
   useEffect(() => {
@@ -283,11 +327,12 @@ export default function Painel({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  const podeEmails = !meuAcesso || meuAcesso.permissoes.includes('emails');
   const atualizarResumo = useCallback(() => {
-    Promise.all([rpc<Resumo>('admin_resumo'), contagemEmails()]).then(([r, emails]) => setResumo({ ...r, emails })).catch((e: ErroPainel) => {
+    Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined)]).then(([r, emails]) => setResumo({ ...r, emails })).catch((e: ErroPainel) => {
       if (e.codigo === 'sql_pendente') setAcesso('sql_pendente');
     });
-  }, []);
+  }, [podeEmails]);
 
   useEffect(() => {
     if (!sessao) return;
@@ -299,7 +344,11 @@ export default function Painel({ children }: { children: ReactNode }) {
         const { data } = await db().from('perfis').select('nome, foto_url').eq('id', sessao.user.id).maybeSingle();
         setNome(data?.nome || sessao.user.email || '');
         setFoto(data?.foto_url || null);
-        const [r, emails] = await Promise.all([rpc<Resumo>('admin_resumo'), contagemEmails()]);
+        // Sem o SQL dos cargos, a função não existe e o painel segue como antes (tudo liberado).
+        const cargo = await rpc<MeuAcesso>('admin_meu_acesso').catch(() => null);
+        setMeuAcesso(cargo);
+        const podeEmails = !cargo || cargo.permissoes.includes('emails');
+        const [r, emails] = await Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined)]);
         setResumo({ ...r, emails });
         setAcesso('ok');
       } catch (e) {
@@ -325,8 +374,13 @@ export default function Painel({ children }: { children: ReactNode }) {
   if (acesso === 'verificando') return <Carregando texto="Conferindo o acesso…" />;
   if (acesso !== 'ok') return <SemAcesso motivo={acesso} sair={sair} />;
 
+  const pode = (p: Permissao) => !meuAcesso || meuAcesso.permissoes.includes(p);
+  const podeRota = (href: string) => pode(permissaoDaRota(href));
+  const itens = menu.filter((m) => podeRota(m.href));
+  const liberada = podeRota(rota);
+
   return (
-    <PainelCtx.Provider value={{ resumo, atualizarResumo, usuarioId: sessao.user.id, nome, foto, mudarFoto: setFoto }}>
+    <PainelCtx.Provider value={{ resumo, atualizarResumo, usuarioId: sessao.user.id, nome, foto, mudarFoto: setFoto, acesso: meuAcesso, pode, podeRota }}>
       <Avisos>
         <div className="casca">
           {menuAberto ? <div className="veu" onClick={() => setMenuAberto(false)} /> : null}
@@ -336,11 +390,12 @@ export default function Painel({ children }: { children: ReactNode }) {
               <div><strong>iService</strong><span>Equipe</span></div>
             </div>
             <nav aria-label="Menu do painel">
-              {menu.map((m) => {
+              {itens.map((m, i) => {
                 const n = resumo && m.contador ? m.contador(resumo) : 0;
+                const novoGrupo = m.grupo && m.grupo !== itens[i - 1]?.grupo;
                 return (
                   <div key={m.href} style={{ display: 'contents' }}>
-                    {m.grupo ? <div className="grupo">{m.grupo}</div> : null}
+                    {novoGrupo ? <div className="grupo">{m.grupo}</div> : null}
                     <Link href={m.href} className={ativo(rota, m.href) ? 'ativo' : ''}>
                       {m.icone}
                       {m.rotulo}
@@ -356,7 +411,7 @@ export default function Painel({ children }: { children: ReactNode }) {
                 <Avatar nome={nome} foto={foto} tamanho={34} />
                 <span className="lapis"><Camera /></span>
               </button>
-              <div className="quem"><strong>{nome}</strong><span>Equipe iService</span></div>
+              <div className="quem"><strong>{nome}</strong><span>{meuAcesso?.cargo_nome ?? 'Equipe iService'}</span></div>
               <button onClick={sair} title="Sair" aria-label="Sair"><LogOut size={16} /></button>
             </div>
           </aside>
@@ -367,7 +422,7 @@ export default function Painel({ children }: { children: ReactNode }) {
               <span className="espaco" />
               <BarChart3 size={18} style={{ opacity: 0 }} />
             </div>
-            {children}
+            {liberada ? children : <SemPermissao cargo={meuAcesso?.cargo_nome} />}
           </main>
         </div>
         <DialogoFoto pessoa={editarFoto ? { id: sessao.user.id, nome, foto } : null} propria

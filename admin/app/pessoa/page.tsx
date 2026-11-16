@@ -13,7 +13,7 @@ import { enderecoTexto, type Ficha } from '@/lib/tipos';
 function Ficha() {
   const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
-  const { usuarioId, atualizarResumo } = usePainel();
+  const { usuarioId, atualizarResumo, pode } = usePainel();
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Ficha>('admin_usuario', { p_id: id }), [id]);
   const { executar, ocupado } = useAcao();
   const [suspender, setSuspender] = useState(false);
@@ -43,7 +43,7 @@ function Ficha() {
         acoes={<>
           {zap ? <a className="botao contorno" href={zap} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a> : null}
           {pro ? <Link className="botao contorno" href={`/cadastro/?id=${perfil.id}`}><BadgeCheck /> Documentos e cadastro</Link> : null}
-          {perfil.id !== usuarioId ? (suspensa
+          {perfil.id !== usuarioId && pode('pessoas_suspender') ? (suspensa
             ? <button className="botao sucesso" disabled={ocupado} onClick={reativar}><RotateCcw /> Reativar conta</button>
             : <button className="botao contorno perigo-texto" disabled={ocupado} onClick={() => setSuspender(true)}><Ban /> Suspender conta</button>) : null}
         </>} />
