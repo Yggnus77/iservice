@@ -34,6 +34,13 @@ export type Resumo = {
   nota_media_dia: number | null;
   ultimos_7_dias: { dia: string; buscas: number; sem_resultado: number; pedidos: number; concluidos: number; cadastros: number }[];
   profissionais_por_profissao: { id: string; nome: string; ativa: boolean; aprovados: number; em_analise: number }[];
+  /** Caixa de e-mail do suporte (vem de admin_suporte_contagem). */
+  emails?: ContagemEmails;
+};
+
+export type ContagemEmails = {
+  aberto: number; em_atendimento: number; encerrado: number; meus_aberto: number; meus_em_atendimento: number;
+  meus_nao_lidos: number; meus_pendentes: number; sem_responsavel: number; eu: string | null;
 };
 
 type Ctx = {
@@ -45,7 +52,8 @@ export const usePainel = () => useContext(PainelCtx);
 
 const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; contador?: (r: Resumo) => number; alerta?: boolean }[] = [
   { href: '/', rotulo: 'Início', icone: <Gauge /> },
-  { grupo: 'Operação', href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
+  { grupo: 'Operação', href: '/emails/', rotulo: 'E-mails', icone: <Mail />, contador: (r) => (r.emails?.meus_pendentes ?? 0) + (r.emails?.sem_responsavel ?? 0) },
+  { href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
   { href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
   { href: '/emergencias/', rotulo: 'Emergências', icone: <Siren />, contador: (r) => r.emergencias_abertas, alerta: true },
   { href: '/garantia/', rotulo: 'Garantia iService', icone: <ShieldCheck />, contador: (r) => r.reclamacoes_abertas },
@@ -61,6 +69,9 @@ const menu: { grupo?: string; href: string; rotulo: string; icone: ReactNode; co
   { grupo: 'Equipe', href: '/equipe/', rotulo: 'Equipe', icone: <UsersRound /> },
   { href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },
 ];
+
+// A caixa de e-mail tem SQL próprio: se ainda não foi aplicado, o resto do painel segue normal.
+const contagemEmails = () => rpc<ContagemEmails>('admin_suporte_contagem').catch(() => undefined);
 
 function ativo(rota: string, href: string) {
   const r = rota.replace(/^\/admin/, '') || '/';
@@ -273,7 +284,7 @@ export default function Painel({ children }: { children: ReactNode }) {
   }, []);
 
   const atualizarResumo = useCallback(() => {
-    rpc<Resumo>('admin_resumo').then(setResumo).catch((e: ErroPainel) => {
+    Promise.all([rpc<Resumo>('admin_resumo'), contagemEmails()]).then(([r, emails]) => setResumo({ ...r, emails })).catch((e: ErroPainel) => {
       if (e.codigo === 'sql_pendente') setAcesso('sql_pendente');
     });
   }, []);
@@ -288,8 +299,8 @@ export default function Painel({ children }: { children: ReactNode }) {
         const { data } = await db().from('perfis').select('nome, foto_url').eq('id', sessao.user.id).maybeSingle();
         setNome(data?.nome || sessao.user.email || '');
         setFoto(data?.foto_url || null);
-        const r = await rpc<Resumo>('admin_resumo');
-        setResumo(r);
+        const [r, emails] = await Promise.all([rpc<Resumo>('admin_resumo'), contagemEmails()]);
+        setResumo({ ...r, emails });
         setAcesso('ok');
       } catch (e) {
         setAcesso((e as ErroPainel).codigo === 'sql_pendente' ? 'sql_pendente' : 'nao_admin');

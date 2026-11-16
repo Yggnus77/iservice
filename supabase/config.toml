@@ -429,3 +429,12 @@ verify_jwt = false
 
 [functions.limpar-arquivos]
 verify_jwt = false
+
+[functions.enviar-email]
+verify_jwt = false
+
+[functions.receber-email]
+verify_jwt = false
+
+[functions.responder-suporte]
+verify_jwt = false
