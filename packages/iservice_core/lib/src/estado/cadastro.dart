@@ -22,6 +22,7 @@ class RascunhoCadastro {
     this.bloco,
     this.numero,
     this.complemento,
+    this.bairro,
     this.referencia,
     this.cep,
     this.lat,
@@ -40,6 +41,7 @@ class RascunhoCadastro {
   final String? bloco;
   final String? numero;
   final String? complemento;
+  final String? bairro;
   final String? referencia;
   final String? cep;
   final double? lat;
@@ -61,6 +63,7 @@ class RascunhoCadastro {
     String? bloco,
     String? numero,
     String? complemento,
+    String? bairro,
     String? referencia,
     String? cep,
     double? lat,
@@ -79,6 +82,7 @@ class RascunhoCadastro {
         bloco: bloco ?? this.bloco,
         numero: numero ?? this.numero,
         complemento: complemento ?? this.complemento,
+        bairro: bairro ?? this.bairro,
         referencia: referencia ?? this.referencia,
         cep: cep ?? this.cep,
         lat: lat ?? this.lat,
@@ -98,6 +102,7 @@ class RascunhoCadastro {
         'bloco': bloco,
         'numero': numero,
         'complemento': complemento,
+        'bairro': bairro,
         'referencia': referencia,
         'cep': cep,
         'lat': lat,
@@ -117,6 +122,7 @@ class RascunhoCadastro {
         bloco: j['bloco'],
         numero: j['numero'],
         complemento: j['complemento'],
+        bairro: j['bairro'],
         referencia: j['referencia'],
         cep: j['cep'],
         lat: (j['lat'] as num?)?.toDouble(),
@@ -169,6 +175,7 @@ class RascunhoNotifier extends Notifier<RascunhoCadastro> {
         bloco: r.bloco,
         numero: r.numero,
         complemento: r.complemento,
+        bairro: r.bairro,
         referencia: r.referencia,
         cep: r.cep,
         cidade: r.cidade,

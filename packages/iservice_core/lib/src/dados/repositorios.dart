@@ -241,6 +241,7 @@ class ContaRepo {
     String? bloco,
     String? numero,
     String? complemento,
+    String? bairro,
     String? referencia,
     String? cep,
     String cidade = 'Brasília',
@@ -265,6 +266,8 @@ class ContaRepo {
           'p_rotulo': rotulo,
           'p_principal': principal,
           'p_id': id,
+          // Só vai quando preenchido: assim o app funciona mesmo antes da migração do bairro.
+          if (bairro != null && bairro.trim().isNotEmpty) 'p_bairro': bairro.trim(),
         });
         return (r as num).toInt();
       });

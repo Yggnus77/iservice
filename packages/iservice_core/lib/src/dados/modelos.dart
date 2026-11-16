@@ -115,6 +115,7 @@ class Endereco {
     this.bloco,
     this.numero,
     this.complemento,
+    this.bairro,
     this.referencia,
     this.cep,
   });
@@ -125,6 +126,7 @@ class Endereco {
   final String? bloco;
   final String? numero;
   final String? complemento;
+  final String? bairro;
   final String? referencia;
   final String? cep;
   final String cidade;
@@ -133,8 +135,8 @@ class Endereco {
   final double lng;
   final bool principal;
 
-  /// "SQS 308, Bloco C, Apto 101"
-  String get linha1 => [logradouro, bloco, numero, complemento].where((s) => s != null && s.isNotEmpty).join(', ');
+  /// "SQS 308, Bloco C, Apto 101" ou "Rua 10 Qd 5, Lt 3, Jardim Ingá"
+  String get linha1 => [logradouro, bloco, numero, complemento, bairro].where((s) => s != null && s.isNotEmpty).join(', ');
 
   factory Endereco.fromJson(Map<String, dynamic> j) => Endereco(
         id: j['id'],
@@ -144,6 +146,7 @@ class Endereco {
         bloco: j['bloco'],
         numero: j['numero'],
         complemento: j['complemento'],
+        bairro: j['bairro'],
         referencia: j['referencia'],
         cep: j['cep'],
         cidade: j['cidade'] ?? 'Brasília',
