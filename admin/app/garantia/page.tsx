@@ -21,6 +21,7 @@ type Aba = 'abertas' | 'resolvida' | 'encerrada' | 'todas';
 
 function Mediacao({ r, aoMudar }: { r: Reclamacao; aoMudar: () => void }) {
   const { executar, ocupado } = useAcao();
+  const decide = usePainel().pode('garantia_decidir');
   const hist = useCarregar(() => rpc<Historico[]>('admin_reclamacao_historico', { p_reclamacao: r.id }), [r.id]);
   const [texto, setTexto] = useState('');
   const [status, setStatus] = useState<string>(r.status === 'aberta' ? 'em_mediacao' : r.status);
@@ -75,9 +76,12 @@ function Mediacao({ r, aoMudar }: { r: Reclamacao; aoMudar: () => void }) {
             <label htmlFor="med-status">Situação</label>
             <select id="med-status" className="entrada" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="em_mediacao">Em mediação</option>
-              <option value="resolvida">Resolvida (houve acordo ou correção)</option>
-              <option value="encerrada">Encerrada (sem acordo ou improcedente)</option>
+              {decide ? <>
+                <option value="resolvida">Resolvida (houve acordo ou correção)</option>
+                <option value="encerrada">Encerrada (sem acordo ou improcedente)</option>
+              </> : null}
             </select>
+            {!decide ? <span className="ajuda">Quem fecha a reclamação é o Responsável de setor ou o gerente. Registre aqui o que você apurou.</span> : null}
           </div>
           <div className="campo">
             <label htmlFor="med-texto">{fecha ? 'Resolução' : 'Anotação ou mensagem'}</label>

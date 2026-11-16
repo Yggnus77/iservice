@@ -126,6 +126,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
   const [enviando, setEnviando] = useState(false);
   const [original, setOriginal] = useState<number | null>(null);
   const [transferir, setTransferir] = useState(false);
+  const todos = usePainel().pode('emails_todos');
   const fim = useRef<HTMLDivElement>(null);
   const primeiraCarga = useRef(true);
 
@@ -209,8 +210,8 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
           {c.responsavel_nome ? <>Com <strong>{minha ? 'você' : c.responsavel_nome}</strong></> : <strong style={{ color: 'var(--perigo)' }}>Sem responsável</strong>}
         </span>
         <span className="espaco" />
-        {!minha ? <button className="botao contorno pequeno" disabled={ocupado} onClick={assumir}><UserCheck /> Assumir</button> : null}
-        <button className="botao contorno pequeno" disabled={ocupado} onClick={() => setTransferir(true)}><ArrowLeftRight /> Passar</button>
+        {!minha && (todos || !c.responsavel) ? <button className="botao contorno pequeno" disabled={ocupado} onClick={assumir}><UserCheck /> Assumir</button> : null}
+        {todos || minha || !c.responsavel ? <button className="botao contorno pequeno" disabled={ocupado} onClick={() => setTransferir(true)}><ArrowLeftRight /> Passar</button> : null}
         {c.status === 'aberto' ? <button className="botao contorno pequeno" disabled={ocupado} onClick={() => status('em_atendimento', 'Em atendimento.')}>Em atendimento</button> : null}
         {c.status !== 'encerrado'
           ? <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => status('encerrado', 'Conversa encerrada.')}><CheckCircle2 /> Encerrar</button>
@@ -355,7 +356,8 @@ type Quem = 'meus' | 'todos' | 'sem_responsavel' | string;
 function Pagina() {
   const params = useSearchParams();
   const router = useRouter();
-  const { resumo, atualizarResumo } = usePainel();
+  const { resumo, atualizarResumo, pode } = usePainel();
+  const todos = pode('emails_todos');
   const aberta = Number(params.get('id')) || null;
   const [status, setStatus] = useState<StatusConversa>('aberto');
   const [quem, setQuem] = useState<Quem>('meus');
@@ -395,7 +397,7 @@ function Pagina() {
       <Cabecalho titulo="E-mails"
         texto={<>Tudo o que chega em <strong>{ENDERECO}</strong> e as respostas aos e-mails automáticos. Cada e-mail novo vai para uma pessoa da equipe, em rodízio.</>}
         acoes={<>
-          <button className="botao contorno" onClick={() => setDistribuicao(true)}><Shuffle /> Distribuição</button>
+          {todos ? <button className="botao contorno" onClick={() => setDistribuicao(true)}><Shuffle /> Distribuição</button> : null}
           <button className="botao primario" onClick={() => setNovo(true)}><MailPlus /> Novo e-mail</button>
         </>} />
 
@@ -415,9 +417,9 @@ function Pagina() {
         ]} />
         <select className="entrada" value={quem} onChange={(ev) => setQuem(ev.target.value)} aria-label="De quem">
           <option value="meus">Meus{naoLidosMeus ? ` (${naoLidosMeus} não lidos)` : ''}</option>
-          <option value="todos">Toda a equipe</option>
+          <option value="todos">{todos ? 'Toda a equipe' : 'Meus e sem responsável'}</option>
           <option value="sem_responsavel">Sem responsável</option>
-          {(equipe.dados ?? []).filter((m) => m.ativo && !m.voce).map((m) => <option key={m.email} value={m.email}>{m.nome}</option>)}
+          {(todos ? equipe.dados ?? [] : []).filter((m) => m.ativo && !m.voce).map((m) => <option key={m.email} value={m.email}>{m.nome}</option>)}
         </select>
         <div className="busca">
           <Search />

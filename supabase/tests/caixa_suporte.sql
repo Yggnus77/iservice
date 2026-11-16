@@ -59,7 +59,7 @@ update public.perfis p set email = u.email from auth.users u where u.id = p.id;
 update public.perfis set e_admin = true where id = '00000000-0000-0000-0000-0000000000ad';
 insert into public.equipe (email, nome, papel, usuario_id, convidado_em, entrou_em) values
   ('dono@teste.com', 'Dono iService', 'dono', '00000000-0000-0000-0000-0000000000ad', now() - interval '3 days', now()),
-  ('ana@teste.com', 'Ana Souza', 'suporte', null, now() - interval '2 days', null),
+  ('ana@teste.com', 'Ana Souza', 'responsavel', null, now() - interval '2 days', null),
   ('bruno@teste.com', 'Bruno Lima', 'suporte', null, now() - interval '1 day', null);
 -- Ana e Bruno confirmam o e-mail: o gatilho da equipe libera o acesso.
 update auth.users set email_confirmed_at = now() where id in ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a2');
