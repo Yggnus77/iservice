@@ -1,0 +1,77 @@
+# Testa os apps web no motor do Safari (WebKit, com tela e toque de iPhone) e no Safari
+# de verdade dentro do simulador de iPhone (Mac do GitHub). Não cria conta nem grava no banco:
+# no site publicado vai só até antes de criar a conta; telas de quem está logado usam a
+# versão de demonstração (dados de exemplo). Resultado: aba Actions > execução > "Artifacts".
+name: Teste no iPhone (Safari)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths: ['tools/teste-iphone/**', '.github/workflows/teste-iphone.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+      - run: flutter pub get
+      - run: bash tools/teste-iphone/montar_demo.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-web
+          path: |
+            apps/cliente/build/demo
+            apps/profissional/build/demo
+          retention-days: 3
+
+  webkit:
+    needs: demo
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { name: demo-web, path: demo-web }
+      - name: Servir a demonstração
+        run: |
+          ls demo-web || true
+          (cd demo-web/cliente/build/demo 2>/dev/null && nohup python3 -m http.server 8101 >/dev/null 2>&1 &)
+          (cd demo-web/profissional/build/demo 2>/dev/null && nohup python3 -m http.server 8102 >/dev/null 2>&1 &)
+      - name: WebKit
+        run: |
+          cd tools/teste-iphone
+          npm init -y >/dev/null && npm i playwright@1.56.1 >/dev/null
+          npx playwright install --with-deps webkit >/dev/null
+          node testar_webkit.js "$GITHUB_WORKSPACE/capturas-webkit"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: capturas-webkit, path: capturas-webkit, retention-days: 14 }
+
+  simulador:
+    needs: demo
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { name: demo-web, path: demo-web }
+      - name: Servir a demonstração
+        run: |
+          (cd demo-web/cliente/build/demo 2>/dev/null && nohup python3 -m http.server 8101 >/dev/null 2>&1 &)
+          (cd demo-web/profissional/build/demo 2>/dev/null && nohup python3 -m http.server 8102 >/dev/null 2>&1 &)
+      - run: bash tools/teste-iphone/simulador.sh "$GITHUB_WORKSPACE/capturas-simulador"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: capturas-simulador, path: capturas-simulador, retention-days: 14 }
