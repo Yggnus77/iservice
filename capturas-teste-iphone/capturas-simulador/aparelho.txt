@@ -1,0 +1,18 @@
+== Devices ==
+-- iOS 18.5 --
+-- iOS 18.6 --
+-- iOS 26.0 --
+-- iOS 26.1 --
+-- iOS 26.2 --
+    iPhone SE (3rd generation) (A1285399-F2F4-46E9-8CF2-4AA227FF7EF3) (Booted) 
+-- tvOS 18.5 --
+-- tvOS 26.1 --
+-- tvOS 26.2 --
+-- watchOS 11.5 --
+-- watchOS 26.1 --
+-- watchOS 26.2 --
+-- visionOS 2.3 --
+-- visionOS 2.4 --
+-- visionOS 2.5 --
+-- visionOS 26.1 --
+-- visionOS 26.2 --
