@@ -69,7 +69,7 @@ class _TelaCadastroState extends ConsumerState<TelaCadastro> {
       _ => PassoFoto(passo: 4, total: 4, aoContinuar: _concluir),
     };
     return Stack(children: [
-      tela,
+      BannerCadastro(imagem: const AssetImage('assets/cadastro.jpg'), child: tela),
       if (_salvando) const ColoredBox(color: Color(0x33000000), child: Carregando()),
     ]);
   }

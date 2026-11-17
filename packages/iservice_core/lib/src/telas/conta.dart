@@ -52,6 +52,37 @@ class CabecalhoPasso extends StatelessWidget {
   }
 }
 
+/// Imagem do alto do cadastro de cada app. O app envolve a tela de cadastro com ele,
+/// e todos os passos mostram a imagem acima do título.
+class BannerCadastro extends InheritedWidget {
+  const BannerCadastro({super.key, required this.imagem, required super.child});
+  final ImageProvider imagem;
+
+  static ImageProvider? de(BuildContext context) => context.dependOnInheritedWidgetOfExactType<BannerCadastro>()?.imagem;
+
+  @override
+  bool updateShouldNotify(BannerCadastro antigo) => antigo.imagem != imagem;
+}
+
+class _Banner extends StatelessWidget {
+  const _Banner(this.imagem);
+  final ImageProvider imagem;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: AspectRatio(aspectRatio: 1672 / 941, child: Image(image: imagem, fit: BoxFit.cover)),
+            ),
+          ),
+        ),
+      );
+}
+
 /// Estrutura comum dos passos: conteúdo rolável e botão fixo embaixo.
 class ModeloPasso extends StatelessWidget {
   const ModeloPasso({super.key, required this.cabecalho, required this.filhos, required this.rotuloBotao, required this.aoContinuar, this.carregando = false, this.rodape});
@@ -63,19 +94,22 @@ class ModeloPasso extends StatelessWidget {
   final Widget? rodape;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    // Em tela larga (computador) o formulário fica numa coluna de até 640 px, no centro.
+    final lado = ((MediaQuery.sizeOf(context).width - 640) / 2).clamp(Medidas.margemTela, double.infinity);
+    return Scaffold(
         appBar: AppBar(),
         body: SafeArea(
           top: false,
           child: Column(children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24),
-                children: [cabecalho, ...filhos],
+                padding: EdgeInsets.fromLTRB(lado, 0, lado, 24),
+                children: [if (BannerCadastro.de(context) case final banner?) _Banner(banner), cabecalho, ...filhos],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 8, Medidas.margemTela, 16),
+              padding: EdgeInsets.fromLTRB(lado, 8, lado, 16),
               child: Column(children: [
                 BotaoPrincipal(rotulo: rotuloBotao, aoTocar: aoContinuar, carregando: carregando),
                 ?rodape,
@@ -84,6 +118,7 @@ class ModeloPasso extends StatelessWidget {
           ]),
         ),
       );
+  }
 }
 
 const _espaco = SizedBox(height: 14);
