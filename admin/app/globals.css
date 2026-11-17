@@ -498,3 +498,16 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .lista-cargos li { display: flex; gap: 12px; align-items: flex-start; }
 .lista-cargos strong { font-size: 14px; }
 .lista-cargos p { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--texto-suave); }
+
+/* Sugestões de profissões */
+.sugestao-barra { display: flex; align-items: center; gap: 10px; }
+.sugestao-barra .trilho { display: flex; gap: 2px; height: 10px; min-width: 6px; border-radius: 6px; overflow: hidden; }
+.sugestao-barra .trilho i { display: block; height: 100%; }
+.sugestao-barra .trilho i.a { background: var(--azul); }
+.sugestao-barra .trilho i.b { background: var(--laranja); }
+.sugestao-barra strong { font-variant-numeric: tabular-nums; }
+.tabela.sugestoes span.fraco { display: block; color: var(--texto-fraco); font-size: 12.5px; margin-top: 3px; }
+.lista-sugestoes { list-style: none; margin: 0; padding: 0; }
+.lista-sugestoes li { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--linha); }
+.lista-sugestoes li:last-child { border-bottom: 0; }
+.lista-sugestoes .fraco { display: block; color: var(--texto-fraco); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }

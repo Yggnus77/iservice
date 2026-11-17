@@ -35,6 +35,7 @@ function ItemLista({ c, ativo, mostrarResponsavel, abrir }: { c: ItemConversa; a
         <span className="caixa-item-previa">{c.ultima_direcao === 'enviada' ? 'Você: ' : ''}{c.previa || 'Sem texto'}</span>
         <span className="caixa-item-rodape">
           <span className="mono">{c.protocolo}</span>
+          {c.assunto.startsWith('Reclamação pelo site') ? <Selo tom="vermelho">Reclamação · site</Selo> : null}
           {c.usuario_id ? <Selo tom={c.e_profissional ? 'laranja' : 'azul'}>{c.e_profissional ? 'Profissional' : 'Cliente'}</Selo> : null}
           {mostrarResponsavel ? (c.responsavel_nome
             ? <span className="texto-fraco">{c.responsavel_nome.split(' ')[0]}</span>

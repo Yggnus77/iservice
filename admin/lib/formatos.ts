@@ -172,4 +172,5 @@ export const nomesAcao: Record<string, string> = {
   remover_equipe: 'Removeu da equipe',
   foto_equipe: 'Trocou a foto de alguém da equipe',
   remover_foto_equipe: 'Tirou a foto de alguém da equipe',
+  apagar_sugestao_profissao: 'Apagou uma sugestão de profissão',
 };
