@@ -10,4 +10,6 @@ cp $D/main_demo.dart apps/cliente/lib/main_demo.dart
 cp $D/main_demo_profissional.dart apps/profissional/lib/main_demo.dart
 for a in cliente profissional; do
   (cd apps/$a && flutter build web -t lib/main_demo.dart --release -o build/demo)
+  # A demonstração roda em http://localhost: sem isto o navegador troca tudo para https e nada carrega.
+  sed -i.bak 's/; upgrade-insecure-requests//' apps/$a/build/demo/index.html && rm -f apps/$a/build/demo/index.html.bak
 done

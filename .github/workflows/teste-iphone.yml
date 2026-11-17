@@ -11,7 +11,7 @@ on:
     paths: ['tools/teste-iphone/**', '.github/workflows/teste-iphone.yml']
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   demo:
@@ -75,3 +75,21 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: capturas-simulador, path: capturas-simulador, retention-days: 14 }
+
+  # Guarda as capturas no próprio ramo (pasta capturas-teste-iphone/) para consulta rápida.
+  # Só em ramos claude/**; apague a pasta antes de mesclar.
+  juntar:
+    needs: [webkit, simulador]
+    if: always() && startsWith(github.ref_name, 'claude/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { pattern: 'capturas-*', path: capturas-teste-iphone }
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add capturas-teste-iphone
+          git commit -m "Capturas do teste no iPhone (${GITHUB_SHA::7})" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}

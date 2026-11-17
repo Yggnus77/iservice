@@ -116,11 +116,12 @@ async function publicado(b, app) {
   log(`[${app}] passo 2 na tela:`, JSON.stringify(await rotulos(p)));
   if (await tocar(p, /Cidade ou região/, { ms: 1500 })) {
     await foto(p, `${app}-05-lista-cidades`);
-    await tocar(p, /Plano Piloto|Asa Sul|Brasília/, { ms: 1500 });
+    // Entorno (GO): o bairro passa a ser obrigatório, é o caso mais completo.
+    await tocar(p, /Valparaíso de Goiás/, { ms: 1500 });
   }
-  await digitar(p, /^Endereço|SQS 308/, 'SQS 308 Bloco C');
-  await digitar(p, /Bloco \/ casa|Lote/, '101');
-  await digitar(p, /Bairro/, 'Asa Sul');
+  await digitar(p, /^Endereço|Rua 10/, 'Rua 10 Qd 5');
+  await digitar(p, /Lote|Bloco \/ casa/, '12');
+  await digitar(p, /Bairro/, 'Céu Azul');
   await p.keyboard.press('Enter').catch(() => {});
   await foto(p, `${app}-06-endereco-preenchido`);
   await tocar(p, /^\s*Continuar\s*$/, { ms: 7000, ultimo: true });
