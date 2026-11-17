@@ -263,7 +263,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
                 child: OutlinedButton(
                   onPressed: _ocupado || expirou ? null : () => _responder(false),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: c.perigo),
-                  child: const Text('Recusar'),
+                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Recusar', maxLines: 1)),
                 ),
               ),
               const SizedBox(width: 12),

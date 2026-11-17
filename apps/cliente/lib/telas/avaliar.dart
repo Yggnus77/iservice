@@ -91,7 +91,10 @@ class _TelaAvaliarState extends ConsumerState<TelaAvaliar> {
           for (final f in _fotos)
             ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(f, width: 72, height: 72, fit: BoxFit.cover)),
           if (_fotos.length < 4)
-            InkWell(
+            Semantics(
+              button: true,
+              label: 'Adicionar foto',
+              child: InkWell(
               onTap: _enviando ? null : _adicionarFoto,
               borderRadius: BorderRadius.circular(10),
               child: Container(
@@ -100,6 +103,7 @@ class _TelaAvaliarState extends ConsumerState<TelaAvaliar> {
                 decoration: BoxDecoration(border: Border.all(color: c.linha, width: 1.5), borderRadius: BorderRadius.circular(10)),
                 child: Icon(Symbols.add_a_photo_rounded, color: c.acaoTexto),
               ),
+            ),
             ),
         ]),
       ]),

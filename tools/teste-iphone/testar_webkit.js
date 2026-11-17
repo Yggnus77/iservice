@@ -134,6 +134,7 @@ async function publicado(b, app) {
   await p.evaluate(() => { location.hash = '#/entrar'; });
   await espera(p, 3000);
   await digitar(p, /E-mail/, 'teste@exemplo.com');
+  await espera(p, 800);
   await foto(p, `${app}-09-entrar-com-teclado`);
   await ctx.close();
 }
@@ -174,7 +175,7 @@ async function demo(b) {
         // Foto da galeria: o iPhone abre o seletor de fotos; aqui entregamos uma imagem pronta.
         fs.existsSync(amostra) || fs.copyFileSync(path.join(__dirname, 'amostra.jpg'), amostra);
         p.on('filechooser', async (fc) => { log('  seletor de foto abriu, multiplo=' + fc.isMultiple()); await fc.setFiles(amostra); });
-        await tocar(p, /foto/i, { ms: 3000 });
+        await tocar(p, /Adicionar foto/, { ms: 3000 });
       }
       await foto(p, 'demo-' + n);
     } catch (e) { log('demo', n, 'FALHOU', String(e).slice(0, 200)); }

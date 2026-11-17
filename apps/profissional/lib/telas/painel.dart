@@ -386,7 +386,7 @@ class _NovoChamadoState extends ConsumerState<_NovoChamado> {
                     foregroundColor: Theme.of(context).colorScheme.onSurface,
                     side: const BorderSide(color: Cores.bordaControle, width: 1.5),
                   ),
-                  child: const Text('Recusar'),
+                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Recusar', maxLines: 1)),
                 ),
               ),
               const SizedBox(width: 12),
