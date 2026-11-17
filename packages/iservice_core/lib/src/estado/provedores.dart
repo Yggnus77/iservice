@@ -89,13 +89,27 @@ final regiaoLocalProvider = FutureProvider<String?>((ref) async {
 final faixaPrecoProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
     (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
 
-/// Pede permissão e lê o GPS uma vez. Devolve null se o usuário negar.
+/// Pede permissão e lê o GPS uma vez. Devolve null se o usuário negar, se o GPS
+/// não responder em 20 s ou se o navegador falhar (no Safari do iPhone, a consulta
+/// de permissão pode não existir ou dar erro; aí pedimos a posição direto, que já
+/// mostra o aviso de permissão).
 Future<Position?> lerLocalizacaoAtual() async {
-  if (!await Geolocator.isLocationServiceEnabled()) return null;
-  var p = await Geolocator.checkPermission();
-  if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-  if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return null;
-  return await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return null;
+    LocationPermission? p;
+    try {
+      p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+    } on Object {
+      p = null;
+    }
+    if (p == LocationPermission.denied || p == LocationPermission.deniedForever) return null;
+    return await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 20)),
+    );
+  } on Object {
+    return null;
+  }
 }
 
 final notificacoesProvider = StreamProvider<List<Notificacao>>((ref) {

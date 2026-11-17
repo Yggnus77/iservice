@@ -175,9 +175,9 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
             else
               SegmentedButton<QuandoPedido>(
                 segments: const [
-                  ButtonSegment(value: QuandoPedido.agora, label: Text('Agora'), icon: Icon(Symbols.bolt_rounded)),
-                  ButtonSegment(value: QuandoPedido.hoje, label: Text('Hoje'), icon: Icon(Symbols.today_rounded)),
-                  ButtonSegment(value: QuandoPedido.combinado, label: Text('Agendar'), icon: Icon(Symbols.event_rounded)),
+                  ButtonSegment(value: QuandoPedido.agora, label: FittedBox(fit: BoxFit.scaleDown, child: Text('Agora', maxLines: 1)), icon: Icon(Symbols.bolt_rounded)),
+                  ButtonSegment(value: QuandoPedido.hoje, label: FittedBox(fit: BoxFit.scaleDown, child: Text('Hoje', maxLines: 1)), icon: Icon(Symbols.today_rounded)),
+                  ButtonSegment(value: QuandoPedido.combinado, label: FittedBox(fit: BoxFit.scaleDown, child: Text('Agendar', maxLines: 1)), icon: Icon(Symbols.event_rounded)),
                 ],
                 selected: {quando},
                 showSelectedIcon: false,

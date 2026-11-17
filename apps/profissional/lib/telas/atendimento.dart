@@ -301,7 +301,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
               child: OutlinedButton(
                 onPressed: _ocupado ? null : () => _responder(false),
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(Medidas.alturaBotao), foregroundColor: Cores.perigo),
-                child: const Text('Recusar'),
+                child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Recusar', maxLines: 1)),
               ),
             ),
             const SizedBox(width: 12),
