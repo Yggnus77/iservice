@@ -609,6 +609,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .artigo-texto b { color: var(--tinta); }
 .artigo-texto a { text-decoration: underline; text-underline-offset: 3px; }
 .artigo-texto .nota { font-size: 14px; color: var(--suave); }
+.artigo-texto blockquote { margin: 20px 0; padding: 18px 22px; border-left: 4px solid var(--laranja); border-radius: 0 14px 14px 0; background: var(--laranja-claro); color: var(--tinta); font-size: 18px; font-weight: 600; line-height: 1.5; }
+.artigo-texto .lista-check { list-style: none; padding-left: 0; gap: 12px; }
+.artigo-texto .lista-check li { display: flex; gap: 10px; align-items: flex-start; }
+.artigo-texto .lista-check .ms { color: var(--verde); font-size: 22px; flex: none; margin-top: 2px; }
 .tabela-rolagem { overflow-x: auto; margin: 16px 0 8px; border: 1px solid var(--linha); border-radius: 14px; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 420px; }
 .tabela th, .tabela td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--linha); }
