@@ -107,7 +107,7 @@ class _TelaCadastroState extends ConsumerState<TelaCadastro> {
           extra: const _SobreEPrecos(),
         ),
     };
-    return Stack(children: [tela, if (_salvando) const ColoredBox(color: Color(0x33000000), child: Carregando())]);
+    return Stack(children: [BannerCadastro(imagem: const AssetImage('assets/cadastro.jpg'), child: tela), if (_salvando) const ColoredBox(color: Color(0x33000000), child: Carregando())]);
   }
 }
 
