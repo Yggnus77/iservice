@@ -189,8 +189,6 @@ for app in ["cliente", "profissional"]:
 
     # Web (PWA)
     web = os.path.join(base, "web")
-    reduzir(icone, os.path.join(web, "favicon.png"), 32)
-    im(icone, "-define", "icon:auto-resize=48,32,16", os.path.join(web, "favicon.ico"))
     reduzir(icone, os.path.join(web, "icons/Icon-192.png"), 192)
     reduzir(icone, os.path.join(web, "icons/Icon-512.png"), 512)
     reduzir(icone, os.path.join(web, "icons/apple-touch-icon.png"), 180, sem_alfa=True)
@@ -229,6 +227,12 @@ simbolo_quadrado(os.path.join(TMP, "site-256.png"), 256)
 im(os.path.join(TMP, "site-256.png"), "-define", "icon:auto-resize=48,32,16", os.path.join(site, "favicon.ico"))
 simbolo_quadrado(os.path.join(site, "favicon-48.png"), 48)
 simbolo_quadrado(os.path.join(site, "favicon-96.png"), 96)
+# Aba dos apps web = mesmo símbolo do site e do painel (ícone da tela inicial continua o do app).
+for app in ["cliente", "profissional"]:
+    web = os.path.join(REPO, "apps", app, "web")
+    shutil.copy(os.path.join(SVG, "simbolo.svg"), os.path.join(web, "favicon.svg"))
+    shutil.copy(os.path.join(site, "favicon.ico"), os.path.join(web, "favicon.ico"))
+    simbolo_quadrado(os.path.join(web, "favicon.png"), 32)
 simbolo_quadrado(os.path.join(site, "apple-touch-icon.png"), 180, fundo="white", margem=0.12)
 simbolo_quadrado(os.path.join(site, "assets/img/icon-192.png"), 192, fundo="white", margem=0.12)
 simbolo_quadrado(os.path.join(site, "assets/img/icon-512.png"), 512, fundo="white", margem=0.12)
