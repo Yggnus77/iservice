@@ -1,6 +1,7 @@
 // Dados de exemplo locais para as capturas de tela do site. Nada aqui fala com o banco.
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -336,6 +337,10 @@ class DemoArquivos extends ArquivosRepo {
   String urlPublica(String bucket, String caminho) => caminho;
   @override
   Future<String> urlTemporaria(String bucket, String caminho) async => caminho;
+  // "Envio" local: a foto volta como data URL, para o teste mostrar a miniatura.
+  @override
+  Future<String> enviar({required String bucket, required String nome, required Uint8List bytes, String tipo = 'image/jpeg'}) async =>
+      'data:$tipo;base64,${base64Encode(bytes)}';
 }
 
 class DemoProfissional extends ProfissionalRepo {
