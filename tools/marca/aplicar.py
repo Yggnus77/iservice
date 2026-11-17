@@ -216,9 +216,20 @@ for dst in [os.path.join(site, "assets/img/simbolo.svg"), os.path.join(site, "fa
             os.path.join(REPO, "admin/public/simbolo.svg"), os.path.join(REPO, "admin/public/favicon.svg")]:
     shutil.copy(os.path.join(SVG, "simbolo.svg"), dst)
 shutil.copy(os.path.join(SVG, "emblema.svg"), os.path.join(site, "assets/img/emblema.svg"))
-icone = M("icone-cliente-1024.svg")
-im(icone, "-define", "icon:auto-resize=48,32,16", os.path.join(site, "favicon.ico"))
-reduzir(icone, os.path.join(site, "apple-touch-icon.png"), 180, sem_alfa=True)
-reduzir(icone, os.path.join(site, "assets/img/icon-192.png"), 192)
-reduzir(icone, os.path.join(site, "assets/img/icon-512.png"), 512)
+# Ícones do site = mesmo símbolo do painel (favicon.svg), sem o fundo escuro do ícone dos apps.
+def simbolo_quadrado(dst, w, fundo="none", margem=0.02):
+    lado = round(w * (1 - 2 * margem))
+    a = [M("simbolo.svg"), "-filter", "Lanczos", "-resize", f"{lado}x{lado}", "-background", fundo,
+         "-gravity", "center", "-extent", f"{w}x{w}"]
+    if fundo != "none":
+        a += ["-alpha", "remove", "-alpha", "off"]
+    im(*a, "-strip", "-define", "png:exclude-chunks=date,time", dst)
+
+simbolo_quadrado(os.path.join(TMP, "site-256.png"), 256)
+im(os.path.join(TMP, "site-256.png"), "-define", "icon:auto-resize=48,32,16", os.path.join(site, "favicon.ico"))
+simbolo_quadrado(os.path.join(site, "favicon-48.png"), 48)
+simbolo_quadrado(os.path.join(site, "favicon-96.png"), 96)
+simbolo_quadrado(os.path.join(site, "apple-touch-icon.png"), 180, fundo="white", margem=0.12)
+simbolo_quadrado(os.path.join(site, "assets/img/icon-192.png"), 192, fundo="white", margem=0.12)
+simbolo_quadrado(os.path.join(site, "assets/img/icon-512.png"), 512, fundo="white", margem=0.12)
 print("ok")
