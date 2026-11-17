@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
-  ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera,
+  ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -70,7 +70,7 @@ export const usePainel = () => useContext(PainelCtx);
 const rotas: [string, Permissao][] = [
   ['/emails', 'emails'], ['/cadastros', 'cadastros'], ['/cadastro', 'cadastros'], ['/pedidos', 'pedidos'], ['/pedido', 'pedidos'],
   ['/emergencias', 'emergencias'], ['/garantia', 'garantia'], ['/avaliacoes', 'avaliacoes'], ['/denuncias', 'denuncias'],
-  ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'],
+  ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
   ['/equipe', 'equipe'], ['/registro', 'registro'],
 ];
@@ -92,6 +92,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
   { grupo: 'Crescimento', href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
+  { grupo: 'Crescimento', href: '/sugestoes/', rotulo: 'Sugestões de profissões', icone: <Lightbulb /> },
   { grupo: 'Crescimento', href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
   { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },

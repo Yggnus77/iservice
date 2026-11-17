@@ -771,3 +771,80 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .telas-imgs .tela, .telas-passos .txt span { transition: none; }
   .telas-passos .barra { display: none; }
 }
+
+/* Formulários do site: sugestão de profissão (janela) e reclamação (página) */
+.cat b .cat-botao { all: unset; cursor: pointer; color: var(--azul); }
+.cat b .cat-botao::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.cat b .cat-botao:focus-visible { outline: none; }
+.cat:has(.cat-botao:focus-visible) { outline: 3px solid var(--azul); outline-offset: 2px; }
+.cat.mais:hover { background: #fff; border-style: solid; }
+
+.form-site { display: grid; gap: 18px; }
+.form-site .campo { display: grid; gap: 6px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
+.form-site .campo > span, .form-site legend { color: var(--tinta); font-size: 14px; font-weight: 700; padding: 0; }
+.form-site .campo em { font-style: normal; font-weight: 500; color: var(--suave); }
+.form-site .campo small { color: var(--suave); font-size: 13px; line-height: 1.4; }
+.form-site input:not([type=radio]), .form-site select, .form-site textarea {
+  width: 100%; min-height: 50px; padding: 12px 14px; border: 1.5px solid #CBD5E4; border-radius: 12px;
+  background: #fff; color: var(--tinta); font: 500 16px/1.4 var(--fonte); transition: border-color .15s, box-shadow .15s;
+}
+.form-site textarea { resize: vertical; min-height: 150px; }
+.form-site select { appearance: none; padding-right: 42px; cursor: pointer;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='%236B7A93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.form-site input::placeholder, .form-site textarea::placeholder { color: #98A4B8; }
+.form-site input:focus, .form-site select:focus, .form-site textarea:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 4px rgba(0, 82, 204, .14); }
+.form-site .invalido input, .form-site .invalido select, .form-site .invalido textarea, .form-site [aria-invalid="true"] { border-color: #D93025; }
+.form-site .form-linha.dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-site .opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.form-site .opcao { position: relative; flex: 1 1 0; min-width: 120px; }
+.form-site .opcao input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.form-site .opcao span {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-height: 48px; padding: 8px 12px; text-align: center;
+  border: 1.5px solid #CBD5E4; border-radius: 12px; font-size: 15px; font-weight: 600; color: var(--texto); line-height: 1.25;
+}
+.form-site .opcao span small { display: block; font-weight: 500; font-size: 12.5px; color: var(--suave); }
+.form-site .opcao input:checked + span { border-color: var(--azul); background: var(--azul-claro); color: var(--azul); }
+.form-site .opcao input:focus-visible + span { box-shadow: 0 0 0 4px rgba(0, 82, 204, .2); }
+.form-site .contador { justify-self: end; }
+.form-site .btn { justify-self: start; }
+.form-site .btn[disabled] { opacity: .65; cursor: progress; transform: none; }
+.form-site .form-erro { margin: 0; padding: 12px 14px; border-radius: 12px; background: #FDECEA; color: #A50E0E; font-size: 14px; font-weight: 600; }
+.form-site .form-nota { margin: -4px 0 0; font-size: 13px; color: var(--suave); }
+.armadilha { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.formulario-pagina { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; padding-block: 48px 96px; align-items: start; }
+.cartao-form { background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); padding: 32px; box-shadow: var(--sombra-leve); }
+.form-pronto { text-align: center; display: grid; justify-items: center; gap: 4px; }
+.form-pronto h2, .janela-form .form-pronto h3 { margin: 8px 0 4px; color: var(--tinta); font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.form-pronto p { margin: 4px 0; max-width: 520px; }
+.form-pronto .btn { margin-top: 16px; }
+.form-pronto .protocolo { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.15em; color: var(--azul); letter-spacing: .02em; }
+.selo-ok { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: #E5F9EE; color: var(--verde-texto); font-size: 36px; }
+.form-lado { display: grid; gap: 14px; position: sticky; top: 104px; }
+.lado-item { display: flex; gap: 14px; padding: 18px; border-radius: 18px; background: var(--fundo-2); }
+.lado-item > .ms { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--azul-claro); color: var(--azul); }
+.lado-item b { display: block; color: var(--tinta); font-size: 15px; line-height: 1.3; }
+.lado-item p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; }
+.lado-item.alerta { background: #FDECEA; }
+.lado-item.alerta > .ms { background: #fff; color: #C5221F; }
+.lado-item a { font-weight: 700; }
+@media (max-width: 900px) {
+  .formulario-pagina { grid-template-columns: 1fr; gap: 24px; padding-top: 28px; }
+  .form-lado { position: static; order: -1; }
+  .form-lado .lado-item:not(.alerta) { display: none; }
+}
+@media (max-width: 600px) {
+  .cartao-form { padding: 22px 18px; border-radius: 18px; }
+  .form-site .form-linha.dupla { grid-template-columns: 1fr; }
+  .form-site .btn { justify-self: stretch; justify-content: center; }
+}
+
+.janela-form { width: min(520px, calc(100vw - 32px)); }
+.janela-form .form-site { gap: 16px; }
+.janela-form [data-etapa=form] > p { margin: 4px 0 18px; }
+.janela-form h3 { padding-right: 44px; }
+.janela-form .form-pronto { padding: 12px 0 4px; }
+.janela-form .form-pronto .acoes-pronto { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+.janela-form .form-pronto .acoes-pronto .btn { margin: 0; min-height: 46px; }
+@media (max-width: 760px) { .cat.mais { grid-column: 1 / -1; } }
+@media (max-width: 440px) { .cat.mais small { display: block; } }

@@ -604,7 +604,7 @@ def sitemap():
     urls = [(u, HOJE) for u in ['', 'profissionais.html'] + [arquivo(p) for p in PROFISSOES]]
     urls += [('blog/', max([a['atualizado'] for a in ARTIGOS] or [HOJE]))]
     urls += [(url_artigo(a), a['atualizado']) for a in ARTIGOS]
-    urls += [(u, HOJE) for u in ['termos.html', 'privacidade.html', 'excluir-conta.html']]
+    urls += [(u, HOJE) for u in ['termos.html', 'privacidade.html', 'excluir-conta.html', 'reclamacao.html']]
     corpo = ''.join(f'  <url>\n    <loc>{DOMINIO}{u}</loc>\n    <lastmod>{d}</lastmod>\n  </url>\n' for u, d in urls)
     return f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{corpo}</urlset>\n'
 
