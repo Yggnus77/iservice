@@ -77,10 +77,10 @@ jobs:
         with: { name: capturas-simulador, path: capturas-simulador, retention-days: 14 }
 
   # Guarda as capturas no próprio ramo (pasta capturas-teste-iphone/) para consulta rápida.
-  # Só em ramos claude/**; apague a pasta antes de mesclar.
+  # Só quando rodado à mão (Run workflow) num ramo claude/**; apague a pasta antes de mesclar.
   juntar:
     needs: [webkit, simulador]
-    if: always() && startsWith(github.ref_name, 'claude/')
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'claude/') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

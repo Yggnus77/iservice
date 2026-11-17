@@ -7,5 +7,5 @@ Workflow `.github/workflows/teste-iphone.yml` (aba Actions > "Teste no iPhone (S
   (dados de exemplo, sem banco) para mapa, pedido, chat, avaliação com foto, agenda e ganhos.
   Gera `relatorio.txt` com erros, bloqueios da política de segurança e o que havia na tela.
 - **simulador**: Safari de verdade no simulador de iPhone do Xcode (Mac do GitHub).
-- **juntar**: em ramos `claude/**`, grava as capturas em `capturas-teste-iphone/` no próprio ramo.
+- **juntar**: só quando rodado à mão num ramo `claude/**`, grava as capturas em `capturas-teste-iphone/` no próprio ramo.
   Apague a pasta antes de mesclar.
