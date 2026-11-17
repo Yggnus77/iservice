@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -646,12 +648,13 @@ class _ListaParaEscolherState<T> extends State<_ListaParaEscolher<T>> {
 /// Tela cheia com a imagem da marca: o profissional aparece no alto e vai escurecendo
 /// até o azul da marca, onde ficam os textos.
 class FundoMarca extends StatelessWidget {
-  const FundoMarca({super.key, required this.child});
+  const FundoMarca({super.key, required this.child, this.imagem = Cores.imagemFundo});
   final Widget child;
+  final ImageProvider imagem;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: Cores.fundoMarca(escurecer: .35, alinhamento: Cores.focoFundo, imagem: Cores.imagemFundo),
+        decoration: Cores.fundoMarca(escurecer: .35, alinhamento: Cores.focoFundo, imagem: imagem),
         child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -669,4 +672,132 @@ class FundoMarca extends StatelessWidget {
           child: child,
         ),
       );
+}
+
+/// Entrada pelo navegador em tela grande: a imagem do app aparece inteira e clara
+/// (pessoas à esquerda, logo no alto à direita) e o conteúdo vai num cartão escuro
+/// abaixo do logo, sem cobrir as pessoas. As medidas são da imagem de 1920 × 1080.
+class EntradaWeb extends StatelessWidget {
+  const EntradaWeb({super.key, required this.imagem, required this.cartao, required this.estreito, this.fimDoLogo = 445, this.fimDasPessoas = 1100});
+
+  final ImageProvider imagem;
+
+  /// Conteúdo do cartão (texto e botões), em fundo escuro.
+  final Widget cartao;
+
+  /// Tela usada no celular, em janela pequena ou quando o cartão não cabe.
+  final Widget estreito;
+
+  /// Onde, na imagem de 1920 × 1080, acaba o logo (de cima para baixo) e as pessoas (da esquerda).
+  final double fimDoLogo;
+  final double fimDasPessoas;
+
+  static const _larguraCartao = 470.0;
+  static const _alturaMinima = 330.0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kIsWeb) return estreito;
+    return LayoutBuilder(builder: (context, c) {
+      final w = c.maxWidth;
+      final h = c.maxHeight;
+      // Mesma conta do BoxFit.cover alinhado à direita e no centro.
+      final escala = (w / 1920) > (h / 1080) ? w / 1920 : h / 1080;
+      final x0 = w - 1920 * escala;
+      final y0 = (h - 1080 * escala) / 2;
+      final margem = (w * .03).clamp(24.0, 56.0);
+      final topo = y0 + fimDoLogo * escala + 12;
+      final esquerda = x0 + fimDasPessoas * escala;
+      final largura = (w - margem - esquerda).clamp(0.0, _larguraCartao);
+      final altura = h - margem - topo;
+      if (w < 900 || largura < 400 || altura < _alturaMinima) return estreito;
+      return Scaffold(
+        backgroundColor: Cores.azulEscuro,
+        body: Stack(children: [
+          Positioned.fill(child: Image(image: imagem, fit: BoxFit.cover, alignment: Alignment.centerRight)),
+          Positioned(
+            right: margem,
+            bottom: margem,
+            width: largura,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: altura),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Cores.azulEscuro.withValues(alpha: .86),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white.withValues(alpha: .12)),
+                    ),
+                    child: SingleChildScrollView(padding: const EdgeInsets.all(28), child: cartao),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      );
+    });
+  }
+}
+
+/// Entrada no celular (app ou navegador estreito): a imagem clara aparece inteira, com o
+/// logo no alto, e o conteúdo vai num cartão branco embaixo.
+class EntradaCelular extends StatelessWidget {
+  const EntradaCelular({super.key, required this.imagem, required this.cartao, this.alinhamento = Alignment.topCenter});
+  final ImageProvider imagem;
+  final Widget cartao;
+  final Alignment alinhamento;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: const Color(0xFFEAF1FB),
+        body: Stack(children: [
+          Positioned.fill(child: Image(image: imagem, fit: BoxFit.cover, alignment: alinhamento)),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .96),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [BoxShadow(color: Cores.azulEscuro.withValues(alpha: .18), blurRadius: 30, offset: const Offset(0, 10))],
+                    ),
+                    child: Padding(padding: const EdgeInsets.fromLTRB(22, 22, 22, 14), child: cartao),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ]),
+      );
+}
+
+/// Item curto do cartão da entrada: ícone colorido e uma frase.
+class ItemEntrada extends StatelessWidget {
+  const ItemEntrada({super.key, required this.icone, required this.texto, required this.cor, this.corTexto = Colors.white});
+  final IconData icone;
+  final String texto;
+  final Color cor;
+  final Color corTexto;
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(color: cor.withValues(alpha: .16), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icone, color: cor, size: 20),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(texto, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: corTexto, fontWeight: FontWeight.w600, height: 1.25)),
+        ),
+      ]);
 }
