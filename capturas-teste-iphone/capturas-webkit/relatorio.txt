@@ -1,0 +1,137 @@
+WebKit 26.6 | aparelho iPhone 15 {"width":393,"height":659}
+[cliente] console: Refused to load https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092 because it does not appear in the script-src directive of the Content Security Policy.
+[cliente] console: BLOQUEADO-CSP script-src-elem https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092
+[cliente] abriu em 2.2 s
+captura cliente-01-boas-vindas
+[cliente] na tela: ["iService","Entrar","1. Encontre\nProfissionais de confiança perto de você, em Brasília e no Entorno.","Continuar","Já tenho conta"]
+[cliente] tela de início: {"icone":"https://iservice.app.br/cliente/icons/apple-touch-icon.png","manifesto":"https://iservice.app.br/cliente/manifest.json","titulo":"iService","viewport":"width=device-width, initial-scale=1.0, maximum-scale=5.0","iconeStatus":200,"iconeTamanho":"180x180","manifestoStatus":200,"display":"standalone","nome":"iService","start":"."}
+[cliente] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=SQS%20308%2C%20Bras%C3%ADlia&size=1 because it does not appear in the connect-src directive of the Content Security Policy.
+[cliente] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=SQS%20308%2C%20Bras%C3%ADlia&size=1
+[cliente] busca de endereço pelo navegador: bloqueada: TypeError: Load failed
+captura cliente-02-cadastro-dados
+captura cliente-03-cadastro-dados-preenchidos
+captura cliente-04-cadastro-endereco
+[cliente] passo 2 na tela: ["Voltar","Cidade ou região administrativa","Endereço","Bloco / casa / lote","Complemento","Bairro / setor (opcional)","CEP (opcional)","Ponto de referência (opcional)","Usar minha localização\nRecomendado se você está no endereço agora.","Continuar"]
+captura cliente-05-lista-cidades
+captura cliente-06-endereco-preenchido
+[cliente] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=Rua+10+Qd+5%2C+C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-
+[cliente] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=Rua+10+Qd+5%2C+C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.l
+[cliente] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-47.975 because 
+[cliente] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-47.975
+captura cliente-07-confira-no-mapa
+[cliente] depois do endereço: ["FecharConfira no mapa","Fechar","flutter_map | © \n© Stadia Maps © OpenMapTiles © OpenStreetMap","Usar minha localização","Rua 10 Qd 5, 12, Céu Azul · Valparaíso de Goiás (GO)","Confirmar local"]
+captura cliente-08-passo-email-senha
+captura cliente-09-entrar-com-teclado
+[profissional] console: Refused to load https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092 because it does not appear in the script-src directive of the Content Security Policy.
+[profissional] console: BLOQUEADO-CSP script-src-elem https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092
+[profissional] abriu em 2.2 s
+captura profissional-01-boas-vindas
+[profissional] na tela: ["iService","Mais trabalho,\nmais conquistas.","Receba pedidos de clientes de Brasília e do Entorno direto no celular.","Clientes perto de você","Pedidos só da sua área de atendimento.","Você define o preço","Sem leilão nem disputa de preço.","Grátis no lançamento","Sem mensalidade nem comissão por enquanto.","Bom trabalho aparece","Os mais bem avaliados ficam no topo.","Quero me cadastrar","Já tenho cadastro"]
+[profissional] tela de início: {"icone":"https://iservice.app.br/profissional/icons/apple-touch-icon.png","manifesto":"https://iservice.app.br/profissional/manifest.json","titulo":"iService Pro","viewport":"width=device-width, initial-scale=1.0, maximum-scale=5.0","iconeStatus":200,"iconeTamanho":"180x180","manifestoStatus":200,"display":"standalone","nome":"iService Profissional","start":"."}
+[profissional] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=SQS%20308%2C%20Bras%C3%ADlia&size=1 because it does not appear in the connect-src directive of the Content Security Policy.
+[profissional] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=SQS%20308%2C%20Bras%C3%ADlia&size=1
+[profissional] busca de endereço pelo navegador: bloqueada: TypeError: Load failed
+captura profissional-02-cadastro-dados
+captura profissional-03-cadastro-dados-preenchidos
+captura profissional-04-cadastro-endereco
+[profissional] passo 2 na tela: ["Voltar","Cidade ou região administrativa","Endereço","Bloco / casa / lote","Complemento","Bairro / setor (opcional)","CEP (opcional)","Ponto de referência (opcional)","Usar minha localização\nRecomendado se você está no endereço agora.","Área de atendimento\nAté onde você aceita ir a partir do seu endereço.\n15 km","15 km","Continuar"]
+captura profissional-05-lista-cidades
+captura profissional-06-endereco-preenchido
+[profissional] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=Rua+10+Qd+5%2C+C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-
+[profissional] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=Rua+10+Qd+5%2C+C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.l
+[profissional] console: Refused to connect to https://api.stadiamaps.com/geocoding/v1/search?text=C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-47.975 because 
+[profissional] console: BLOQUEADO-CSP connect-src https://api.stadiamaps.com/geocoding/v1/search?text=C%C3%A9u+Azul%2C+Valpara%C3%ADso+de+Goi%C3%A1s%2C+GO&size=1&lang=pt&boundary.country=BR&boundary.circle.lat=-16.065&boundary.circle.lon=-47.975&boundary.circle.radius=35&focus.point.lat=-16.065&focus.point.lon=-47.975
+captura profissional-07-confira-no-mapa
+[profissional] depois do endereço: ["FecharConfira no mapa","Fechar","flutter_map | © \n© Stadia Maps © OpenMapTiles © OpenStreetMap","Usar minha localização","Rua 10 Qd 5, 12, Céu Azul · Valparaíso de Goiás (GO)","Confirmar local"]
+captura profissional-08-passo-email-senha
+captura profissional-09-entrar-com-teclado
+[demo c-inicio] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-inicio FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-inicio] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-mapa] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-mapa FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-mapa] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-perfil-pro] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-perfil-pro FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-perfil-pro] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-solicitar] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-solicitar FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-solicitar] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-acompanhar] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-acompanhar FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-acompanhar] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-chat] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-chat FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-chat] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-avaliar] falhou http://localhost:8101/?etapa=concluido Could not connect to localhost: Connection refused
+demo c-avaliar FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=concluido#/inicio", waiting until "load"
+
+[demo c-avaliar] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo c-perfil] falhou http://localhost:8101/?etapa=caminho Could not connect to localhost: Connection refused
+demo c-perfil FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8101/?etapa=caminho#/inicio", waiting until "load"
+
+[demo c-perfil] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-inicio] falhou http://localhost:8102/?etapa=solicitado Could not connect to localhost: Connection refused
+demo p-inicio FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=solicitado#/inicio", waiting until "load"
+
+[demo p-inicio] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-solicitacoes] falhou http://localhost:8102/?etapa=solicitado Could not connect to localhost: Connection refused
+demo p-solicitacoes FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=solicitado#/inicio", waiting until "load"
+
+[demo p-solicitacoes] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-pedido-novo] falhou http://localhost:8102/?etapa=solicitado Could not connect to localhost: Connection refused
+demo p-pedido-novo FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=solicitado#/inicio", waiting until "load"
+
+[demo p-pedido-novo] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-atendimento] falhou http://localhost:8102/?etapa=atendimento Could not connect to localhost: Connection refused
+demo p-atendimento FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=atendimento#/inicio", waiting until "load"
+
+[demo p-atendimento] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-agenda] falhou http://localhost:8102/?etapa=atendimento Could not connect to localhost: Connection refused
+demo p-agenda FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=atendimento#/inicio", waiting until "load"
+
+[demo p-agenda] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-ganhos] falhou http://localhost:8102/?etapa=concluido Could not connect to localhost: Connection refused
+demo p-ganhos FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=concluido#/inicio", waiting until "load"
+
+[demo p-ganhos] console: Failed to load resource: Could not connect to localhost: Connection refused
+[demo p-perfil] falhou http://localhost:8102/?etapa=concluido Could not connect to localhost: Connection refused
+demo p-perfil FALHOU Error: page.goto: Could not connect to localhost: Connection refused
+Call log:
+  - navigating to "http://localhost:8102/?etapa=concluido#/inicio", waiting until "load"
+
+[demo p-perfil] console: Failed to load resource: Could not connect to localhost: Connection refused
