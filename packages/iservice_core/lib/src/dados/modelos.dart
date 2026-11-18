@@ -581,6 +581,7 @@ class Pedido {
     required this.descricao,
     required this.enderecoTexto,
     required this.taxaUrgencia,
+    this.taxaForaHorario = 0,
     required this.responderAte,
     required this.criadoEm,
     this.janela,
@@ -614,6 +615,9 @@ class Pedido {
   final double? distanciaKm;
   final double? precoInformado;
   final double taxaUrgencia;
+
+  /// Acréscimo da plataforma para serviço fora do horário comercial (0 quando não há).
+  final double taxaForaHorario;
   final double? valorCobrado;
   final DateTime responderAte;
   final DateTime criadoEm;
@@ -681,6 +685,7 @@ class Pedido {
         distanciaKm: _dn(j['distancia_km']),
         precoInformado: _dn(j['preco_informado']),
         taxaUrgencia: _d(j['taxa_urgencia']),
+        taxaForaHorario: _d(j['taxa_fora_horario']),
         valorCobrado: _dn(j['valor_cobrado']),
         responderAte: DateTime.parse(j['responder_ate']),
         criadoEm: DateTime.parse(j['criado_em']),
@@ -708,6 +713,7 @@ class Pedido {
         distanciaKm: _dn(j['distancia_km']),
         precoInformado: _dn(j['preco_informado']),
         taxaUrgencia: _d(j['taxa_urgencia']),
+        taxaForaHorario: _d(j['taxa_fora_horario']),
         valorCobrado: _dn(j['valor_cobrado']),
         responderAte: DateTime.parse(j['responder_ate']),
         criadoEm: DateTime.parse(j['criado_em']),

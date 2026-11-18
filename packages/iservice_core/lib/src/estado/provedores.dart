@@ -89,6 +89,14 @@ final regiaoLocalProvider = FutureProvider<String?>((ref) async {
 final faixaPrecoProvider = FutureProvider.autoDispose.family<FaixaPreco?, (int, String?, Cobranca)>(
     (ref, k) => ref.read(catalogoRepo).faixaPreco(k.$1, k.$2, k.$3));
 
+/// Valor mínimo de uma especialidade numa região, numa forma de cobrança (o profissional não cobra menos).
+final precoMinimoProvider = FutureProvider.autoDispose.family<double?, (int, String?, Cobranca)>(
+    (ref, k) => ref.read(catalogoRepo).precoMinimo(k.$1, k.$2, k.$3));
+
+/// Acréscimo fora do horário comercial para (preço, momento do serviço).
+final taxaForaHorarioProvider = FutureProvider.autoDispose.family<double, (double?, DateTime)>(
+    (ref, k) => ref.read(catalogoRepo).taxaForaHorario(k.$1, k.$2));
+
 /// Pede permissão e lê o GPS uma vez. Devolve null se o usuário negar, se o GPS
 /// não responder em 20 s ou se o navegador falhar (no Safari do iPhone, a consulta
 /// de permissão pode não existir ou dar erro; aí pedimos a posição direto, que já

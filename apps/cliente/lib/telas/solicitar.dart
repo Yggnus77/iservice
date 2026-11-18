@@ -43,6 +43,24 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
     }).toList();
   }
 
+  /// Quando o serviço acontece: agora, no início da janela de hoje ou no horário agendado (minuto cheio).
+  DateTime? _momentoDoServico(QuandoPedido quando) {
+    final n = DateTime.now();
+    switch (quando) {
+      case QuandoPedido.agora:
+        return DateTime(n.year, n.month, n.day, n.hour, n.minute);
+      case QuandoPedido.hoje:
+        final j = _janela;
+        if (j == null) return null;
+        final partes = j.split('–').first.split(':');
+        final h = int.tryParse(partes.first);
+        if (h == null) return null;
+        return DateTime(n.year, n.month, n.day, h, partes.length > 1 ? int.tryParse(partes[1]) ?? 0 : 0);
+      case QuandoPedido.combinado:
+        return _combinado;
+    }
+  }
+
   Future<void> _escolherHorario(PerfilProfissional pro, int diasMax) async {
     final ocupados = await ref.read(pedidosRepo).horariosOcupados(pro.id).catchError((_) => <DateTime>[]);
     if (!mounted) return;
@@ -124,6 +142,11 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         // Faixa comum na região do endereço, na mesma forma de cobrança do profissional.
         final faixa = esp?.preco == null ? null : ref.watch(faixaPrecoProvider((esp!.id, endereco?.regiaoId, esp.cobranca))).value;
         final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
+        // Acréscimo da plataforma fora do horário comercial, calculado pelo banco para o momento do serviço.
+        final momento = _momentoDoServico(quando);
+        final foraHorario = esp?.preco == null || momento == null
+            ? 0.0
+            : ref.watch(taxaForaHorarioProvider((esp!.preco, momento))).value ?? 0.0;
 
         return Scaffold(
           appBar: AppBar(title: const Text('Solicitar serviço')),
@@ -242,6 +265,15 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
                       ),
                     ),
                   if (quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
+                  if (foraHorario > 0) _Linha('Fora do horário comercial', '+ ${reais(foraHorario)}'),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Icon(Symbols.schedule_rounded, size: 16, color: c.textoSuave),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(textoAcrescimoForaHorario(config), style: t.bodySmall)),
+                    ]),
+                  ),
                   const Divider(height: 20),
                   Row(children: [
                     Icon(Symbols.payments_rounded, size: 18, color: c.textoSuave),

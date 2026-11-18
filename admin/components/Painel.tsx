@@ -95,7 +95,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Crescimento', href: '/sugestoes/', rotulo: 'Sugestões de profissões', icone: <Lightbulb /> },
   { grupo: 'Crescimento', href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
-  { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços de referência', icone: <Tags /> },
+  { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços e mínimos', icone: <Tags /> },
   { grupo: 'Catálogo', href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
   { grupo: 'Equipe', href: '/equipe/', rotulo: 'Equipe', icone: <UsersRound /> },
   { grupo: 'Equipe', href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },

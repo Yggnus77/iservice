@@ -112,3 +112,28 @@ DateTime? lerData(String s) {
   if (data.day != d || data.month != m) return null;
   return data;
 }
+
+/// Regra do acréscimo fora do horário comercial, em uma linha para o cliente.
+/// Lê `acrescimo_fora_horario` (0,2 = 20%) e `horario_comercial` da configuração.
+String textoAcrescimoForaHorario(Map<String, dynamic> config) {
+  final pct = ((config['acrescimo_fora_horario'] as num?)?.toDouble() ?? 0.2) * 100;
+  if (pct <= 0) return 'Sem acréscimo fora do horário comercial.';
+  final h = config['horario_comercial'];
+  String faixa(Object? v) {
+    if (v is! List || v.length < 2) return '';
+    String hora(Object? x) {
+      final p = '$x'.split(':');
+      final m = p.length > 1 ? p[1] : '00';
+      return m == '00' ? '${int.tryParse(p.first) ?? p.first}h' : '${int.tryParse(p.first) ?? p.first}h$m';
+    }
+    return '${hora(v[0])} às ${hora(v[1])}';
+  }
+  final semana = h is Map ? faixa(h['semana']) : '8h às 18h';
+  final sabado = h is Map ? faixa(h['sabado']) : '8h às 12h';
+  final horario = [
+    if (semana.isNotEmpty) 'segunda a sexta, $semana',
+    if (sabado.isNotEmpty) 'sábado, $sabado',
+  ].join('; ');
+  final p = pct == pct.roundToDouble() ? pct.toStringAsFixed(0) : pct.toStringAsFixed(1).replaceAll('.', ',');
+  return 'Fora do horário comercial ($horario), em domingos e feriados, a plataforma acrescenta $p% ao preço do profissional.';
+}

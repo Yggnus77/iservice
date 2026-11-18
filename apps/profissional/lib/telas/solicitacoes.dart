@@ -252,6 +252,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
             texto: [
               if (p.precoInformado == null) 'Preço combinado no local' else 'Seu preço: a partir de ${reais(p.precoInformado)}',
               if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
+              if (p.taxaForaHorario > 0) '+ ${reais(p.taxaForaHorario)} fora do horário comercial',
             ].join(' '),
           ),
           const SizedBox(height: 14),

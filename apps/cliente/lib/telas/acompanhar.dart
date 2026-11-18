@@ -259,6 +259,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         if (p.descricao.isNotEmpty) _Linha(Symbols.description_rounded, 'Descrição', p.descricao),
         if (p.precoInformado != null) _Linha(Symbols.sell_rounded, 'Preço informado', 'a partir de ${reais(p.precoInformado)}'),
         if (p.taxaUrgencia > 0) _Linha(Symbols.bolt_rounded, 'Taxa de urgência', reais(p.taxaUrgencia)),
+        if (p.taxaForaHorario > 0) _Linha(Symbols.nights_stay_rounded, 'Fora do horário comercial', '+ ${reais(p.taxaForaHorario)}'),
         if (p.valorCobrado != null) _Linha(Symbols.payments_rounded, 'Valor cobrado', reais(p.valorCobrado)),
         const SizedBox(height: 16),
         if (ativo) ...[

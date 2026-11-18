@@ -6,6 +6,7 @@ import { Cabecalho } from '@/components/Painel';
 import { Carregando, Dialogo, ErroCaixa, Vazio, useAcao, useCarregar } from '@/components/ui';
 import { db, rpc } from '@/lib/supabase';
 import { dataHora } from '@/lib/formatos';
+import Minimos from './Minimos';
 
 type Celula = {
   especialidade_id: number; especialidade: string; faixa: number; minimo: number; maximo: number; amostras: number; estimada: boolean;
@@ -57,7 +58,7 @@ export default function Precos() {
 
   return (
     <>
-      <Cabecalho titulo="Preços de referência" texto="A faixa comum (P25 a P75) que o app mostra para cada especialidade e região, separada por forma de cobrança. O profissional sempre define o próprio preço."
+      <Cabecalho titulo="Preços" texto="Valores mínimos que ninguém pode furar e a faixa comum (P25 a P75) que o app mostra para cada especialidade e região. O profissional sempre define o próprio preço, a partir do mínimo."
         acoes={<>
           <select className="entrada" value={profissao} onChange={(e) => setProfissao(e.target.value)} aria-label="Profissão">
             {profissoes.dados?.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -66,6 +67,8 @@ export default function Precos() {
             {cobrancas.map(([v, r]) => <option key={v} value={v}>{r}</option>)}
           </select>
         </>} />
+      <Minimos />
+      <h2 style={{ margin: '0 0 10px' }}>Faixa de referência</h2>
       <div className="linha-flex texto-suave" style={{ marginBottom: 14, gap: 18 }}>
         <span><strong style={{ color: 'var(--verde-texto)' }}>●</strong> Calculada com 5+ preços reais</span>
         <span><strong style={{ color: 'var(--texto-fraco)' }}>●</strong> Estimada pela base (poucos preços)</span>
