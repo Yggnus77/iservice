@@ -46,12 +46,34 @@ class ErroIService implements Exception {
       if (m.contains('same as the old') || m.contains('different from the old')) {
         return const ErroIService('A nova senha precisa ser diferente da anterior.', codigo: 'senha_igual');
       }
-      if (m.contains('password')) return const ErroIService('Senha fraca. Use 8 caracteres com letras e números.', codigo: 'senha');
+      if (e is AuthWeakPasswordException || e.code == 'weak_password' || m.contains('password')) {
+        final motivos = e is AuthWeakPasswordException ? e.reasons : const <String>[];
+        return ErroIService(mensagemSenhaRecusada(motivos, e.message), codigo: motivos.contains('pwned') ? 'senha_vazada' : 'senha');
+      }
       return ErroIService(e.message);
     }
     if (e is StorageException) return const ErroIService('Não foi possível enviar o arquivo. Tente de novo.');
     return const ErroIService('Sem conexão. Confira sua internet e tente de novo.');
   }
+}
+
+/// Explica por que o servidor recusou a senha. O Supabase manda o mesmo erro
+/// ("weak_password") para três casos e diz qual nos motivos:
+/// "pwned" (a senha já apareceu em vazamentos), "length" (curta) e
+/// "characters" (falta misturar letras e números).
+String mensagemSenhaRecusada(List<String> motivos, [String mensagemOriginal = '']) {
+  final m = mensagemOriginal.toLowerCase();
+  final vazada = motivos.contains('pwned') || m.contains('pwned') || m.contains('known to be weak') || m.contains('data breach');
+  if (vazada) {
+    return 'Essa senha já apareceu em vazamentos de dados na internet, então pode ser descoberta por outras pessoas. '
+        'Por segurança, escolha outra. Uma frase longa que só você conhece funciona bem.';
+  }
+  final faltas = <String>[
+    if (motivos.contains('length') || m.contains('at least')) 'ter pelo menos 8 caracteres',
+    if (motivos.contains('characters') || m.contains('should contain')) 'misturar letras e números',
+  ];
+  if (faltas.isEmpty) return 'Essa senha não foi aceita. Use pelo menos 8 caracteres, misturando letras e números.';
+  return 'A senha precisa ${faltas.join(' e ')}.';
 }
 
 Future<T> _tentar<T>(Future<T> Function() f) async {

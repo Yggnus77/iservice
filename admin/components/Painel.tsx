@@ -136,9 +136,18 @@ function CampoIcone({ id, rotulo, icone, ...props }: { id: string; rotulo: strin
   );
 }
 
+const motivosSenha = (e: unknown): string[] =>
+  e && typeof e === 'object' && 'reasons' in e && Array.isArray((e as { reasons: unknown }).reasons) ? (e as { reasons: string[] }).reasons : [];
+
 const retornoPainel = () => `${window.location.origin}/admin/`;
 
-function traduzirAuth(msg: string) {
+/** O Supabase usa o mesmo erro "weak_password" para senha vazada, curta ou sem números; os motivos dizem qual. */
+function traduzirAuth(msg: string, motivos: string[] = []) {
+  if (motivos.includes('pwned') || /pwned|known to be weak|data breach/i.test(msg)) {
+    return 'Essa senha já apareceu em vazamentos de dados na internet, então pode ser descoberta por outras pessoas. Por segurança, escolha outra. Uma frase longa que só você conhece funciona bem.';
+  }
+  if (motivos.includes('length')) return 'A senha precisa ter pelo menos 8 caracteres.';
+  if (motivos.includes('characters')) return 'A senha precisa misturar letras e números.';
   if (/Invalid login/i.test(msg)) return 'E-mail ou senha incorretos.';
   if (/Email not confirmed/i.test(msg)) return 'Falta confirmar o e-mail. Abra o link que enviamos para a sua caixa de entrada.';
   if (/banned/i.test(msg)) return 'Esta conta está suspensa.';
@@ -178,7 +187,7 @@ function Entrar() {
           email: mail, password: senha,
           options: { data: { nome: nome.trim(), app: 'equipe' }, emailRedirectTo: retornoPainel() },
         });
-        if (error) setErro(traduzirAuth(error.message));
+        if (error) setErro(traduzirAuth(error.message, motivosSenha(error)));
         else if (data.user && (data.user.identities?.length ?? 0) === 0) setErro(traduzirAuth('already registered'));
         else if (data.session) return; // confirmação desligada: já entrou
         else setEnviado(`Enviamos um e-mail para ${mail}. Abra o link "Confirmar e-mail" e o painel abre já com o seu acesso.`);
@@ -263,7 +272,7 @@ function NovaSenha({ pronto }: { pronto: () => void }) {
     setOcupado(true);
     const { error } = await db().auth.updateUser({ password: senha });
     setOcupado(false);
-    if (error) setErro(/different from the old/i.test(error.message) ? 'Use uma senha diferente da anterior.' : traduzirAuth(error.message));
+    if (error) setErro(/different from the old/i.test(error.message) ? 'Use uma senha diferente da anterior.' : traduzirAuth(error.message, motivosSenha(error)));
     else pronto();
   };
   return (
