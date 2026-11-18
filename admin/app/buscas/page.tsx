@@ -57,7 +57,7 @@ export default function Buscas() {
 
   return (
     <>
-      <Cabecalho titulo="Buscas e mapa" texto="Onde os clientes procuram e não encontram ninguém: é ali que vale recrutar profissionais."
+      <Cabecalho ajuda={<>Cada vez que alguém procura um profissional no app, a busca é guardada aqui (local aproximado, sem identificar a pessoa). As manchas laranja no mapa e as regiões com muita busca sem resultado mostram onde faltam profissionais: é ali que vale recrutar e divulgar.</>} titulo="Buscas e mapa" texto="Onde os clientes procuram e não encontram ninguém: é ali que vale recrutar profissionais."
         acoes={<Link className="botao contorno" href="/comunicados/"><Megaphone /> Avisar profissionais</Link>} />
       <div className="filtros">
         <Abas ativa={periodo} mudar={setPeriodo} abas={[{ id: '1', rotulo: 'Hoje' }, { id: '7', rotulo: '7 dias' }, { id: '30', rotulo: '30 dias' }, { id: '90', rotulo: '90 dias' }]} />

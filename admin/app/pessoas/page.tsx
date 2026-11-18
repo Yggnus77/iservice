@@ -2,11 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Search, Users } from 'lucide-react';
-import { Cabecalho } from '@/components/Painel';
-import { Abas, Carregando, ErroCaixa, Pessoa, Selo, SeloStatus, Vazio, useCarregar } from '@/components/ui';
+import { Download, Search, Users } from 'lucide-react';
+import { Cabecalho, usePainel } from '@/components/Painel';
+import { Abas, Carregando, ErroCaixa, Pessoa, Selo, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
+import { baixarPlanilha, dataHoraPlanilha } from '@/lib/planilha';
 import { rpc } from '@/lib/supabase';
-import { data, numero, statusCadastro, telefone } from '@/lib/formatos';
+import { data, hojeISO, numero, statusCadastro, telefone } from '@/lib/formatos';
 
 type Linha = {
   id: string; nome: string; email: string | null; telefone: string | null; foto_url: string | null; e_cliente: boolean; e_profissional: boolean;
@@ -26,10 +27,21 @@ export default function Pessoas() {
     () => rpc<Linha[]>('admin_usuarios', { p_texto: busca || null, p_filtro: filtro, p_limite: POR_PAGINA, p_pular: pagina * POR_PAGINA }),
     [busca, filtro, pagina]);
   const total = dados?.[0]?.total ?? 0;
+  const { executar, ocupado } = useAcao();
+  const { pode } = usePainel();
 
   return (
     <>
-      <Cabecalho titulo="Pessoas" texto="Clientes e profissionais. Abra a ficha para ver pedidos, denúncias ou suspender uma conta." />
+      <Cabecalho ajuda={<>Todos os clientes e profissionais. Procure por nome, e-mail, CPF ou telefone e abra a ficha para ver o histórico, anotar, advertir ou suspender.</>} titulo="Pessoas" texto="Clientes e profissionais. Abra a ficha para ver pedidos, denúncias ou suspender uma conta."
+        acoes={pode('dados_pessoais') ? <button className="botao contorno" disabled={ocupado} onClick={() => executar(async () => {
+          const linhas = await rpc<Linha[]>('admin_usuarios', { p_texto: busca || null, p_filtro: filtro, p_limite: 20000, p_pular: 0 });
+          baixarPlanilha(`pessoas-iservice-${hojeISO()}`, [
+            ['Nome', 'E-mail', 'Telefone', 'Cliente', 'Profissional', 'Situação do cadastro', 'Equipe', 'Suspensa', 'Pediu exclusão', 'Pedidos', 'Na plataforma desde'],
+            ...linhas.map((l) => [l.nome, l.email, telefone(l.telefone), l.e_cliente, l.e_profissional,
+              l.status_profissional ? statusCadastro[l.status_profissional]?.rotulo ?? l.status_profissional : null, l.e_admin, l.suspenso, l.exclusao_pendente,
+              Number(l.pedidos), dataHoraPlanilha(l.criado_em)]),
+          ]);
+        }, 'Planilha baixada.')}><Download /> Baixar planilha (Excel)</button> : undefined} />
       <div className="filtros">
         <Abas<Filtro> ativa={filtro} mudar={(f) => { setFiltro(f); setPagina(0); }} abas={[
           { id: 'todos', rotulo: 'Todos' }, { id: 'clientes', rotulo: 'Só clientes' }, { id: 'profissionais', rotulo: 'Profissionais' },

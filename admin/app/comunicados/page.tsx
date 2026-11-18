@@ -63,7 +63,7 @@ export default function Comunicados() {
 
   return (
     <>
-      <Cabecalho titulo="Comunicados" texto="Envie um aviso para um grupo de profissionais, por exemplo os eletricistas de Ceilândia." />
+      <Cabecalho ajuda={<>Manda uma notificação no app para um grupo: por profissão, por região ou para todos. Use para avisos importantes (novidades, campanhas, mudança nos termos). Antes de enviar o painel mostra quantas pessoas vão receber. Não exagere: aviso demais faz a pessoa desligar as notificações.</>} titulo="Comunicados" texto="Envie um aviso para um grupo de profissionais, por exemplo os eletricistas de Ceilândia." />
       <div className="grade lado">
         <section className="cartao">
           <div className="titulo"><div><h2>Novo comunicado</h2><p>Chega como notificação dentro do app Profissional.</p></div></div>

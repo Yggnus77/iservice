@@ -75,7 +75,7 @@ export default function Avaliacoes() {
 
   return (
     <>
-      <Cabecalho titulo="Avaliações"
+      <Cabecalho ajuda={<>As estrelas e comentários que clientes deram aos profissionais. Veja os profissionais mais bem e mais mal avaliados e os comentários recentes. Avaliação ofensiva ou falsa pode ser ocultada (sai da nota do profissional); isso fica no registro da equipe.</>} titulo="Avaliações"
         texto="As notas nos dois sentidos: clientes avaliam profissionais e profissionais avaliam clientes. Use para premiar os melhores e acompanhar de perto os piores." />
 
       <div className="grade g4" style={{ marginBottom: 18 }}>

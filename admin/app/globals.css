@@ -511,3 +511,105 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .lista-sugestoes li { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--linha); }
 .lista-sugestoes li:last-child { border-bottom: 0; }
 .lista-sugestoes .fraco { display: block; color: var(--texto-fraco); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ ajuda "?" */
+.com-ajuda { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ajuda-botao {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 999px;
+  background: transparent; color: var(--texto-fraco); cursor: pointer; flex: none; vertical-align: middle; transition: color .12s, background .12s;
+}
+.ajuda-botao svg { width: 16px; height: 16px; }
+.ajuda-botao:hover, .ajuda-botao.aberta { color: var(--azul); background: var(--azul-suave); }
+.ajuda-botao.claro { color: #8fb4f5; }
+.ajuda-botao.claro:hover, .ajuda-botao.claro.aberta { color: #fff; background: rgba(255, 255, 255, .12); }
+.cabecalho h1 .ajuda-botao { width: 26px; height: 26px; }
+.cabecalho h1 .ajuda-botao svg { width: 19px; height: 19px; }
+.ajuda-balao {
+  position: fixed; z-index: 80; background: var(--azul-escuro); color: #e9f0fd; border-radius: 12px; padding: 12px 14px;
+  font-size: 13px; font-weight: 500; line-height: 1.5; letter-spacing: 0; text-transform: none; box-shadow: var(--sombra-alta); text-align: left;
+}
+.ajuda-balao strong { display: block; color: #fff; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.ajuda-balao a { color: #9cc2ff; }
+
+/* ------------------------------------------------------------------ busca única */
+.busca-gatilho {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 38px; margin: 0 0 12px; padding: 0 10px 0 12px;
+  border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; background: rgba(255, 255, 255, .06); color: #b9cbec; cursor: pointer; font-size: 13px;
+}
+.busca-gatilho:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.busca-gatilho svg { width: 16px; height: 16px; flex: none; }
+.busca-gatilho span { flex: 1; text-align: left; }
+.busca-gatilho kbd, .busca-rodape kbd {
+  font: 600 10.5px/1 var(--fonte), system-ui, sans-serif; padding: 3px 6px; border-radius: 5px; border: 1px solid rgba(255, 255, 255, .2); color: inherit;
+}
+.busca-fundo { position: fixed; inset: 0; z-index: 70; background: rgba(1, 16, 49, .5); display: flex; justify-content: center; align-items: flex-start; padding: 10vh 16px 16px; }
+.busca-caixa { color: var(--texto); width: 100%; max-width: 640px; background: var(--superficie); border-radius: 16px; box-shadow: var(--sombra-alta); overflow: hidden; display: flex; flex-direction: column; max-height: 76vh; }
+.busca-campo { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 18px; border-bottom: 1px solid var(--linha); }
+.busca-campo > svg { width: 20px; height: 20px; color: var(--texto-fraco); flex: none; }
+.busca-campo input { flex: 1; min-width: 0; border: 0; outline: 0; font-size: 16px; padding: 8px 0; background: transparent; }
+.busca-resultados { overflow-y: auto; padding: 6px; }
+.busca-grupo { font-size: 10.5px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--texto-fraco); padding: 12px 12px 4px; }
+.busca-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; text-align: left; }
+.busca-item.ativo { background: var(--azul-suave); }
+.busca-icone { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--superficie-suave); color: var(--azul); flex: none; }
+.busca-icone svg { width: 16px; height: 16px; }
+.busca-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.busca-texto strong { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.busca-texto span { font-size: 12px; color: var(--texto-suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.busca-ir svg { width: 15px; height: 15px; color: var(--texto-fraco); }
+.busca-dica { display: flex; gap: 12px; align-items: flex-start; padding: 18px; color: var(--texto-suave); }
+.busca-dica svg { flex: none; margin-top: 2px; color: var(--texto-fraco); }
+.busca-rodape { display: flex; align-items: center; gap: 14px; padding: 9px 16px; border-top: 1px solid var(--linha); font-size: 11.5px; color: var(--texto-fraco); background: var(--fundo); }
+.busca-rodape kbd { border-color: var(--borda-controle); margin-right: 3px; }
+@media (max-width: 720px) { .busca-rodape { display: none; } .busca-fundo { padding-top: 12px; } .busca-caixa { max-height: 88vh; } }
+
+/* ------------------------------------------------------------------ anotações */
+.nota-nova { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+.nota-nova textarea { flex: 1; resize: vertical; min-height: 44px; }
+.notas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.notas li { display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #fffbea; border: 1px solid #f6e7a8; }
+.notas li.fixada { background: #fff4c2; border-color: #ecd26b; }
+.nota-cab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
+.nota-cab .botao.pequeno { height: 26px; padding: 0 6px; }
+.nota-texto { white-space: pre-wrap; word-break: break-word; margin-top: 2px; }
+
+/* ------------------------------------------------------------------ precisa de atenção */
+.fila { list-style: none; margin: 0; padding: 0; }
+.fila > li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px; border-bottom: 1px solid var(--linha); }
+.fila > li:last-child { border-bottom: 0; }
+.fila .marca-gravidade { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.fila .marca-gravidade svg { width: 18px; height: 18px; }
+.fila .marca-gravidade.alto { background: var(--perigo-suave); color: var(--perigo); }
+.fila .marca-gravidade.medio { background: var(--laranja-suave); color: var(--laranja-texto); }
+.fila .meio-item { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fila .meio-item strong { font-weight: 700; }
+.fila .botoes-item { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 720px) { .fila > li { flex-wrap: wrap; padding: 14px 16px; } .fila .botoes-item { width: 100%; justify-content: flex-start; } }
+
+/* ------------------------------------------------------------------ relatórios */
+.periodo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.periodo .entrada[type="date"] { width: auto; }
+.variacao { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; }
+.variacao svg { width: 13px; height: 13px; }
+.variacao.sobe { color: var(--verde-texto); }
+.variacao.desce { color: var(--perigo); }
+.variacao.igual { color: var(--texto-fraco); }
+.numero .rotulo .ajuda-botao { margin-left: auto; }
+.barras.longas .coluna .rot { font-size: 10px; }
+
+/* ------------------------------------------------------------------ escolher sanção */
+.opcoes-sancao { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.opcoes-sancao button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  border: 1.5px solid var(--borda-controle); background: var(--superficie); text-align: left;
+}
+.opcoes-sancao button strong { font-size: 13px; }
+.opcoes-sancao button span { font-size: 11.5px; color: var(--texto-fraco); }
+.opcoes-sancao button.ativa { border-color: var(--azul); background: var(--azul-suave); }
+.opcoes-sancao button.ativa.perigo { border-color: var(--perigo); background: var(--perigo-suave); }
+
+/* ------------------------------------------------------------------ respostas prontas */
+.respostas-lista { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.resposta-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie); text-align: left; cursor: pointer; width: 100%; }
+.resposta-item:hover { border-color: var(--azul); background: var(--azul-suave); }
+.resposta-item .previa { display: block; color: var(--texto-suave); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -151,7 +151,7 @@ export default function Equipe() {
 
   return (
     <>
-      <Cabecalho titulo="Equipe"
+      <Cabecalho ajuda={<>Quem da equipe tem acesso ao painel e com qual cargo. Cada cargo vê só o que precisa (o Suporte não vê documentos, o Marketing não vê dados pessoais). Convide pelo e-mail: a pessoa cria a senha no primeiro acesso.</>} titulo="Equipe"
         texto={meuCargo === 'responsavel' ? 'O seu time de Atendimento. Cada pessoa tem o próprio login e o acesso do próprio cargo.'
           : 'Cada pessoa tem o próprio login e vê só o que o cargo dela permite.'}
         acoes={<>

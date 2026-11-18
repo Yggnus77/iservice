@@ -24,7 +24,7 @@ export default function Emergencias() {
 
   return (
     <>
-      <Cabecalho titulo="Emergências" texto="Acionamentos do botão de emergência nos apps. Ligue para a pessoa imediatamente e, se for o caso, oriente a chamar o 190."
+      <Cabecalho ajuda={<>Quando alguém aperta o botão de emergência durante um serviço, aparece aqui na hora, com o local. Ligue imediatamente para a pessoa. Se houver risco, oriente a ligar para o 190. Depois marque como atendida e anote o que aconteceu.</>} titulo="Emergências" texto="Acionamentos do botão de emergência nos apps. Ligue para a pessoa imediatamente e, se for o caso, oriente a chamar o 190."
         acoes={<Abas ativa={abertas} mudar={setAbertas} abas={[{ id: 'abertas', rotulo: 'Abertas' }, { id: 'todas', rotulo: 'Todas' }]} />} />
       {erro ? <ErroCaixa erro={erro} tentar={recarregar} /> : carregando && !dados ? <Carregando /> : !dados?.length ? (
         <section className="cartao"><Vazio icone={<Siren size={24} />} titulo="Nenhuma emergência aberta" texto="Esta tela se atualiza sozinha a cada 20 segundos." /></section>

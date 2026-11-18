@@ -5,12 +5,15 @@ import { usePathname } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
-  BadgeCheck, BarChart3, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
+  BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
+  BellRing, LineChart, Search,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
 import { DialogoFoto } from './FotoPerfil';
+import { Ajuda } from './Ajuda';
+import { BuscaGlobal } from './BuscaGlobal';
 
 export type Resumo = {
   dia: string;
@@ -36,6 +39,8 @@ export type Resumo = {
   profissionais_por_profissao: { id: string; nome: string; ativa: boolean; aprovados: number; em_analise: number }[];
   /** Caixa de e-mail do suporte (vem de admin_suporte_contagem). */
   emails?: ContagemEmails;
+  /** Fila "Precisa de atenção" (vem de admin_atencao_contagem). */
+  atencao?: { pedidos: number; profissionais: number; documentos: number; total: number };
 };
 
 export type ContagemEmails = {
@@ -47,7 +52,8 @@ export type ContagemEmails = {
 export type Permissao =
   | 'inicio' | 'emails' | 'emails_todos' | 'cadastros' | 'cadastros_decidir' | 'dados_pessoais' | 'pedidos' | 'emergencias'
   | 'garantia' | 'garantia_decidir' | 'avaliacoes' | 'avaliacoes_moderar' | 'denuncias' | 'pessoas' | 'pessoas_suspender'
-  | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo';
+  | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo'
+  | 'relatorios';
 
 export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing';
 export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[] };
@@ -72,7 +78,7 @@ const rotas: [string, Permissao][] = [
   ['/emergencias', 'emergencias'], ['/garantia', 'garantia'], ['/avaliacoes', 'avaliacoes'], ['/denuncias', 'denuncias'],
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
-  ['/equipe', 'equipe'], ['/registro', 'registro'],
+  ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -82,6 +88,7 @@ export function permissaoDaRota(href: string): Permissao {
 
 const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; contador?: (r: Resumo) => number; alerta?: boolean }[] = [
   { grupo: '', href: '/', rotulo: 'Início', icone: <Gauge /> },
+  { grupo: 'Operação', href: '/atencao/', rotulo: 'Precisa de atenção', icone: <BellRing />, contador: (r) => r.atencao?.total ?? 0, alerta: true },
   { grupo: 'Operação', href: '/emails/', rotulo: 'E-mails', icone: <Mail />, contador: (r) => (r.emails?.meus_pendentes ?? 0) + (r.emails?.sem_responsavel ?? 0) },
   { grupo: 'Operação', href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
   { grupo: 'Operação', href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
@@ -90,6 +97,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
   { grupo: 'Operação', href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
+  { grupo: 'Crescimento', href: '/relatorios/', rotulo: 'Relatórios', icone: <LineChart /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
   { grupo: 'Crescimento', href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
   { grupo: 'Crescimento', href: '/sugestoes/', rotulo: 'Sugestões de profissões', icone: <Lightbulb /> },
@@ -103,6 +111,8 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
 
 // A caixa de e-mail tem SQL próprio: se ainda não foi aplicado, o resto do painel segue normal.
 const contagemEmails = () => rpc<ContagemEmails>('admin_suporte_contagem').catch(() => undefined);
+// Sem o SQL das ferramentas de gestão, o menu segue sem a contagem.
+const contagemAtencao = () => rpc<NonNullable<Resumo['atencao']>>('admin_atencao_contagem').catch(() => undefined);
 
 function ativo(rota: string, href: string) {
   const r = rota.replace(/^\/admin/, '') || '/';
@@ -330,7 +340,8 @@ export default function Painel({ children }: { children: ReactNode }) {
 
   const podeEmails = !meuAcesso || meuAcesso.permissoes.includes('emails');
   const atualizarResumo = useCallback(() => {
-    Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined)]).then(([r, emails]) => setResumo({ ...r, emails })).catch((e: ErroPainel) => {
+    Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined), contagemAtencao()])
+      .then(([r, emails, atencao]) => setResumo({ ...r, emails, atencao })).catch((e: ErroPainel) => {
       if (e.codigo === 'sql_pendente') setAcesso('sql_pendente');
     });
   }, [podeEmails]);
@@ -349,8 +360,8 @@ export default function Painel({ children }: { children: ReactNode }) {
         const cargo = await rpc<MeuAcesso>('admin_meu_acesso').catch(() => null);
         setMeuAcesso(cargo);
         const podeEmails = !cargo || cargo.permissoes.includes('emails');
-        const [r, emails] = await Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined)]);
-        setResumo({ ...r, emails });
+        const [r, emails, atencao] = await Promise.all([rpc<Resumo>('admin_resumo'), podeEmails ? contagemEmails() : Promise.resolve(undefined), contagemAtencao()]);
+        setResumo({ ...r, emails, atencao });
         setAcesso('ok');
       } catch (e) {
         setAcesso((e as ErroPainel).codigo === 'sql_pendente' ? 'sql_pendente' : 'nao_admin');
@@ -390,6 +401,8 @@ export default function Painel({ children }: { children: ReactNode }) {
               <img src="/admin/simbolo.svg" alt="" />
               <div><strong>iService</strong><span>Equipe</span></div>
             </div>
+            <BuscaGlobal paginas={itens.map((m) => ({ href: m.href, rotulo: m.rotulo, grupo: m.grupo, icone: m.icone }))}
+              podePessoas={pode('pessoas')} podePedidos={pode('pedidos')} podeEmails={pode('emails')} />
             <nav aria-label="Menu do painel">
               {itens.map((m, i) => {
                 const n = resumo && m.contador ? m.contador(resumo) : 0;
@@ -421,7 +434,7 @@ export default function Painel({ children }: { children: ReactNode }) {
               <button onClick={() => setMenuAberto(true)} aria-label="Abrir menu"><Menu /></button>
               <strong>iService · Equipe</strong>
               <span className="espaco" />
-              <BarChart3 size={18} style={{ opacity: 0 }} />
+              <button onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))} aria-label="Buscar no painel"><Search size={20} /></button>
             </div>
             {liberada ? children : <SemPermissao cargo={meuAcesso?.cargo_nome} />}
           </main>
@@ -433,13 +446,17 @@ export default function Painel({ children }: { children: ReactNode }) {
   );
 }
 
-export function Cabecalho({ titulo, texto, acoes, voltar }: { titulo: string; texto?: ReactNode; acoes?: ReactNode; voltar?: { href: string; rotulo: string } }) {
+export function Cabecalho({ titulo, texto, acoes, voltar, ajuda }: {
+  titulo: string; texto?: ReactNode; acoes?: ReactNode; voltar?: { href: string; rotulo: string };
+  /** Explicação da tela, no botão "?" ao lado do título. */
+  ajuda?: ReactNode;
+}) {
   return (
     <>
       {voltar ? <Link className="voltar" href={voltar.href}>‹ {voltar.rotulo}</Link> : null}
       <div className="cabecalho">
         <div>
-          <h1>{titulo}</h1>
+          <h1 className="com-ajuda">{titulo}{ajuda ? <Ajuda titulo={titulo}>{ajuda}</Ajuda> : null}</h1>
           {texto ? <p>{texto}</p> : null}
         </div>
         {acoes ? <div className="acoes">{acoes}</div> : null}

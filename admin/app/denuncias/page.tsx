@@ -146,7 +146,7 @@ function Pagina() {
   const { resumo } = usePainel();
   return (
     <>
-      <Cabecalho titulo="Denúncias e avaliações" texto="Denúncias enviadas pelos apps e avaliações que parecem fora do normal."
+      <Cabecalho ajuda={<><strong>Denúncias:</strong> enviadas por clientes ou profissionais pelo app. Analise, converse com as partes e marque como procedente ou não.<br /><strong>Avaliações suspeitas:</strong> notas que parecem fora do normal: serviço concluído em menos de 10 minutos, várias avaliações do mesmo cliente para o mesmo profissional, conta criada no mesmo dia, comentário com telefone ou link, ou pedido com denúncia.</>} titulo="Denúncias e avaliações" texto="Denúncias enviadas pelos apps e avaliações que parecem fora do normal."
         acoes={<Abas ativa={aba} mudar={setAba} abas={[{ id: 'denuncias', rotulo: 'Denúncias', n: resumo?.denuncias_abertas }, { id: 'avaliacoes', rotulo: 'Avaliações suspeitas' }]} />} />
       {aba === 'denuncias' ? <Denuncias /> : <Avaliacoes />}
     </>

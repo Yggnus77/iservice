@@ -173,4 +173,12 @@ export const nomesAcao: Record<string, string> = {
   foto_equipe: 'Trocou a foto de alguém da equipe',
   remover_foto_equipe: 'Tirou a foto de alguém da equipe',
   apagar_sugestao_profissao: 'Apagou uma sugestão de profissão',
+  anotar: 'Fez uma anotação interna',
+  apagar_nota: 'Apagou uma anotação interna',
+  advertir: 'Advertiu a conta',
+  validade_documento: 'Mudou a validade de um documento',
+  salvar_resposta_pronta: 'Salvou uma resposta pronta',
+  apagar_resposta_pronta: 'Apagou uma resposta pronta',
+  atencao_tratado: 'Marcou um alerta como tratado',
+  lembrete_cadastro: 'Mandou lembrete para terminar o cadastro',
 };

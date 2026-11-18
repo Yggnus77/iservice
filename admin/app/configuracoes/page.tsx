@@ -65,7 +65,7 @@ export default function Configuracoes() {
   }, []);
   return (
     <>
-      <Cabecalho titulo="Configurações" texto="Valores que os apps e o banco leem na hora: taxa de urgência, prazos, WhatsApp do suporte e outros." />
+      <Cabecalho ajuda={<>Valores que os apps leem na hora, sem precisar publicar versão nova. Mude com cuidado: vale para todo mundo assim que salvar. Só o dono tem acesso a esta tela.</>} titulo="Configurações" texto="Valores que os apps e o banco leem na hora: taxa de urgência, prazos, WhatsApp do suporte e outros." />
       {erro ? <ErroCaixa erro={erro} tentar={recarregar} /> : carregando && !dados ? <Carregando /> : (
         <section className="cartao">
           <div className="corpo sem-espaco">

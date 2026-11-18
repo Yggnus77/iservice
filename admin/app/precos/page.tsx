@@ -58,7 +58,7 @@ export default function Precos() {
 
   return (
     <>
-      <Cabecalho titulo="Preços" texto="Valores mínimos que ninguém pode furar e a faixa comum (P25 a P75) que o app mostra para cada especialidade e região. O profissional sempre define o próprio preço, a partir do mínimo."
+      <Cabecalho ajuda={<><strong>Mínimo:</strong> ninguém pode cobrar menos que isso, para não haver guerra de preço. <strong>Faixa comum:</strong> o que a maioria cobra na região (do mais barato ao mais caro, sem os extremos), mostrada ao cliente como referência. O profissional escolhe o próprio preço a partir do mínimo.</>} titulo="Preços" texto="Valores mínimos que ninguém pode furar e a faixa comum (P25 a P75) que o app mostra para cada especialidade e região. O profissional sempre define o próprio preço, a partir do mínimo."
         acoes={<>
           <select className="entrada" value={profissao} onChange={(e) => setProfissao(e.target.value)} aria-label="Profissão">
             {profissoes.dados?.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
