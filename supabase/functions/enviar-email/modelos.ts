@@ -7,6 +7,9 @@
 // programas de e-mail exigem) e na versão só texto.
 
 export const SITE = "https://iservice.app.br";
+// Logo dos e-mails: PNG (Gmail e Outlook não mostram SVG), publicado no site.
+// O "?v=" força os leitores de e-mail a buscar a imagem de novo quando ela mudar.
+export const LOGO_EMAIL = `${SITE}/assets/img/email/logo-iservice.png?v=1`;
 export const SUPORTE_EMAIL = "suporte@iservice.app.br";
 export const SUPORTE_WHATSAPP = "(98) 98551-6037";
 export const SUPORTE_WHATSAPP_LINK = "https://wa.me/5598985516037";
@@ -646,8 +649,7 @@ export function montar(c: Conteudo): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td valign="middle">
 <a href="${SITE}" target="_blank" style="text-decoration:none;">
-<img src="${SITE}/assets/img/icon-192.png" width="40" height="40" alt="" style="display:inline-block;vertical-align:middle;border:0;width:40px;height:40px;">
-<span style="display:inline-block;vertical-align:middle;margin-left:8px;font-family:${FONTE};font-size:22px;font-weight:800;letter-spacing:-.4px;color:${COR.texto};">i<span style="color:${COR.azul};">Service</span></span>
+<img src="${LOGO_EMAIL}" width="160" height="48" alt="iService" style="display:block;border:0;outline:none;text-decoration:none;width:160px;height:48px;max-width:160px;font-family:${FONTE};font-size:24px;font-weight:800;font-style:italic;line-height:48px;color:${COR.azul};">
 </a>
 </td>
 ${rotuloApp ? `<td align="right" valign="middle" style="font-family:${FONTE};font-size:12px;font-weight:700;color:${corApp};letter-spacing:.3px;">${rotuloApp}</td>` : ""}
