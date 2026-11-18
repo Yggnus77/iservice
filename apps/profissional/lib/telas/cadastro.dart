@@ -527,6 +527,9 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
 
   Future<void> _salvar({bool mudouCobranca = false}) async {
     if (!mudouCobranca && _num == widget.preco) return;
+    // Abaixo do mínimo da região não salva (o banco também recusa).
+    final minimo = ref.read(precoMinimoProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
+    if (_num != null && minimo != null && _num! < minimo) return;
     try {
       await ref.read(profissionalRepo).definirPreco(widget.especialidade.id, _num, cobranca: _cobranca);
       ref.invalidate(minhasProfissoesProvider);
@@ -539,6 +542,8 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
   @override
   Widget build(BuildContext context) {
     final faixa = ref.watch(faixaPrecoProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
+    final minimo = ref.watch(precoMinimoProvider((widget.especialidade.id, widget.regiaoId, _cobranca))).value;
+    final abaixoDoMinimo = _num != null && minimo != null && _num! < minimo;
     final aviso = faixa?.aviso(_num);
     final t = Theme.of(context).textTheme;
     final c = context.cores;
@@ -552,8 +557,11 @@ class _CampoPrecoState extends ConsumerState<_CampoPreco> {
               Text(widget.profissao, style: t.bodySmall),
               if (faixa != null)
                 Text('Comum na região: ${faixaReais(faixa.minimo, faixa.maximo)} ${_cobranca.unidade}', style: t.bodySmall),
+              if (minimo != null) Text('Mínimo na sua região: ${reais(minimo)} ${_cobranca.unidade}', style: t.bodySmall),
               if (_num == null)
                 Text('Informe quanto você cobra em média', style: t.bodySmall?.copyWith(color: c.alerta))
+              else if (abaixoDoMinimo)
+                Text('Abaixo do mínimo da plataforma. Informe ${reais(minimo)} ou mais.', style: t.bodySmall?.copyWith(color: c.perigo))
               else if (aviso != null)
                 Text(aviso, style: t.bodySmall?.copyWith(color: c.alerta)),
             ]),

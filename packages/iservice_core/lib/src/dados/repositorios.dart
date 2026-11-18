@@ -103,6 +103,19 @@ class CatalogoRepo {
         final l = r as List;
         return l.isEmpty ? null : FaixaPreco.fromJson(l.first);
       });
+
+  /// Valor mínimo que o profissional pode cobrar nesta especialidade, região e forma de cobrança.
+  Future<double?> precoMinimo(int especialidadeId, String? regiaoId, [Cobranca cobranca = Cobranca.servico]) => _tentar(() async {
+        final r = await _db.rpc('preco_minimo', params: {'p_especialidade': especialidadeId, 'p_regiao': regiaoId, 'p_cobranca': cobranca.valor});
+        return (r as num?)?.toDouble();
+      });
+
+  /// Acréscimo fora do horário comercial para um serviço com este preço neste momento (0 no horário comercial).
+  Future<double> taxaForaHorario(double? preco, DateTime momento) => _tentar(() async {
+        if (preco == null || preco <= 0) return 0.0;
+        final r = await _db.rpc('taxa_fora_horario', params: {'p_preco': preco, 'p_momento': momento.toUtc().toIso8601String()});
+        return (r as num?)?.toDouble() ?? 0.0;
+      });
 }
 
 // ---------------------------------------------------------------------------

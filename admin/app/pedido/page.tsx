@@ -13,7 +13,7 @@ type Parte = { id: string; nome: string; telefone: string | null; email: string 
 type Detalhe = {
   pedido: {
     id: string; codigo: string; status: string; quando: string; janela: string | null; combinado_para: string | null; descricao: string; fotos: string[];
-    endereco_texto: string; regiao: string | null; distancia_km: number | null; preco_informado: number | null; taxa_urgencia: number; valor_cobrado: number | null;
+    endereco_texto: string; regiao: string | null; distancia_km: number | null; preco_informado: number | null; taxa_urgencia: number; taxa_fora_horario?: number; valor_cobrado: number | null;
     forma_pagamento: string | null; motivo: string | null; criado_em: string; responder_ate: string; aceito_em: string | null; a_caminho_em: string | null;
     iniciado_em: string | null; concluido_em: string | null; encerrado_em: string | null; profissao: string; especialidade: string | null; lat: number; lng: number;
     cancelado_por: string | null;
@@ -79,7 +79,7 @@ function Detalhes() {
               <dl className="dados" style={{ marginTop: 16 }}>
                 <div><dt>Local</dt><dd>{p.endereco_texto}{p.regiao && !p.endereco_texto?.includes(p.regiao) ? ` · ${p.regiao}` : ''}</dd></div>
                 <div><dt>Distância do profissional</dt><dd>{p.distancia_km != null ? `${p.distancia_km} km` : '—'}</dd></div>
-                <div><dt>Preço informado</dt><dd>{moeda(p.preco_informado)}{p.taxa_urgencia ? ` + ${moeda(p.taxa_urgencia)} de urgência` : ''}</dd></div>
+                <div><dt>Preço informado</dt><dd>{moeda(p.preco_informado)}{p.taxa_urgencia ? ` + ${moeda(p.taxa_urgencia)} de urgência` : ''}{p.taxa_fora_horario ? ` + ${moeda(p.taxa_fora_horario)} fora do horário comercial` : ''}</dd></div>
                 <div><dt>Valor cobrado</dt><dd>{moeda(p.valor_cobrado)}{p.forma_pagamento ? ` · ${p.forma_pagamento}` : ''}</dd></div>
               </dl>
               {p.motivo ? <div className="alerta-faixa laranja" style={{ marginTop: 16, marginBottom: 0 }}><div><strong>Motivo do encerramento</strong>{p.motivo}</div></div> : null}

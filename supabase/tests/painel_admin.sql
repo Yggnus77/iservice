@@ -47,7 +47,7 @@ select id, 'SQS 308', 'asa-sul', public.ponto(-15.815, -47.896), true from publi
 update public.profissionais set area_centro = public.ponto(-15.81, -47.89), regiao_id = 'asa-sul';
 insert into public.profissional_profissoes values ('00000000-0000-0000-0000-0000000000b1', 'eletricista', true), ('00000000-0000-0000-0000-0000000000b2', 'baba', true);
 insert into public.profissional_especialidades (profissional_id, especialidade_id, preco)
-select pp.profissional_id, e.id, 100 from public.profissional_profissoes pp join public.especialidades e on e.profissao_id = pp.profissao_id and e.ordem = 0;
+select pp.profissional_id, e.id, 150 from public.profissional_profissoes pp join public.especialidades e on e.profissao_id = pp.profissao_id and e.ordem = 0;
 insert into public.documentos (profissional_id, tipo, arquivo_path)
 select id, t, id || '/' || t || '.jpg' from public.profissionais, unnest(array['documento_frente', 'selfie_documento']::public.tipo_documento[]) t;
 insert into public.documentos (profissional_id, tipo, arquivo_path) values ('00000000-0000-0000-0000-0000000000b2', 'antecedentes', '00000000-0000-0000-0000-0000000000b2/antecedentes.pdf');
