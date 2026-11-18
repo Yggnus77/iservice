@@ -46,7 +46,7 @@ export default function SiteEDownloads() {
 
   return (
     <>
-      <Cabecalho titulo="Site e downloads" texto="Quem visitou iservice.app.br e clicou para baixar os apps. Cada pessoa conta uma vez por dia, sem cookies." />
+      <Cabecalho ajuda={<>Visitas ao site iservice.app.br e cliques em “Baixar”. Cada pessoa conta uma vez por dia e não usamos cookies. Compare com os cadastros para ver quantos visitantes viram usuários.</>} titulo="Site e downloads" texto="Quem visitou iservice.app.br e clicou para baixar os apps. Cada pessoa conta uma vez por dia, sem cookies." />
       <div className="filtros">
         <Abas ativa={periodo} mudar={setPeriodo} abas={[{ id: '7', rotulo: '7 dias' }, { id: '30', rotulo: '30 dias' }, { id: '90', rotulo: '90 dias' }]} />
       </div>

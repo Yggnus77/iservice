@@ -33,7 +33,7 @@ export default function Registro() {
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Acao[]>('admin_registro', { p_limite: 300 }), []);
   return (
     <>
-      <Cabecalho titulo="Registro da equipe" texto="Tudo o que a equipe fez no painel, do mais recente ao mais antigo." />
+      <Cabecalho ajuda={<>Tudo o que cada pessoa da equipe fez no painel: aprovações, suspensões, advertências, mudanças de preço, lembretes. Serve para conferir e para ter histórico se alguém perguntar.</>} titulo="Registro da equipe" texto="Tudo o que a equipe fez no painel, do mais recente ao mais antigo." />
       <section className="cartao">
         <div className="corpo sem-espaco">
           {erro ? <div style={{ padding: 16 }}><ErroCaixa erro={erro} tentar={recarregar} /></div> : carregando && !dados ? <Carregando /> : !dados?.length ? (

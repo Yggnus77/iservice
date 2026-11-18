@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { BadgeCheck, ClipboardList, Flag, Search, SearchX, ShieldCheck, Siren, Star, UserPlus, Users, Wrench } from 'lucide-react';
+import { BadgeCheck, BellRing, ClipboardList, Flag, Search, SearchX, ShieldCheck, Siren, Star, UserPlus, Users, Wrench } from 'lucide-react';
+import { Ajuda } from '@/components/Ajuda';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Carregando } from '@/components/ui';
 import { diaCurto, numero, statusPedido } from '@/lib/formatos';
@@ -10,12 +11,12 @@ import { diaCurto, numero, statusPedido } from '@/lib/formatos';
 const META_POR_PROFISSAO = 15;
 const META_TOTAL = 300;
 
-function Numero({ rotulo, valor, detalhe, icone, cor, fundo, href }: {
-  rotulo: string; valor: React.ReactNode; detalhe?: React.ReactNode; icone: React.ReactNode; cor: string; fundo: string; href?: string;
+function Numero({ rotulo, valor, detalhe, icone, cor, fundo, href, ajuda }: {
+  rotulo: string; valor: React.ReactNode; detalhe?: React.ReactNode; icone: React.ReactNode; cor: string; fundo: string; href?: string; ajuda?: React.ReactNode;
 }) {
   const corpo = (
     <>
-      <span className="rotulo"><span className="icone" style={{ color: cor, background: fundo }}>{icone}</span>{rotulo}</span>
+      <span className="rotulo"><span className="icone" style={{ color: cor, background: fundo }}>{icone}</span>{rotulo}{ajuda ? <Ajuda titulo={rotulo}>{ajuda}</Ajuda> : null}</span>
       <span className="valor">{valor}</span>
       {detalhe ? <span className="detalhe">{detalhe}</span> : null}
     </>
@@ -41,7 +42,9 @@ export default function Inicio() {
 
   return (
     <>
-      <Cabecalho titulo={`${saudacao}${primeiroNome ? ', ' + primeiroNome : ''}`}
+      <Cabecalho ajuda={<>O resumo do dia, atualizado sozinho a cada minuto. Toque em um número para ir direto à lista.
+        Os números do topo são o que espera ação da equipe; os de baixo mostram o movimento do dia. Dica: aperte <strong>Ctrl+K</strong> para buscar qualquer coisa.</>}
+        titulo={`${saudacao}${primeiroNome ? ', ' + primeiroNome : ''}`}
         texto={`Resumo de hoje, ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' })}.`} />
 
       {resumo.emergencias_abertas > 0 && pode('emergencias') ? (
@@ -52,23 +55,33 @@ export default function Inicio() {
         </Link>
       ) : null}
 
+      {(resumo.atencao?.total ?? 0) > 0 && pode('pedidos') ? (
+        <Link href="/atencao/" className="alerta-faixa laranja" style={{ textDecoration: 'none' }}>
+          <BellRing size={24} />
+          <div><strong>{resumo.atencao!.total} {resumo.atencao!.total === 1 ? 'item precisa' : 'itens precisam'} de atenção</strong>
+            {[resumo.atencao!.pedidos && `${resumo.atencao!.pedidos} ${resumo.atencao!.pedidos === 1 ? 'pedido travado' : 'pedidos travados'}`,
+              resumo.atencao!.profissionais && `${resumo.atencao!.profissionais} ${resumo.atencao!.profissionais === 1 ? 'profissional com alerta' : 'profissionais com alerta'}`,
+              resumo.atencao!.documentos && `${resumo.atencao!.documentos} ${resumo.atencao!.documentos === 1 ? 'documento vencendo' : 'documentos vencendo'}`].filter(Boolean).join(' · ')}.</div>
+        </Link>
+      ) : null}
+
       <div className="grade g4" style={{ marginBottom: 18 }}>
-        <Numero href="/cadastros/" rotulo="Cadastros para aprovar" valor={numero(resumo.cadastros_em_analise)} icone={<BadgeCheck />} cor="#b25f00" fundo="#fff4e5"
+        <Numero href="/cadastros/" rotulo="Cadastros para aprovar" ajuda="Profissionais que enviaram tudo e esperam a conferência de documentos. Quanto mais rápido aprovar, mais cedo ele começa a atender." valor={numero(resumo.cadastros_em_analise)} icone={<BadgeCheck />} cor="#b25f00" fundo="#fff4e5"
           detalhe={resumo.cadastros_em_analise ? 'Quem enviou primeiro está no topo da fila' : 'Fila em dia'} />
-        <Numero href="/garantia/" rotulo="Reclamações da garantia" valor={numero(resumo.reclamacoes_abertas)} icone={<ShieldCheck />} cor="#0046b8" fundo="#e8f0fc"
+        <Numero href="/garantia/" rotulo="Reclamações da garantia" ajuda="Clientes que reclamaram de um serviço nos 30 dias da Garantia iService e ainda não tiveram resposta final." valor={numero(resumo.reclamacoes_abertas)} icone={<ShieldCheck />} cor="#0046b8" fundo="#e8f0fc"
           detalhe="Abertas ou em mediação" />
-        <Numero href="/denuncias/" rotulo="Denúncias abertas" valor={numero(resumo.denuncias_abertas)} icone={<Flag />} cor="#c62828" fundo="#fdecec" detalhe="Aguardando análise" />
-        <Numero href="/pedidos/?status=andamento" rotulo="Pedidos em andamento" valor={numero(resumo.pedidos_em_andamento)} icone={<ClipboardList />} cor="#00873a" fundo="#e6f9ee"
+        <Numero href="/denuncias/" rotulo="Denúncias abertas" ajuda="Denúncias feitas pelos apps que ninguém da equipe analisou ainda." valor={numero(resumo.denuncias_abertas)} icone={<Flag />} cor="#c62828" fundo="#fdecec" detalhe="Aguardando análise" />
+        <Numero href="/pedidos/?status=andamento" rotulo="Pedidos em andamento" ajuda="Pedidos aceitos, a caminho ou com o serviço acontecendo agora. Profissionais disponíveis são os que estão com o modo disponível ligado." valor={numero(resumo.pedidos_em_andamento)} icone={<ClipboardList />} cor="#00873a" fundo="#e6f9ee"
           detalhe={`${numero(resumo.profissionais_disponiveis)} profissionais disponíveis agora`} />
       </div>
 
       <div className="grade g4" style={{ marginBottom: 18 }}>
-        <Numero rotulo="Buscas hoje" valor={numero(resumo.buscas)} icone={<Search />} cor="#0046b8" fundo="#e8f0fc" href="/buscas/" />
-        <Numero rotulo="Buscas sem resultado" valor={numero(resumo.buscas_sem_resultado)} icone={<SearchX />} cor="#b25f00" fundo="#fff4e5" href="/buscas/"
+        <Numero rotulo="Buscas hoje" ajuda="Quantas vezes alguém procurou um profissional no app hoje." valor={numero(resumo.buscas)} icone={<Search />} cor="#0046b8" fundo="#e8f0fc" href="/buscas/" />
+        <Numero rotulo="Buscas sem resultado" ajuda="Procuraram e não acharam ninguém perto. É o melhor sinal de onde e em que profissão recrutar." valor={numero(resumo.buscas_sem_resultado)} icone={<SearchX />} cor="#b25f00" fundo="#fff4e5" href="/buscas/"
           detalhe={resumo.buscas ? `${Math.round((resumo.buscas_sem_resultado / resumo.buscas) * 100)}% das buscas: onde recrutar` : 'Nenhuma busca ainda hoje'} />
-        <Numero rotulo="Pedidos hoje" valor={numero(resumo.pedidos)} icone={<ClipboardList />} cor="#00873a" fundo="#e6f9ee"
+        <Numero rotulo="Pedidos hoje" ajuda="Pedidos feitos hoje, quantos já foram concluídos e as avaliações recebidas." valor={numero(resumo.pedidos)} icone={<ClipboardList />} cor="#00873a" fundo="#e6f9ee"
           detalhe={`${numero(resumo.concluidos)} concluídos · ${numero(resumo.avaliacoes)} avaliações${resumo.nota_media_dia ? ` (média ${Number(resumo.nota_media_dia).toFixed(1)})` : ''}`} />
-        <Numero rotulo="Cadastros novos hoje" valor={numero(resumo.cadastros_novos_clientes + resumo.cadastros_novos_profissionais)} icone={<UserPlus />} cor="#5b3cc4" fundo="#efeafd"
+        <Numero rotulo="Cadastros novos hoje" ajuda="Contas criadas hoje nos apps, separadas entre clientes e profissionais." valor={numero(resumo.cadastros_novos_clientes + resumo.cadastros_novos_profissionais)} icone={<UserPlus />} cor="#5b3cc4" fundo="#efeafd"
           detalhe={`${numero(resumo.cadastros_novos_clientes)} clientes · ${numero(resumo.cadastros_novos_profissionais)} profissionais`} />
       </div>
 
@@ -144,7 +157,9 @@ export default function Inicio() {
         <section className="cartao">
           <div className="titulo">
             <div>
-              <h2>Meta de recrutamento</h2>
+              <h2 className="com-ajuda">Meta de recrutamento
+                <Ajuda titulo="Meta de recrutamento">A meta antes do lançamento: {META_TOTAL} profissionais aprovados, pelo menos {META_POR_PROFISSAO} em cada profissão. As profissões mais vazias aparecem primeiro: são as que precisam de recrutamento.</Ajuda>
+              </h2>
               <p>{numero(resumo.profissionais_aprovados)} de {META_TOTAL} aprovados · {completas} de {resumo.profissionais_por_profissao.length} profissões com {META_POR_PROFISSAO}+</p>
             </div>
             <Wrench size={18} color="#7a879d" />

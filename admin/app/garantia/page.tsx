@@ -110,7 +110,7 @@ export default function Garantia() {
 
   return (
     <>
-      <Cabecalho titulo="Garantia iService" texto="Reclamações abertas pelos clientes ou profissionais. Medie, registre e avise as partes." />
+      <Cabecalho ajuda={<>A Garantia iService vale 30 dias depois do serviço concluído. Quando o cliente reclama, a equipe conversa com as duas partes (mediação), registra cada passo e decide: resolvida ou encerrada. O Suporte registra e media; o Responsável de setor, o gerente e o dono fecham.</>} titulo="Garantia iService" texto="Reclamações abertas pelos clientes ou profissionais. Medie, registre e avise as partes." />
       <div className="filtros">
         <Abas<Aba> ativa={aba} mudar={(a) => { setAba(a); setSel(null); }} abas={[
           { id: 'abertas', rotulo: 'Abertas' }, { id: 'resolvida', rotulo: 'Resolvidas' }, { id: 'encerrada', rotulo: 'Encerradas' }, { id: 'todas', rotulo: 'Todas' },

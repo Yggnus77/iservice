@@ -350,7 +350,7 @@ set search_path = public
 as $$
 begin
   perform public.exigir_permissao('cadastros');
-  return coalesce((select jsonb_agg(x order by (x ->> 'valido_ate')) from public.validades_lista(greatest(0, least(coalesce(p_dias, 30), 365)), p_profissional) x), '[]'::jsonb);
+  return coalesce((select jsonb_agg(x order by (x ->> 'valido_ate')) from public.validades_lista(greatest(0, least(coalesce(p_dias, 30), 3650)), p_profissional) x), '[]'::jsonb);
 end;
 $$;
 

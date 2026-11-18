@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, ArrowLeftRight, CheckCircle2, ChevronLeft, Code, Download, Inbox, Loader2, Mail, MailPlus, Paperclip,
-  RotateCcw, Search, Send, Shuffle, StickyNote, UserCheck,
+  MessageSquareText, RotateCcw, Search, Send, Shuffle, StickyNote, UserCheck,
 } from 'lucide-react';
+import { Ajuda } from '@/components/Ajuda';
+import { RespostasProntas, preencher } from '@/components/RespostasProntas';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Abas, Avatar, Carregando, Dialogo, ErroCaixa, Interruptor, Pessoa, Selo, SeloStatus, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
 import { rpc, ErroPainel } from '@/lib/supabase';
@@ -127,7 +129,9 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
   const [enviando, setEnviando] = useState(false);
   const [original, setOriginal] = useState<number | null>(null);
   const [transferir, setTransferir] = useState(false);
-  const todos = usePainel().pode('emails_todos');
+  const [prontas, setProntas] = useState(false);
+  const painel = usePainel();
+  const todos = painel.pode('emails_todos');
   const fim = useRef<HTMLDivElement>(null);
   const primeiraCarga = useRef(true);
 
@@ -228,6 +232,9 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         <div className="caixa-escrever-abas" role="tablist">
           <button role="tab" aria-selected={modo === 'responder'} className={modo === 'responder' ? 'ativa' : ''} onClick={() => setModo('responder')}><Send size={14} /> Responder</button>
           <button role="tab" aria-selected={modo === 'nota'} className={modo === 'nota' ? 'ativa' : ''} onClick={() => setModo('nota')}><StickyNote size={14} /> Nota interna</button>
+          <button className="caixa-link" onClick={() => setProntas(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginLeft: 6 }}>
+            <MessageSquareText size={14} /> Respostas prontas
+          </button>
           <span className="espaco" />
           <span className="texto-fraco" style={{ fontSize: 12 }}>{modo === 'responder' ? `Para ${c.contato_email}` : 'O cliente não vê'}</span>
         </div>
@@ -252,6 +259,14 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
       </div>
 
       <Original id={original} fechar={() => setOriginal(null)} />
+      <RespostasProntas aberto={prontas} fechar={() => setProntas(false)} gerir={todos}
+        usar={(r) => {
+          const primeiro = (nome.split(/[\s@]/)[0] || '').replace(/^./, (x) => x.toUpperCase());
+          const atendente = `${painel.nome.split(' ')[0] || 'Equipe'} · Equipe iService`;
+          const t = preencher(r.texto, { nome: primeiro, protocolo: c.protocolo, atendente });
+          setTexto((atual) => (atual.trim() ? `${atual.trimEnd()}\n\n${t}` : t));
+          setProntas(false);
+        }} />
       <Dialogo aberto={transferir} fechar={() => setTransferir(false)} titulo="Passar a conversa" icone={<ArrowLeftRight />}
         texto="Escolha quem da equipe vai cuidar deste atendimento. Fica registrado na conversa.">
         <div className="lista-simples">
@@ -396,6 +411,12 @@ function Pagina() {
   return (
     <>
       <Cabecalho titulo="E-mails"
+        ajuda={<>
+          A caixa do <strong>{ENDERECO}</strong>. Cada e-mail novo vai para uma pessoa da equipe, em rodízio.<br />
+          <strong>Em aberto:</strong> ninguém respondeu ainda. <strong>Em atendimento:</strong> já respondido, esperando o cliente.
+          <strong> Encerrado:</strong> resolvido (se a pessoa responder, volta a abrir).<br />
+          Use <strong>Respostas prontas</strong> para os assuntos que se repetem, e <strong>Nota interna</strong> para recados que o cliente não vê.
+        </>}
         texto={<>Tudo o que chega em <strong>{ENDERECO}</strong> e as respostas aos e-mails automáticos. Cada e-mail novo vai para uma pessoa da equipe, em rodízio.</>}
         acoes={<>
           {todos ? <button className="botao contorno" onClick={() => setDistribuicao(true)}><Shuffle /> Distribuição</button> : null}

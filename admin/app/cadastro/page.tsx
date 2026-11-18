@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { AlertTriangle, Check, CheckCircle2, Columns2, ExternalLink, FileText, Lock, MapPin, MessageCircle, ShieldAlert, UserRound, X } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
+import { Ajuda } from '@/components/Ajuda';
+import { DialogoValidade, type ItemValidade } from '@/components/Validade';
 import { Carregando, DialogoTexto, ErroCaixa, Miniatura, Pessoa, Selo, SeloStatus, Visor, useAcao, useCarregar, useUrlArquivo } from '@/components/ui';
 import { rpc } from '@/lib/supabase';
 import { cpf, data, dataHora, haQuanto, idade, moeda, pendencia, statusCadastro, statusDocumento, telefone, tipoDocumento, whatsapp } from '@/lib/formatos';
@@ -21,8 +23,18 @@ const sugestoesFoto = [
 
 const ordemDocs = ['selfie_documento', 'documento_frente', 'documento_verso', 'antecedentes', 'comprovante_endereco'];
 
-function CartaoDocumento({ doc, abrir, revisar, ocupado, decide }: {
+type Validade = { tipo: 'documento' | 'certificacao'; id: number; valido_ate: string; dias: number; vencido: boolean };
+
+function SeloValidade({ v }: { v?: Validade }) {
+  if (!v) return null;
+  return <Selo tom={v.vencido ? 'vermelho' : v.dias <= 30 ? 'laranja' : 'neutro'}>
+    {v.vencido ? `Venceu em ${data(v.valido_ate)}` : `Vale até ${data(v.valido_ate)}`}
+  </Selo>;
+}
+
+function CartaoDocumento({ doc, abrir, revisar, ocupado, decide, validade, mudarValidade }: {
   doc: Documento; abrir: (url: string | null) => void; revisar: (d: Documento, aprovar: boolean) => void; ocupado: boolean; decide: boolean;
+  validade?: Validade; mudarValidade?: () => void;
 }) {
   const { url, falhou } = useUrlArquivo('documentos', doc.arquivo_path);
   if (!doc.arquivo_path) {
@@ -58,6 +70,7 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado, decide }: {
           <SeloStatus mapa={statusDocumento} valor={doc.status} />
         </div>
         <span className="texto-fraco">Enviado {haQuanto(doc.criado_em)}</span>
+        {validade ? <span><SeloValidade v={validade} /></span> : null}
         {doc.observacao ? <span className="obs">{doc.observacao}</span> : null}
         {!decide ? null : doc.status === 'pendente' ? (
           <div className="botoes">
@@ -65,7 +78,10 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado, decide }: {
             <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => revisar(doc, true)}><Check /> Aprovar</button>
           </div>
         ) : doc.status === 'aprovado' ? (
-          <div className="botoes"><button className="botao fantasma pequeno" disabled={ocupado} onClick={() => revisar(doc, false)}>Pedir nova foto</button></div>
+          <div className="botoes">
+            {mudarValidade ? <button className="botao fantasma pequeno" disabled={ocupado} onClick={mudarValidade}>Validade</button> : null}
+            <button className="botao fantasma pequeno" disabled={ocupado} onClick={() => revisar(doc, false)}>Pedir nova foto</button>
+          </div>
         ) : null}
       </div>
     </div>
@@ -89,6 +105,10 @@ function Revisao() {
     ?? dados?.profissional?.documentos.find((d) => d.tipo === 'documento_frente');
   const urlSelfie = useUrlArquivo('documentos', selfie?.arquivo_path).url;
   const urlFrente = useUrlArquivo('documentos', frente?.arquivo_path).url;
+  // Validade de documentos e certificações (sem o SQL das ferramentas de gestão, fica de fora).
+  const validades = useCarregar(() => rpc<Validade[]>('admin_validades', { p_dias: 3650, p_profissional: id }).catch(() => null), [id]);
+  const [editarValidade, setEditarValidade] = useState<ItemValidade | null>(null);
+  const validadeDe = (tipo: 'documento' | 'certificacao', docId: number) => validades.dados?.find((v) => v.tipo === tipo && v.id === docId);
 
   if (erro) return <ErroCaixa erro={erro} tentar={recarregar} />;
   if (carregando && !dados) return <Carregando />;
@@ -96,7 +116,7 @@ function Revisao() {
   const { perfil, profissional: pro } = dados;
   if (!pro) return <ErroCaixa erro="Esta pessoa não tem cadastro de profissional." />;
 
-  const fim = async () => { recarregar(); atualizarResumo(); };
+  const fim = async () => { recarregar(); validades.recarregar(); atualizarResumo(); };
   const revisar = async (d: Documento, aprovar: boolean) => {
     if (!aprovar) { setRecusarDoc(d); return; }
     if (await executar(() => rpc('admin_revisar_documento', { p_documento: d.id, p_aprovar: true }), 'Documento aprovado.')) fim();
@@ -118,7 +138,7 @@ function Revisao() {
 
   return (
     <>
-      <Cabecalho voltar={{ href: '/cadastros/', rotulo: 'Cadastros' }} titulo={perfil.nome || 'Sem nome'}
+      <Cabecalho ajuda={<>Confira cada documento antes de aprovar. <strong>Aprovar</strong> libera o profissional para aparecer nas buscas. <strong>Pedir ajustes</strong> devolve o cadastro com a explicação do que mudar. As pendências no topo mostram o que ainda falta ele preencher.</>} voltar={{ href: '/cadastros/', rotulo: 'Cadastros' }} titulo={perfil.nome || 'Sem nome'}
         texto={<span className="linha-flex" style={{ marginTop: 4 }}>
           <SeloStatus mapa={statusCadastro} valor={pro.status} />
           {perfil.suspenso_em ? <Selo tom="vermelho">Conta suspensa</Selo> : null}
@@ -156,7 +176,10 @@ function Revisao() {
         <div className="pilha">
           <section className="cartao">
             <div className="titulo">
-              <div><h2>Conferência de identidade</h2><p>Compare o rosto da foto de perfil e da selfie com a foto do documento.</p></div>
+              <div><h2 className="com-ajuda">Conferência de identidade
+                <Ajuda titulo="Como conferir">Veja se o rosto da foto de perfil e da selfie é o mesmo do documento, e se os dados batem com o cadastro (nome, CPF, nascimento).
+                  Foto ruim: “Nova foto” pede para enviar de novo. A certidão de antecedentes aprovada vale 6 meses; use <strong>Validade</strong> para mudar a data.</Ajuda>
+              </h2><p>Compare o rosto da foto de perfil e da selfie com a foto do documento.</p></div>
               {pode('dados_pessoais') ? <button className="botao contorno pequeno" onClick={() => setComparar(true)}><Columns2 /> Comparar lado a lado</button> : null}
             </div>
             <div className="corpo">
@@ -168,7 +191,9 @@ function Revisao() {
                   <div className="info"><strong>Foto de perfil</strong><span className="texto-fraco">Aparece para os clientes no app</span></div>
                 </div>
                 {docs.map((d) => (
-                  <CartaoDocumento key={d.id} doc={d} ocupado={ocupado} revisar={revisar} decide={decide}
+                  <CartaoDocumento key={d.id} doc={d} ocupado={ocupado} revisar={revisar} decide={decide} validade={validadeDe('documento', d.id)}
+                    mudarValidade={decide && validades.dados ? () => setEditarValidade({ tipo: 'documento', id: d.id, nome: tipoDocumento[d.tipo] ?? d.tipo,
+                      valido_ate: validadeDe('documento', d.id)?.valido_ate ?? null }) : undefined}
                     abrir={(url) => setVisor([{ titulo: tipoDocumento[d.tipo] ?? d.tipo, url, caminho: d.arquivo_path }])} />
                 ))}
               </div>
@@ -197,7 +222,10 @@ function Revisao() {
           </section>
 
           <section className="cartao">
-            <div className="titulo"><div><h2>Certificações</h2><p>Aparecem no perfil só depois de aprovadas.</p></div></div>
+            <div className="titulo"><div><h2 className="com-ajuda">Certificações
+              <Ajuda titulo="Certificações">Cursos e registros que o profissional enviou. Só aparecem no perfil depois de aprovados.
+                Se o certificado tem prazo (NR-10, CREA, curso com validade), use <strong>Validade</strong>: o profissional é avisado antes de vencer.</Ajuda>
+            </h2><p>Aparecem no perfil só depois de aprovadas.</p></div></div>
             <div className="corpo">
               {pro.certificacoes.length === 0 ? <span className="texto-suave">Nenhuma certificação enviada.</span> : (
                 <ul className="lista-simples">
@@ -208,7 +236,12 @@ function Revisao() {
                         <div className="texto-fraco">{c.instituicao || 'Instituição não informada'} · enviada {haQuanto(c.criado_em)}</div>
                       </div>
                       {c.arquivo_path ? <div className="miniaturas"><Miniatura bucket="documentos" caminho={c.arquivo_path} titulo={c.nome} /></div> : null}
+                      <SeloValidade v={validadeDe('certificacao', c.id)} />
                       <SeloStatus mapa={statusDocumento} valor={c.status} />
+                      {decide && c.status === 'aprovado' && validades.dados ? (
+                        <button className="botao fantasma pequeno" disabled={ocupado} onClick={() => setEditarValidade({ tipo: 'certificacao', id: c.id,
+                          nome: c.nome, valido_ate: validadeDe('certificacao', c.id)?.valido_ate ?? null })}>Validade</button>
+                      ) : null}
                       {decide && c.status === 'pendente' ? <>
                         <button className="botao contorno perigo-texto pequeno" disabled={ocupado} onClick={() => revisarCert(c.id, false)}>Recusar</button>
                         <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => revisarCert(c.id, true)}>Aprovar</button>
@@ -283,6 +316,7 @@ function Revisao() {
         </div>
       </div>
 
+      <DialogoValidade item={editarValidade} fechar={() => setEditarValidade(null)} salvo={() => { validades.recarregar(); recarregar(); }} />
       <DialogoTexto aberto={!!recusarDoc} fechar={() => setRecusarDoc(null)} titulo="Pedir uma nova foto"
         texto={recusarDoc ? <>O profissional recebe o aviso e envia de novo <strong>{(tipoDocumento[recusarDoc.tipo] ?? '').toLowerCase()}</strong> pelo app.</> : null}
         rotulo="O que precisa mudar" sugestoes={sugestoesFoto} botao="Pedir nova foto" tom="perigo"

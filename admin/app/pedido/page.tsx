@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { Lock, MapPin, MessageCircle, ShieldCheck, Siren } from 'lucide-react';
 import { Cabecalho } from '@/components/Painel';
+import { Anotacoes } from '@/components/Anotacoes';
 import { Carregando, ErroCaixa, Estrelas, Miniatura, Pessoa, Selo, SeloStatus, useCarregar } from '@/components/ui';
 import { rpc } from '@/lib/supabase';
 import { dataHora, moeda, quandoPedido, statusPedido, statusReclamacao, statusDenuncia, whatsapp } from '@/lib/formatos';
@@ -57,7 +58,7 @@ function Detalhes() {
 
   return (
     <>
-      <Cabecalho voltar={{ href: '/pedidos/', rotulo: 'Pedidos' }} titulo={`Pedido ${p.codigo}`}
+      <Cabecalho ajuda={<>Tudo sobre o pedido: o que foi pedido, valores, conversa entre cliente e profissional, linha do tempo e avaliação. Use as <strong>Anotações da equipe</strong> para deixar recado sobre o atendimento deste pedido.</>} voltar={{ href: '/pedidos/', rotulo: 'Pedidos' }} titulo={`Pedido ${p.codigo}`}
         texto={<span className="linha-flex" style={{ marginTop: 4 }}>
           <SeloStatus mapa={statusPedido} valor={p.status} />
           <span className="texto-suave">{p.profissao}{p.especialidade ? ` · ${p.especialidade}` : ''} · {quandoPedido[p.quando]}{p.janela ? ` (${p.janela})` : ''}
@@ -129,6 +130,7 @@ function Detalhes() {
               <ParteCartao titulo="Profissional" p={dados.profissional} />
             </div>
           </section>
+          <Anotacoes tipo="pedido" alvo={id} />
           <section className="cartao">
             <div className="titulo"><div><h2>Linha do tempo</h2></div></div>
             <div className="corpo">

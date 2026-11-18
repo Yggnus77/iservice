@@ -239,7 +239,7 @@ export default function Catalogo() {
   const [aba, setAba] = useState<'profissoes' | 'sugeridas' | 'regioes'>('profissoes');
   return (
     <>
-      <Cabecalho titulo="Profissões e regiões" texto="Ligue e desligue profissões e regiões, ajuste especialidades e aprove as sugeridas pelos profissionais."
+      <Cabecalho ajuda={<>As profissões e regiões que aparecem nos apps. Desligar uma profissão ou região esconde dos clientes, sem apagar nada. Especialidades sugeridas pelos profissionais esperam aprovação aqui antes de aparecer para todos.</>} titulo="Profissões e regiões" texto="Ligue e desligue profissões e regiões, ajuste especialidades e aprove as sugeridas pelos profissionais."
         acoes={<Abas ativa={aba} mudar={setAba} abas={[
           { id: 'profissoes', rotulo: 'Profissões' },
           { id: 'sugeridas', rotulo: 'Sugeridas', n: resumo?.especialidades_sugeridas || undefined },

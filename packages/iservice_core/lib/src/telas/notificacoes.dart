@@ -23,6 +23,9 @@ IconData _icone(String tipo) => switch (tipo) {
       'reclamacao_aberta' || 'reclamacao_recebida' || 'garantia' => Symbols.shield_rounded,
       'conta_suspensa' => Symbols.block_rounded,
       'conta_reativada' => Symbols.check_circle_rounded,
+      'advertencia' => Symbols.warning_rounded,
+      'documento_vencendo' || 'documento_vencido' => Symbols.event_busy_rounded,
+      'completar_cadastro' => Symbols.assignment_rounded,
       _ => Symbols.notifications_rounded,
     };
 

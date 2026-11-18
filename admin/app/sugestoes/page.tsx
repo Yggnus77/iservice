@@ -44,7 +44,7 @@ export default function SugestoesDeProfissoes() {
 
   return (
     <>
-      <Cabecalho titulo="Sugestões de profissões"
+      <Cabecalho ajuda={<>Profissões que as pessoas pediram pelo site. Muitos pedidos da mesma profissão é sinal de que vale incluir no app (em Profissões e regiões).</>} titulo="Sugestões de profissões"
         texto="O que visitantes do site pediram em “Não achou sua profissão? Sugira”. As mais pedidas ficam no topo." />
       <div className="filtros">
         <Abas ativa={periodo} mudar={setPeriodo}

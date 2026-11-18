@@ -2,11 +2,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { ClipboardList, Search, ShieldCheck, Siren } from 'lucide-react';
+import { ClipboardList, Download, Search, ShieldCheck, Siren } from 'lucide-react';
 import { Cabecalho } from '@/components/Painel';
-import { Carregando, ErroCaixa, SeloStatus, Vazio, useCarregar } from '@/components/ui';
+import { Carregando, ErroCaixa, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
+import { baixarPlanilha, dataHoraPlanilha } from '@/lib/planilha';
 import { rpc } from '@/lib/supabase';
-import { dataHora, moeda, numero, quandoPedido, statusPedido } from '@/lib/formatos';
+import { dataHora, hojeISO, moeda, numero, quandoPedido, statusPedido } from '@/lib/formatos';
 
 type Linha = {
   id: string; codigo: string; status: string; quando: string; criado_em: string; cliente_id: string; cliente: string; profissional_id: string;
@@ -29,10 +30,19 @@ function Lista() {
     p_status: status || null, p_texto: busca || null, p_inicio: inicio || null, p_fim: fim || null, p_limite: POR_PAGINA, p_pular: pagina * POR_PAGINA,
   }), [status, busca, inicio, fim, pagina]);
   const total = dados?.[0]?.total ?? 0;
+  const { executar, ocupado } = useAcao();
 
   return (
     <>
-      <Cabecalho titulo="Pedidos" texto="Todos os pedidos. Cada um vai só para o profissional que o cliente escolheu." />
+      <Cabecalho ajuda={<>Todos os pedidos da plataforma. Filtre por situação ou por data, ou procure pelo código ou nome. Pedidos com o selo de garantia ou emergência merecem atenção. <strong>Baixar planilha</strong> gera um arquivo para abrir no Excel.</>} titulo="Pedidos" texto="Todos os pedidos. Cada um vai só para o profissional que o cliente escolheu."
+        acoes={<button className="botao contorno" disabled={ocupado} onClick={() => executar(async () => {
+          const linhas = await rpc<Linha[]>('admin_pedidos', { p_status: status || null, p_texto: busca || null, p_inicio: inicio || null, p_fim: fim || null, p_limite: 5000, p_pular: 0 });
+          baixarPlanilha(`pedidos-iservice-${hojeISO()}`, [
+            ['Código', 'Feito em', 'Situação', 'Quando', 'Profissão', 'Especialidade', 'Região', 'Cliente', 'Profissional', 'Valor (R$)', 'Reclamação', 'Emergência'],
+            ...linhas.map((l) => [l.codigo, dataHoraPlanilha(l.criado_em), statusPedido[l.status]?.rotulo ?? l.status, quandoPedido[l.quando] ?? l.quando,
+              l.profissao, l.especialidade, l.regiao, l.cliente, l.profissional, l.valor == null ? null : Number(l.valor), l.tem_reclamacao, l.tem_emergencia]),
+          ]);
+        }, 'Planilha baixada.')}><Download /> Baixar planilha (Excel)</button>} />
       <div className="filtros">
         <select className="entrada" value={status} onChange={(e) => { setStatus(e.target.value); setPagina(0); }} aria-label="Situação">
           <option value="">Todas as situações</option>

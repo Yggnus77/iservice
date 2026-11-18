@@ -2,19 +2,93 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
-import { AlertTriangle, Ban, BadgeCheck, MessageCircle, RotateCcw, Star } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import { AlertTriangle, Ban, BadgeCheck, BellRing, Gavel, Loader2, MessageCircle, RotateCcw, Star, TriangleAlert } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
-import { Carregando, DialogoTexto, ErroCaixa, Pessoa, Selo, SeloStatus, useAcao, useCarregar } from '@/components/ui';
+import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, SeloStatus, useAcao, useCarregar } from '@/components/ui';
+import { Ajuda } from '@/components/Ajuda';
+import { Anotacoes } from '@/components/Anotacoes';
 import { rpc } from '@/lib/supabase';
 import { cpf, data, dataHora, haQuanto, idade, moeda, nomesAcao, numero, statusCadastro, statusDenuncia, statusPedido, statusReclamacao, telefone, whatsapp } from '@/lib/formatos';
 import { enderecoTexto, type Ficha } from '@/lib/tipos';
+
+type Gestao = {
+  suspenso_ate: string | null;
+  advertencias: { id: number; motivo: string; criada_em: string; admin: string }[];
+  alertas: { codigo: string; nivel: 'alto' | 'medio'; texto: string }[];
+};
+
+const opcoesSancao = [
+  { id: 'advertir', rotulo: 'Advertência', sub: 'Só um aviso', dias: null },
+  { id: '3', rotulo: 'Suspender 3 dias', sub: 'Volta sozinha', dias: 3 },
+  { id: '7', rotulo: 'Suspender 7 dias', sub: 'Volta sozinha', dias: 7 },
+  { id: '30', rotulo: 'Suspender 30 dias', sub: 'Volta sozinha', dias: 30 },
+  { id: 'sem_prazo', rotulo: 'Sem prazo', sub: 'Só volta se reativar', dias: null },
+] as const;
+type Sancao = (typeof opcoesSancao)[number]['id'];
+
+/** Advertência ou suspensão (com prazo ou sem prazo), com o motivo. */
+function DialogoSancao({ aberto, fechar, nome, id, comPrazo, advertencias, feito }: {
+  aberto: boolean; fechar: () => void; nome: string; id: string; comPrazo: boolean; advertencias: number; feito: () => void;
+}) {
+  const [opcao, setOpcao] = useState<Sancao>('advertir');
+  const [motivo, setMotivo] = useState('');
+  const { executar, ocupado } = useAcao();
+  useEffect(() => { if (aberto) { setOpcao(comPrazo ? 'advertir' : 'sem_prazo'); setMotivo(''); } }, [aberto, comPrazo]);
+  const escolhida = opcoesSancao.find((o) => o.id === opcao)!;
+  const opcoes = comPrazo ? opcoesSancao : opcoesSancao.filter((o) => o.id === 'sem_prazo');
+  const enviar = async () => {
+    const m = motivo.trim();
+    const ok = opcao === 'advertir'
+      ? await executar(() => rpc('admin_advertir', { p_usuario: id, p_motivo: m }), 'Advertência enviada.')
+      : comPrazo
+        ? await executar(() => rpc('admin_suspender_por', { p_usuario: id, p_dias: escolhida.dias, p_motivo: m }),
+          escolhida.dias ? `Conta suspensa por ${escolhida.dias} dias.` : 'Conta suspensa.')
+        : await executar(() => rpc('admin_suspender', { p_usuario: id, p_suspender: true, p_motivo: m }), 'Conta suspensa.');
+    if (ok) { fechar(); feito(); }
+  };
+  return (
+    <Dialogo aberto={aberto} fechar={fechar} titulo={`Advertir ou suspender ${nome.split(' ')[0] || 'esta conta'}`} icone={<Gavel />}
+      texto={advertencias ? `Já recebeu ${advertencias} ${advertencias === 1 ? 'advertência' : 'advertências'}.` : 'Comece pela advertência. Suspenda quando repetir ou for grave.'}
+      rodape={<>
+        <button className="botao contorno" onClick={fechar}>Cancelar</button>
+        <button className={`botao ${opcao === 'advertir' ? 'primario' : 'perigo'}`} disabled={ocupado || motivo.trim().length < 3} onClick={enviar}>
+          {ocupado ? <Loader2 className="girar" /> : null}{opcao === 'advertir' ? 'Enviar advertência' : 'Suspender conta'}
+        </button>
+      </>}>
+      <div className="opcoes-sancao" role="radiogroup" aria-label="O que fazer">
+        {opcoes.map((o) => (
+          <button key={o.id} role="radio" aria-checked={opcao === o.id} className={`${opcao === o.id ? 'ativa' : ''} ${o.id !== 'advertir' ? 'perigo' : ''}`}
+            onClick={() => setOpcao(o.id)}><strong>{o.rotulo}</strong><span>{o.sub}</span></button>
+        ))}
+      </div>
+      <p className="texto-suave" style={{ margin: '0 0 12px', fontSize: 13 }}>
+        {opcao === 'advertir'
+          ? <><TriangleAlert size={14} style={{ verticalAlign: -2 }} /> A pessoa recebe um aviso no app com o motivo e fica sabendo que, se repetir, pode ser suspensa.</>
+          : <><AlertTriangle size={14} style={{ verticalAlign: -2 }} /> Sai na hora: não entra mais nos apps, some das buscas e pedidos ainda não aceitos são cancelados.
+            {escolhida.dias ? ` Volta sozinha em ${escolhida.dias} dias.` : ' Só volta se alguém da equipe reativar.'}</>}
+      </p>
+      <div className="campo">
+        <label htmlFor="sancao-motivo">{opcao === 'advertir' ? 'Motivo (a pessoa vai ler)' : 'Motivo (fica no registro da equipe e a pessoa recebe)'}</label>
+        <textarea id="sancao-motivo" className="entrada" rows={3} maxLength={500} value={motivo} onChange={(e) => setMotivo(e.target.value)} autoFocus />
+      </div>
+      <div className="linha-flex">
+        {(opcao === 'advertir'
+          ? ['Cancelou serviços depois de aceitar', 'Deixou clientes sem resposta', 'Atrasos sem avisar o cliente', 'Comportamento inadequado']
+          : ['Denúncias confirmadas', 'Documento falso', 'Pediu pagamento por fora do combinado', 'Comportamento inadequado']
+        ).map((t) => <button key={t} className="botao contorno pequeno" onClick={() => setMotivo(t)}>{t}</button>)}
+      </div>
+    </Dialogo>
+  );
+}
 
 function Ficha() {
   const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const { usuarioId, atualizarResumo, pode } = usePainel();
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Ficha>('admin_usuario', { p_id: id }), [id]);
+  // Sem o SQL das ferramentas de gestão, a ficha continua como antes.
+  const gestao = useCarregar(() => rpc<Gestao>('admin_gestao_pessoa', { p_id: id }).catch(() => null), [id]);
   const { executar, ocupado } = useAcao();
   const [suspender, setSuspender] = useState(false);
 
@@ -25,13 +99,15 @@ function Ficha() {
   const zap = whatsapp(perfil.telefone);
   const suspensa = !!perfil.suspenso_em;
 
+  const g = gestao.dados;
+  const atualizar = () => { recarregar(); gestao.recarregar(); atualizarResumo(); };
   const reativar = async () => {
-    if (await executar(() => rpc('admin_suspender', { p_usuario: perfil.id, p_suspender: false }), 'Conta reativada.')) { recarregar(); atualizarResumo(); }
+    if (await executar(() => rpc('admin_suspender', { p_usuario: perfil.id, p_suspender: false }), 'Conta reativada.')) atualizar();
   };
 
   return (
     <>
-      <Cabecalho voltar={{ href: '/pessoas/', rotulo: 'Pessoas' }} titulo={perfil.nome || 'Sem nome'}
+      <Cabecalho ajuda={<>A ficha da pessoa: dados, pedidos, denúncias, reclamações e tudo que a equipe já fez na conta. Em <strong>Advertir ou suspender</strong> dá para mandar um aviso, suspender por alguns dias (volta sozinha) ou suspender sem prazo.</>} voltar={{ href: '/pessoas/', rotulo: 'Pessoas' }} titulo={perfil.nome || 'Sem nome'}
         texto={<span className="linha-flex" style={{ marginTop: 4 }}>
           {pro ? <SeloStatus mapa={statusCadastro} valor={pro.status} /> : null}
           {perfil.e_cliente ? <Selo tom="azul">Cliente</Selo> : null}
@@ -45,10 +121,23 @@ function Ficha() {
           {pro ? <Link className="botao contorno" href={`/cadastro/?id=${perfil.id}`}><BadgeCheck /> Documentos e cadastro</Link> : null}
           {perfil.id !== usuarioId && pode('pessoas_suspender') ? (suspensa
             ? <button className="botao sucesso" disabled={ocupado} onClick={reativar}><RotateCcw /> Reativar conta</button>
-            : <button className="botao contorno perigo-texto" disabled={ocupado} onClick={() => setSuspender(true)}><Ban /> Suspender conta</button>) : null}
+            : <button className="botao contorno perigo-texto" disabled={ocupado} onClick={() => setSuspender(true)}><Ban /> Advertir ou suspender</button>) : null}
         </>} />
 
-      {suspensa ? <div className="alerta-faixa vermelho"><Ban /><div><strong>Conta suspensa</strong>{perfil.motivo_suspensao}. A pessoa não consegue entrar nos apps, fazer pedidos nem mandar mensagens.</div></div> : null}
+      {suspensa ? <div className="alerta-faixa vermelho"><Ban /><div><strong>Conta suspensa</strong>{perfil.motivo_suspensao}. A pessoa não consegue entrar nos apps, fazer pedidos nem mandar mensagens.
+        {g?.suspenso_ate ? <> Volta sozinha em <strong style={{ display: 'inline' }}>{dataHora(g.suspenso_ate)}</strong>.</> : null}</div></div> : null}
+
+      {!suspensa && g?.alertas?.length ? (
+        <div className="alerta-faixa laranja"><BellRing />
+          <div style={{ flex: 1 }}><strong className="com-ajuda">Sinais de problema
+            <Ajuda titulo="Sinais de problema">Calculados sozinhos com os pedidos, avaliações, denúncias e reclamações recentes.
+              Converse com a pessoa primeiro. Se repetir, use Advertir ou suspender.</Ajuda></strong>
+            <span className="linha-flex" style={{ gap: 6, marginTop: 6 }}>
+              {g.alertas.map((a) => <Selo key={a.codigo} tom={a.nivel === 'alto' ? 'vermelho' : 'laranja'}>{a.texto}</Selo>)}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grade lado">
         <div className="pilha">
@@ -136,6 +225,23 @@ function Ficha() {
             </div>
           </section>
 
+          <Anotacoes tipo="pessoa" alvo={perfil.id} />
+
+          {g ? (
+            <section className="cartao">
+              <div className="titulo"><div><h2 className="com-ajuda">Advertências
+                <Ajuda titulo="Advertências">Avisos formais que a pessoa recebeu no app. Ajudam a decidir quando suspender: quem já foi advertido e repete, pode ser suspenso.</Ajuda>
+              </h2></div><Selo tom={g.advertencias.length ? 'laranja' : 'neutro'}>{g.advertencias.length}</Selo></div>
+              <div className="corpo">
+                {g.advertencias.length === 0 ? <span className="texto-suave">Nenhuma advertência.</span> : (
+                  <ul className="lista-simples">
+                    {g.advertencias.map((a) => <li key={a.id}><span style={{ flex: 1 }}>{a.motivo}<div className="texto-fraco">{a.admin} · {dataHora(a.criada_em)}</div></span></li>)}
+                  </ul>
+                )}
+              </div>
+            </section>
+          ) : null}
+
           <section className="cartao">
             <div className="titulo"><div><h2>Histórico da equipe</h2><p>O que a equipe já fez nesta conta.</p></div></div>
             <div className="corpo">
@@ -155,15 +261,8 @@ function Ficha() {
         </div>
       </div>
 
-      <DialogoTexto aberto={suspender} fechar={() => setSuspender(false)} titulo={`Suspender ${perfil.nome.split(' ')[0] || 'esta conta'}?`}
-        texto={<><AlertTriangle size={14} style={{ verticalAlign: -2 }} /> A pessoa sai na hora: não entra mais nos apps, some das buscas e pedidos ainda não aceitos são cancelados. Dá para reativar depois.</>}
-        rotulo="Motivo (fica no registro da equipe)" botao="Suspender conta" tom="perigo"
-        sugestoes={['Denúncias confirmadas', 'Documento falso', 'Pediu pagamento por fora do combinado', 'Comportamento inadequado']}
-        confirmar={async (v) => {
-          const ok = await executar(() => rpc('admin_suspender', { p_usuario: perfil.id, p_suspender: true, p_motivo: v }), 'Conta suspensa.');
-          if (ok) { recarregar(); atualizarResumo(); }
-          return ok;
-        }} />
+      <DialogoSancao aberto={suspender} fechar={() => setSuspender(false)} nome={perfil.nome} id={perfil.id}
+        comPrazo={!!g} advertencias={g?.advertencias.length ?? 0} feito={atualizar} />
     </>
   );
 }
