@@ -37,6 +37,8 @@ insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) value
   ('00000000-0000-0000-0000-0000000090a1', 'gpro@teste.com', now(), '{"nome":"Paulo Problema","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000090a2', 'grasc@teste.com', now(), '{"nome":"Rita Rascunho","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000090c1', 'gcli@teste.com', now(), '{"nome":"Carla Cliente","app":"cliente"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 update public.perfis p set email = u.email from auth.users u where u.id = p.id and u.email like 'g%@teste.com';
 update public.perfis set e_admin = true where id in ('00000000-0000-0000-0000-0000000090d1', '00000000-0000-0000-0000-0000000090b1',
   '00000000-0000-0000-0000-0000000090e1', '00000000-0000-0000-0000-0000000090f1');

@@ -54,6 +54,10 @@ final rotasProvider = Provider<GoRouter>((ref) {
       if (p.termosVersao != ConfigIService.versaoTermos) return local == '/termos' ? null : '/termos';
       if (local == '/termos') return '/';
 
+      // Conta verificada pelo e-mail ou pelo SMS antes de qualquer outro passo.
+      if (!p.contaVerificada) return local == '/verificar' ? null : '/verificar';
+      if (local == '/verificar') return '/';
+
       // Logado mas sem cadastro completo: volta ao passo que falta.
       if (!p.eCliente) {
         if (local.startsWith('/cadastro')) return null;
@@ -69,6 +73,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, _) => const TelaAbertura()),
       GoRoute(path: '/boas-vindas', builder: (_, _) => const TelaBoasVindas()),
       GoRoute(path: '/termos', builder: (_, _) => const TelaAceitarTermos()),
+      GoRoute(path: '/verificar', builder: (_, _) => const TelaVerificarConta()),
       GoRoute(
         path: '/entrar',
         builder: (context, _) => TelaEntrar(aoCriarConta: () => context.push('/cadastro/1'), aoEntrar: () => context.go('/')),

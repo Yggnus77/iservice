@@ -18,6 +18,9 @@ class ConfigIService {
 
   static String urlDoApp(AppIService app) => '$urlSite/${app.name}/';
 
+  /// Página do site com a marca, para onde os links de confirmação do e-mail levam.
+  static String urlConfirmado(AppIService app) => '$urlSite/confirmado.html?app=${app.name}';
+
   /// Versão dos Termos de Uso e da Política de Privacidade em vigor (data da
   /// "Última atualização" em site/termos.html e site/privacidade.html). Ao
   /// mudar os textos de forma relevante, troque a data aqui: quem aceitou a

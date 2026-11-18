@@ -41,6 +41,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000a4', 'luis@teste.com', '{"nome":"Luís Martins","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000a5', 'andre@teste.com', '{"nome":"André Lima","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000a6', 'diego@teste.com', '{"nome":"Diego Ferreira","app":"profissional"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 
 select pg_temp.ok((select count(*) from public.perfis) = 7, 'perfil criado junto com o usuário');
 select pg_temp.ok((select count(*) from public.profissionais) = 6, 'cadastro de profissional criado pelo app Profissional');
@@ -380,6 +382,8 @@ exception when others then if sqlerrm like 'FALHOU%' then raise; end if; raise n
 end $$;
 select pg_temp.admin();
 insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000c9', 'sai@teste.com', '{"nome":"Sem Pedidos","app":"cliente"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 select pg_temp.como('00000000-0000-0000-0000-0000000000c9');
 select pg_temp.ok(public.solicitar_exclusao_conta('teste')::date = (now() + interval '30 days')::date, 'exclusão marcada para daqui a 30 dias');
 select public.cancelar_exclusao_conta();

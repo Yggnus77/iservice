@@ -249,6 +249,7 @@ class MeuPerfil {
     this.profissional,
     this.exclusaoSolicitadaEm,
     this.telefoneVerificado = false,
+    this.emailVerificado = false,
     this.termosVersao,
   });
   final String id;
@@ -264,6 +265,12 @@ class MeuPerfil {
 
   /// Celular confirmado por SMS.
   final bool telefoneVerificado;
+
+  /// E-mail confirmado pelo código do e-mail, pelo Google ou pelo link antigo.
+  final bool emailVerificado;
+
+  /// A conta só é usada depois de verificada pelo e-mail ou pelo SMS.
+  bool get contaVerificada => emailVerificado || telefoneVerificado;
   final String? cpf;
   final DateTime? nascimento;
   final String? fotoUrl;
@@ -287,6 +294,7 @@ class MeuPerfil {
       email: p['email'],
       telefone: p['telefone'],
       telefoneVerificado: p['telefone_verificado'] ?? false,
+      emailVerificado: p['email_verificado'] ?? false,
       cpf: p['cpf'],
       nascimento: p['nascimento'] == null ? null : DateTime.parse(p['nascimento']),
       fotoUrl: p['foto_url'],

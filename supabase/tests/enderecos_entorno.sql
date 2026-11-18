@@ -30,6 +30,8 @@ select pg_temp.ok(public.regiao_proxima(-15.80, -48.14) = 'sol-nascente', 'ponto
 -- ---------------------------------------------------------------- bairro
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000e1', 'entorno@teste.com', '{"nome":"Morador do Entorno","app":"cliente"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 select pg_temp.como('00000000-0000-0000-0000-0000000000e1');
 
 do $$ begin
