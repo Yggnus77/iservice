@@ -46,6 +46,8 @@ select pg_temp.ok(pg_temp.minimos('teste-minimo') = array[70, 60, 55, 50, 45]::n
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000f1', 'pisopro@teste.com', '{"nome":"Paulo Piso","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000f2', 'pisocli@teste.com', '{"nome":"Clara Cliente","app":"cliente"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 update public.profissionais set regiao_id = 'asa-sul' where id = '00000000-0000-0000-0000-0000000000f1';
 insert into public.profissional_profissoes values ('00000000-0000-0000-0000-0000000000f1', 'eletricista', true);
 insert into public.profissional_especialidades (profissional_id, especialidade_id)

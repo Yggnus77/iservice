@@ -11,6 +11,8 @@ mkdirSync(pasta, { recursive: true });
 mkdirSync("supabase/templates", { recursive: true });
 
 const exemplos: { tipo: string; app: App; nome: string; titulo?: string; corpo?: string; dados?: Record<string, unknown>; rotulo: string }[] = [
+  { rotulo: "Código de verificação (cliente)", tipo: "codigo_verificacao", app: "cliente", nome: "Mariana Souza", dados: { codigo: "482913" } },
+  { rotulo: "Código de verificação (profissional)", tipo: "codigo_verificacao", app: "profissional", nome: "Carlos Pereira", dados: { codigo: "075316" } },
   { rotulo: "Boas-vindas (cliente)", tipo: "boas_vindas", app: "cliente", nome: "Mariana Souza" },
   { rotulo: "Boas-vindas (profissional)", tipo: "boas_vindas", app: "profissional", nome: "Carlos Pereira" },
   { rotulo: "Cadastro recebido", tipo: "cadastro_recebido", app: "profissional", nome: "Carlos Pereira",

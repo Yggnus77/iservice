@@ -38,6 +38,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000c1', 'marina@teste.com', '{"nome":"Marina Alves","app":"cliente"}'),
   ('00000000-0000-0000-0000-0000000000b1', 'carlos@teste.com', '{"nome":"Carlos Silva","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000b2', 'joana@teste.com', '{"nome":"Joana Lima","app":"profissional"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 update public.perfis set nascimento = '1990-01-01', telefone = '61981234567', e_cliente = true,
   foto_url = 'https://aurjqwqqrxaexmwozezr.supabase.co/storage/v1/object/public/fotos/' || id || '/perfil.jpg',
   cpf = pg_temp.cpf(lpad((n)::text, 9, '2'))

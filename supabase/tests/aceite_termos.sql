@@ -20,6 +20,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-0000000000c1', 'email@teste.com', '{"nome":"Cadastro por E-mail","app":"cliente","termos":"2026-10-27"}'),
   ('00000000-0000-0000-0000-0000000000c2', 'google@teste.com', '{"nome":"Entrou com Google","app":"profissional"}'),
   ('00000000-0000-0000-0000-0000000000c3', 'esperto@teste.com', '{"nome":"Versão Esquisita","app":"cliente","termos":"qualquer coisa"}');
+-- Conta verificada (e-mail ou SMS) para poder pedir e receber pedidos.
+update public.perfis set email_verificado = true where not email_verificado;
 
 select pg_temp.ok((select termos_versao = '2026-10-27' and termos_aceitos_em is not null from public.perfis
   where id = '00000000-0000-0000-0000-0000000000c1'), 'cadastro por e-mail grava o aceite marcado na tela');

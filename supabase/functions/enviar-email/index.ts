@@ -70,11 +70,47 @@ async function completarDados(n: { usuario_id: string; tipo: string; dados: Reco
   return dados;
 }
 
+// Código de verificação da conta (public.pedir_codigo_email). O código não fica
+// guardado em lugar nenhum além deste e-mail (o banco guarda só o resumo).
+async function enviarCodigo(v: { usuario_id?: string; email?: string; codigo?: string }): Promise<Response> {
+  if (!v.usuario_id || !v.email || !/^\d{6}$/.test(v.codigo ?? "")) return new Response("dados incompletos", { status: 400 });
+  const { data: perfil } = await db.from("perfis").select("nome").eq("id", v.usuario_id).maybeSingle();
+  const { data: pro } = await db.from("profissionais").select("id").eq("id", v.usuario_id).maybeSingle();
+  const email = gerar("codigo_verificacao", {
+    nome: perfil?.nome ?? "", app: pro ? "profissional" : "cliente", titulo: "", corpo: "", dados: { codigo: v.codigo },
+  })!;
+  const chaveResend = Deno.env.get("RESEND_API_KEY");
+  if (!chaveResend) return new Response("RESEND_API_KEY não configurado", { status: 503 });
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${chaveResend}` },
+    body: JSON.stringify({
+      from: Deno.env.get("EMAIL_REMETENTE") ?? "iService <nao-responda@iservice.app.br>",
+      to: [v.email],
+      reply_to: SUPORTE_EMAIL,
+      subject: email.assunto,
+      html: email.html,
+      text: email.texto,
+      tags: [{ name: "tipo", value: "codigo_verificacao" }],
+    }),
+  });
+  if (!resp.ok) {
+    console.error("Resend (código)", resp.status, await resp.text().catch(() => ""));
+    return new Response("Falha ao enviar", { status: 502 });
+  }
+  return Response.json({ enviado: true });
+}
+
 Deno.serve(async (req) => {
   if (!(await autorizado(req))) {
     return new Response("Não autorizado", { status: 401 });
   }
-  const { notificacao_id } = (await req.json().catch(() => ({}))) as { notificacao_id?: number };
+  const pedido = (await req.json().catch(() => ({}))) as {
+    notificacao_id?: number;
+    verificacao?: { usuario_id?: string; email?: string; codigo?: string };
+  };
+  if (pedido.verificacao) return await enviarCodigo(pedido.verificacao);
+  const { notificacao_id } = pedido;
   if (!notificacao_id) return new Response("notificacao_id obrigatório", { status: 400 });
 
   const { data: n, error } = await db.from("notificacoes").select("*").eq("id", notificacao_id).maybeSingle();

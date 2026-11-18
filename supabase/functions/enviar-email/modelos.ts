@@ -61,6 +61,7 @@ export type Conteudo = {
   depois?: string[];
   nota?: string;
   linkReserva?: boolean;             // mostra o endereço do botão por extenso
+  codigo?: string;                   // código de verificação em destaque, grande
 };
 
 // ---------------------------------------------------------------------------
@@ -126,7 +127,7 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
         selo: { texto: "Conta criada", tom: "laranja" },
         titulo: "Boas-vindas ao iService",
         paragrafos: [
-          "Seu e-mail está confirmado. Agora é só completar o cadastro para começar a receber pedidos de clientes perto de você.",
+          "Sua conta está confirmada. Agora é só completar o cadastro para começar a receber pedidos de clientes perto de você.",
         ],
         passosTitulo: "Seus próximos passos",
         passos: [
@@ -144,7 +145,7 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
         selo: { texto: "Conta ativa", tom: "verde" },
         titulo: "Que bom ter você no iService",
         paragrafos: [
-          "Seu e-mail está confirmado. A partir de agora você encontra profissionais avaliados perto de você para resolver o que precisa, ainda hoje.",
+          "Sua conta está confirmada. A partir de agora você encontra profissionais avaliados perto de você para resolver o que precisa, ainda hoje.",
         ],
         passosTitulo: "Como funciona",
         passos: [
@@ -155,6 +156,23 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
         botao: { texto: "Encontrar um profissional", link: urlApp("cliente") },
         nota: "Todo serviço contratado pelo app tem a Garantia iService: se algo der errado, nossa equipe ajuda a resolver.",
       },
+
+  // Código de 6 números para verificar a conta no cadastro (não vem de notificação:
+  // o banco manda o código direto para a função; ver index.ts).
+  codigo_verificacao: (c) => {
+    const codigo = texto(c.dados.codigo);
+    return {
+      assunto: `${codigo} é o seu código do iService`,
+      previa: "Digite este código no app para confirmar seu e-mail. Ele vale por 15 minutos.",
+      app: c.app,
+      selo: { texto: "Confirmação de e-mail", tom: c.app === "profissional" ? "laranja" : "azul" },
+      titulo: "Confirme seu e-mail",
+      paragrafos: ["Use o código abaixo para confirmar seu e-mail e continuar o cadastro no iService."],
+      codigo,
+      depois: ["O código vale por <b>15 minutos</b>. Se ele vencer, é só pedir outro no app."],
+      nota: "Não compartilhe este código com ninguém. A equipe do iService nunca pede o código. Se você não está criando uma conta, pode ignorar este e-mail.",
+    };
+  },
 
   cadastro_recebido: (c) => {
     const reenvio = c.dados.reenvio === true;
@@ -555,6 +573,15 @@ function destaque(d: NonNullable<Conteudo["destaque"]>): string {
 </td></tr></table>`;
 }
 
+function caixaCodigo(codigo: string, appTom: Tom): string {
+  const t = tons(appTom);
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:6px 0 24px 0;"><tr>
+<td align="center" style="background:${t.suave};border:1px solid ${t.forte};border-radius:14px;padding:22px 12px;">
+<p style="margin:0 0 6px 0;font-family:${FONTE};font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${t.texto};">Seu código</p>
+<p style="margin:0;font-family:${FONTE};font-size:38px;line-height:1.1;font-weight:800;letter-spacing:10px;color:${COR.texto};">${esc(codigo)}</p>
+</td></tr></table>`;
+}
+
 function paragrafo(html: string): string {
   return `<p style="margin:0 0 18px 0;font-family:${FONTE};font-size:16px;line-height:1.6;color:${COR.textoSuave};">${html}</p>`;
 }
@@ -568,6 +595,7 @@ export function montar(c: Conteudo): string {
     `<h1 style="margin:0 0 18px 0;font-family:${FONTE};font-size:26px;line-height:1.25;font-weight:800;color:${COR.texto};letter-spacing:-.3px;">${esc(c.titulo)}</h1>`,
     c.saudacao ? paragrafo(`<b style="color:${COR.texto};">${esc(c.saudacao)}</b>`) : "",
     ...c.paragrafos.map(paragrafo),
+    c.codigo ? caixaCodigo(c.codigo, appTom) : "",
     c.destaque ? destaque(c.destaque) : "",
     c.detalhes ? detalhes(c.detalhes) : "",
     c.passos ? passos(c.passosTitulo, c.passos, appTom) : "",
@@ -660,6 +688,7 @@ export function montarTexto(c: Conteudo): string {
   const partes: string[] = [c.titulo.toUpperCase(), ""];
   if (c.saudacao) partes.push(c.saudacao, "");
   for (const p of c.paragrafos) partes.push(semTags(p), "");
+  if (c.codigo) partes.push(`Seu código: ${c.codigo}`, "");
   if (c.destaque) partes.push(`${c.destaque.rotulo}: ${c.destaque.texto}`, "");
   for (const [k, v] of c.detalhes ?? []) if (v && v !== "#") partes.push(`${k}: ${v}`);
   if (c.detalhes) partes.push("");

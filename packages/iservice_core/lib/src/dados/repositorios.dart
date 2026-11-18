@@ -173,7 +173,7 @@ class ContaRepo {
       _tentar(() => _db.auth.signUp(
             email: email.trim(),
             password: senha,
-            emailRedirectTo: ConfigIService.urlDoApp(app),
+            emailRedirectTo: ConfigIService.urlConfirmado(app),
             data: {
               'nome': nome.trim(),
               'app': app.name,
@@ -188,7 +188,7 @@ class ContaRepo {
       _tentar(() => _db.auth.resetPasswordForEmail(email.trim(), redirectTo: ConfigIService.urlDoApp(app)));
 
   Future<void> reenviarConfirmacao(String email, {required AppIService app}) => _tentar(
-      () => _db.auth.resend(type: OtpType.signup, email: email.trim(), emailRedirectTo: ConfigIService.urlDoApp(app)));
+      () => _db.auth.resend(type: OtpType.signup, email: email.trim(), emailRedirectTo: ConfigIService.urlConfirmado(app)));
 
   Future<void> definirNovaSenha(String senha) => _tentar(() => _db.auth.updateUser(UserAttributes(password: senha)));
 
@@ -212,6 +212,13 @@ class ContaRepo {
   /// Manda o código por SMS para confirmar o celular (DDD + número, só dígitos).
   Future<void> enviarCodigoCelular(String telefone) =>
       _tentar(() => _db.auth.updateUser(UserAttributes(phone: '+55${telefone.replaceAll(RegExp(r'\D'), '')}')));
+
+  /// Manda um código de 6 números para o e-mail da conta. Devolve o e-mail.
+  Future<String> pedirCodigoEmail() => _tentar(() async => (await _db.rpc('pedir_codigo_email')) as String);
+
+  /// Confere o código do e-mail. Devolve false se o código estiver errado.
+  Future<bool> confirmarCodigoEmail(String codigo) =>
+      _tentar(() async => (await _db.rpc('confirmar_codigo_email', params: {'p_codigo': codigo.trim()})) == true);
 
   /// Confere o código do SMS e marca o celular como confirmado no perfil.
   Future<void> confirmarCodigoCelular(String telefone, String codigo) => _tentar(() async {
