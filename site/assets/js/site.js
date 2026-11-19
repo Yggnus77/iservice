@@ -51,7 +51,21 @@ const METRICAS = {
       }).catch(() => {});
     } catch (e) { /* contagem nunca atrapalha o site */ }
   };
-  registrar({ p_tipo: 'visita', p_pagina: location.pathname.slice(0, 60) });
+  // De onde a pessoa veio: o código de campanha do link (?utm_source=instagram) ou o site anterior.
+  const origem = (() => {
+    const q = new URLSearchParams(location.search);
+    const campanha = (q.get('utm_source') || q.get('origem') || '').toLowerCase();
+    if (campanha) return { p_origem: campanha.slice(0, 30), p_meio: (q.get('utm_medium') || '').toLowerCase().slice(0, 30) || null };
+    let host = '';
+    try { host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (e) { /* ignora */ }
+    if (!host || host === location.hostname || host.endsWith('iservice.app.br')) return {};
+    const conhecidos = [['google', /(^|\.)google\./], ['instagram', /instagram\.com$/], ['facebook', /(facebook\.com|fb\.me)$/],
+      ['whatsapp', /(whatsapp\.com|wa\.me)$/], ['youtube', /youtube\.com$/], ['tiktok', /tiktok\.com$/], ['bing', /bing\.com$/],
+      ['twitter', /(t\.co|x\.com|twitter\.com)$/], ['linkedin', /(linkedin\.com|lnkd\.in)$/]];
+    const achado = conhecidos.find(([, re]) => re.test(host));
+    return { p_origem: achado ? achado[0] : host.slice(0, 30) };
+  })();
+  registrar({ p_tipo: 'visita', p_pagina: location.pathname.slice(0, 60), ...origem });
 
   const formatarFone = (n) => {
     const d = n.replace(/\D/g, '').replace(/^55/, '');
