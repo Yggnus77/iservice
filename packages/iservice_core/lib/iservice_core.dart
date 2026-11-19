@@ -7,6 +7,7 @@ export 'src/dados/profissional_repo.dart';
 export 'src/dados/repositorios.dart';
 export 'src/estado/cadastro.dart';
 export 'src/estado/provedores.dart';
+export 'src/monitor_falhas.dart';
 export 'src/push.dart';
 export 'src/telas/chat.dart';
 export 'src/telas/confirmar_celular.dart';
