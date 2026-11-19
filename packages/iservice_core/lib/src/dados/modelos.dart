@@ -67,6 +67,7 @@ class Profissao {
     required this.exigeAntecedentes,
     required this.palavrasChave,
     this.especialidades = const [],
+    this.documentosExtras = const [],
   });
   final String id;
   final String nome;
@@ -77,14 +78,18 @@ class Profissao {
   final List<String> palavrasChave;
   final List<Especialidade> especialidades;
 
+  /// Documentos a mais que a profissão pede: cnh, documento_veiculo, vinculo_empresa.
+  final List<String> documentosExtras;
+
   factory Profissao.fromJson(Map<String, dynamic> j) => Profissao(
         id: j['id'],
         nome: j['nome'],
         icone: j['icone'],
         corInicio: j['cor_inicio'],
         corFim: j['cor_fim'],
-        exigeAntecedentes: j['exige_antecedentes'] ?? false,
+        exigeAntecedentes: j['exige_antecedentes'] ?? true,
         palavrasChave: _textos(j['palavras_chave']),
+        documentosExtras: _textos(j['documentos_extras']),
         especialidades: [
           for (final e in (j['especialidades'] as List? ?? const [])) Especialidade.fromJson(e, profissaoId: j['id']),
         ],

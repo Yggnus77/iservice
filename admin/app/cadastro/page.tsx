@@ -18,10 +18,21 @@ const sugestoesFoto = [
   'O documento aparece cortado.',
   'O rosto e o documento precisam aparecer juntos na selfie.',
   'O documento está vencido.',
-  'A certidão precisa ser emitida nos últimos 90 dias.',
+  'O nome ou o CPF não batem com o cadastro.',
 ];
 
-const ordemDocs = ['selfie_documento', 'documento_frente', 'documento_verso', 'antecedentes', 'comprovante_endereco'];
+// Certidões: motivos da Política de Verificação (o profissional lê o texto).
+const sugestoesCertidao = [
+  'A certidão precisa ser emitida nos últimos 90 dias.',
+  'A certidão não está no seu nome e CPF.',
+  'Envie a certidão inteira, com o código de validação visível.',
+  'Envie a certidão criminal do TJDFT (ou do tribunal do seu estado), não a cível.',
+];
+
+const certidao = (tipo: string) => tipo === 'antecedentes' || tipo === 'antecedentes_estadual';
+
+const ordemDocs = ['selfie_documento', 'documento_frente', 'documento_verso', 'antecedentes', 'antecedentes_estadual', 'cnh', 'documento_veiculo',
+  'vinculo_empresa', 'comprovante_endereco'];
 
 type Validade = { tipo: 'documento' | 'certificacao'; id: number; valido_ate: string; dias: number; vencido: boolean };
 
@@ -36,7 +47,27 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado, decide, validade, mudar
   doc: Documento; abrir: (url: string | null) => void; revisar: (d: Documento, aprovar: boolean) => void; ocupado: boolean; decide: boolean;
   validade?: Validade; mudarValidade?: () => void;
 }) {
-  const { url, falhou } = useUrlArquivo('documentos', doc.arquivo_path);
+  const { url, falhou } = useUrlArquivo('documentos', doc.arquivo_apagado_em ? null : doc.arquivo_path);
+  if (doc.arquivo_apagado_em) {
+    // Política de Verificação: a certidão é apagada 90 dias depois da decisão.
+    return (
+      <div className={`doc ${doc.status}`}>
+        <div className="imagem" style={{ cursor: 'default' }}>
+          <span style={{ color: '#cfdaf0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center', padding: 12 }}>
+            <Lock size={26} /> Arquivo apagado em {data(doc.arquivo_apagado_em)} (LGPD)
+          </span>
+        </div>
+        <div className="info">
+          <div className="linha-flex" style={{ justifyContent: 'space-between' }}>
+            <strong>{tipoDocumento[doc.tipo] ?? doc.tipo}</strong>
+            <SeloStatus mapa={statusDocumento} valor={doc.status} />
+          </div>
+          <span className="texto-fraco">Decidido {doc.revisado_em ? haQuanto(doc.revisado_em) : ''}. Fica só o resultado.</span>
+          {validade ? <span><SeloValidade v={validade} /></span> : null}
+        </div>
+      </div>
+    );
+  }
   if (!doc.arquivo_path) {
     // Cargo sem acesso a documentos: mostra só a situação.
     return (
@@ -74,7 +105,7 @@ function CartaoDocumento({ doc, abrir, revisar, ocupado, decide, validade, mudar
         {doc.observacao ? <span className="obs">{doc.observacao}</span> : null}
         {!decide ? null : doc.status === 'pendente' ? (
           <div className="botoes">
-            <button className="botao contorno perigo-texto pequeno" disabled={ocupado} onClick={() => revisar(doc, false)}><X /> Nova foto</button>
+            <button className="botao contorno perigo-texto pequeno" disabled={ocupado} onClick={() => revisar(doc, false)}><X /> {certidao(doc.tipo) ? 'Pedir outra' : 'Nova foto'}</button>
             <button className="botao sucesso pequeno" disabled={ocupado} onClick={() => revisar(doc, true)}><Check /> Aprovar</button>
           </div>
         ) : doc.status === 'aprovado' ? (
@@ -131,6 +162,8 @@ function Revisao() {
   const docs = [...pro.documentos].sort((a, b) => ordemDocs.indexOf(a.tipo) - ordemDocs.indexOf(b.tipo) || b.criado_em.localeCompare(a.criado_em));
   const exigeAntecedentes = pro.profissoes.some((p) => p.exige_antecedentes);
   const antecedentes = docs.find((d) => d.tipo === 'antecedentes' && d.status !== 'recusado');
+  const estadual = docs.find((d) => d.tipo === 'antecedentes_estadual' && d.status !== 'recusado');
+  const certidoesOk = antecedentes?.status === 'aprovado' && estadual?.status === 'aprovado';
   const pendencias = pro.pendencias ?? [];
   const docsPendentes = docs.filter((d) => d.status === 'pendente').length;
   const zap = whatsapp(perfil.telefone);
@@ -164,11 +197,12 @@ function Revisao() {
           O profissional precisa completar pelo app antes da aprovação.</div></div>
       ) : null}
       {exigeAntecedentes ? (
-        <div className={`alerta-faixa ${antecedentes?.status === 'aprovado' ? 'azul' : 'laranja'}`}>
+        <div className={`alerta-faixa ${certidoesOk ? 'azul' : 'laranja'}`}>
           <ShieldAlert />
-          <div><strong>Profissão que exige certidão de antecedentes criminais</strong>
-            {antecedentes ? (antecedentes.status === 'aprovado' ? 'Certidão aprovada.' : 'Confira se a certidão é recente, está no nome e CPF da pessoa e não tem registros.')
-              : 'A certidão ainda não foi enviada.'}</div>
+          <div><strong>Certidões de antecedentes (Polícia Federal e TJDFT ou estado)</strong>
+            {certidoesOk ? 'As duas certidões foram aprovadas.' : !antecedentes || !estadual ? 'Falta enviar ' + [!antecedentes && 'a da Polícia Federal', !estadual && 'a estadual'].filter(Boolean).join(' e ') + '.'
+              : <>Confira em cada uma: emitida nos últimos 90 dias, nome e CPF da pessoa, e o código de validação no site de quem emitiu.
+                Condenação por crime contra a pessoa, sexual, contra o patrimônio ou tráfico: <strong>Pedir ajustes</strong> com o motivo. Outros registros: decisão do dono.</>}</div>
         </div>
       ) : null}
 
@@ -178,7 +212,7 @@ function Revisao() {
             <div className="titulo">
               <div><h2 className="com-ajuda">Conferência de identidade
                 <Ajuda titulo="Como conferir">Veja se o rosto da foto de perfil e da selfie é o mesmo do documento, e se os dados batem com o cadastro (nome, CPF, nascimento).
-                  Foto ruim: “Nova foto” pede para enviar de novo. A certidão de antecedentes aprovada vale 6 meses; use <strong>Validade</strong> para mudar a data.</Ajuda>
+                  Foto ruim: “Nova foto” pede para enviar de novo. Ao aprovar, as certidões valem 12 meses e os documentos 24 meses; use <strong>Validade</strong> para mudar a data. O arquivo das certidões é apagado 90 dias depois da decisão.</Ajuda>
               </h2><p>Compare o rosto da foto de perfil e da selfie com a foto do documento.</p></div>
               {pode('dados_pessoais') ? <button className="botao contorno pequeno" onClick={() => setComparar(true)}><Columns2 /> Comparar lado a lado</button> : null}
             </div>
@@ -208,7 +242,6 @@ function Revisao() {
                   <div className="linha-flex" style={{ marginBottom: 8 }}>
                     <strong>{f.nome}</strong>
                     {f.principal ? <Selo tom="azul">Principal</Selo> : null}
-                    {f.exige_antecedentes ? <Selo tom="roxo">Exige antecedentes</Selo> : null}
                   </div>
                   <div className="linha-flex" style={{ gap: 6 }}>
                     {f.especialidades.length ? f.especialidades.map((e) => (
@@ -319,7 +352,7 @@ function Revisao() {
       <DialogoValidade item={editarValidade} fechar={() => setEditarValidade(null)} salvo={() => { validades.recarregar(); recarregar(); }} />
       <DialogoTexto aberto={!!recusarDoc} fechar={() => setRecusarDoc(null)} titulo="Pedir uma nova foto"
         texto={recusarDoc ? <>O profissional recebe o aviso e envia de novo <strong>{(tipoDocumento[recusarDoc.tipo] ?? '').toLowerCase()}</strong> pelo app.</> : null}
-        rotulo="O que precisa mudar" sugestoes={sugestoesFoto} botao="Pedir nova foto" tom="perigo"
+        rotulo="O que precisa mudar" sugestoes={recusarDoc && certidao(recusarDoc.tipo) ? sugestoesCertidao : sugestoesFoto} botao="Pedir de novo" tom="perigo"
         confirmar={async (v) => {
           const ok = await executar(() => rpc('admin_revisar_documento', { p_documento: recusarDoc!.id, p_aprovar: false, p_observacao: v }), 'Pedido de nova foto enviado.');
           if (ok) fim();
@@ -327,7 +360,8 @@ function Revisao() {
         }} />
       <DialogoTexto aberto={recusarCadastro} fechar={() => setRecusarCadastro(false)} titulo="Pedir ajustes no cadastro"
         texto="O profissional vê este texto no app e pode corrigir e reenviar." rotulo="Motivo" botao="Enviar pedido de ajuste" tom="perigo"
-        sugestoes={['Os dados do documento não batem com o cadastro.', 'Complete as especialidades e os preços.', 'Escolha uma área de atendimento dentro das cidades atendidas.']}
+        sugestoes={['Os dados do documento não batem com o cadastro.', 'Complete as especialidades e os preços.', 'Escolha uma área de atendimento dentro das cidades atendidas.',
+          'A certidão de antecedentes mostra registro que impede o cadastro, conforme a Política de Verificação. Você pode contestar em até 7 dias pelo suporte@iservice.app.br.']}
         confirmar={async (v) => {
           const ok = await executar(() => rpc('admin_decidir_cadastro', { p_profissional: perfil.id, p_aprovar: false, p_motivo: v }), 'Pedido de ajuste enviado.');
           if (ok) fim();

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { AlertTriangle, Ban, BadgeCheck, BellRing, Gavel, Loader2, MessageCircle, RotateCcw, Star, TriangleAlert } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
-import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, SeloStatus, useAcao, useCarregar } from '@/components/ui';
+import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, SeloStatus, useAcao, useAviso, useCarregar } from '@/components/ui';
 import { Ajuda } from '@/components/Ajuda';
 import { Anotacoes } from '@/components/Anotacoes';
 import { rpc } from '@/lib/supabase';
@@ -37,10 +37,12 @@ function DialogoSancao({ aberto, fechar, nome, id, comPrazo, advertencias, feito
   useEffect(() => { if (aberto) { setOpcao(comPrazo ? 'advertir' : 'sem_prazo'); setMotivo(''); } }, [aberto, comPrazo]);
   const escolhida = opcoesSancao.find((o) => o.id === opcao)!;
   const opcoes = comPrazo ? opcoesSancao : opcoesSancao.filter((o) => o.id === 'sem_prazo');
+  const avisar = useAviso();
   const enviar = async () => {
     const m = motivo.trim();
+    let n = 0;
     const ok = opcao === 'advertir'
-      ? await executar(() => rpc('admin_advertir', { p_usuario: id, p_motivo: m }), 'Advertência enviada.')
+      ? await executar(async () => { n = await rpc<number>('admin_advertir', { p_usuario: id, p_motivo: m }); avisar((n % 3 === 0 ? `Advertência enviada. Foi a ${n}ª: a conta ficou suspensa por 30 dias, como manda a Política de Verificação.` : `Advertência enviada (${n}ª). Na 3ª, a conta é suspensa por 30 dias.`)); })
       : comPrazo
         ? await executar(() => rpc('admin_suspender_por', { p_usuario: id, p_dias: escolhida.dias, p_motivo: m }),
           escolhida.dias ? `Conta suspensa por ${escolhida.dias} dias.` : 'Conta suspensa.')

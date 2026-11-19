@@ -3,6 +3,9 @@
 // então excluir_contas_vencidas() põe o usuário na fila public.arquivos_a_apagar
 // e esta função esvazia a fila pela API do Storage.
 //
+// Também apaga as certidões de antecedentes 90 dias depois da decisão da equipe
+// (Política de Verificação): fica no banco só o resultado e a data.
+//
 // Publicar:  supabase functions deploy limpar-arquivos --no-verify-jwt
 // Agendar:   cron iservice-limpar-arquivos (migração 20261029000900), todo dia às 07:00.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -71,5 +74,19 @@ Deno.serve(async (req) => {
     await db.from("arquivos_a_apagar").delete().eq("usuario_id", usuario_id);
     resultado[usuario_id] = apagados;
   }
-  return Response.json({ contas: Object.keys(resultado).length, arquivos: resultado });
+  // Certidões decididas há mais de 90 dias.
+  const { data: certidoes, error: eCert } = await db.rpc("certidoes_para_apagar", { p_limite: 200 });
+  if (eCert) return new Response(eCert.message, { status: 500 });
+  const lista = (certidoes ?? []) as { id: number; arquivo_path: string }[];
+  const caminhoNoBucket = (c: string) =>
+    c.replace(/^https:\/\/[^/]+\/storage\/v1\/object\/public\//, "").replace(/^documentos\//, "");
+  for (let i = 0; i < lista.length; i += 100) {
+    const parte = lista.slice(i, i + 100);
+    const { error: e } = await db.storage.from("documentos").remove(parte.map((d) => caminhoNoBucket(d.arquivo_path)));
+    if (e) return new Response(e.message, { status: 500 });
+    const { error: eMarca } = await db.rpc("marcar_certidao_apagada", { p_ids: parte.map((d) => d.id) });
+    if (eMarca) return new Response(eMarca.message, { status: 500 });
+  }
+
+  return Response.json({ contas: Object.keys(resultado).length, arquivos: resultado, certidoes_apagadas: lista.length });
 });

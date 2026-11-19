@@ -50,7 +50,7 @@ class TelaAnalise extends ConsumerWidget {
                   ? (pro?.motivoStatus ?? 'Confira os documentos e envie de novo.')
                   : suspenso
                       ? 'Fale com o suporte para entender o motivo.'
-                      : 'Nossa equipe confere seus documentos e sua selfie em até 2 dias úteis. Avisamos por aqui assim que for aprovado.',
+                      : 'Nossa equipe confere seus documentos, sua selfie e suas certidões em até 2 dias úteis. Avisamos por aqui assim que for aprovado.',
               style: t.bodyMedium?.copyWith(color: c.textoSuave),
               textAlign: TextAlign.center,
             ),
@@ -58,7 +58,7 @@ class TelaAnalise extends ConsumerWidget {
             if (!recusado && !suspenso)
               Card(
                 child: Column(children: [
-                  for (final (feito, texto) in const [(true, 'Dados pessoais e endereço'), (true, 'Profissões, especialidades e preços'), (true, 'Documento e selfie enviados'), (false, 'Conferência pela equipe iService')])
+                  for (final (feito, texto) in const [(true, 'Dados pessoais e endereço'), (true, 'Profissões, especialidades e preços'), (true, 'Documentos, selfie e certidões enviados'), (false, 'Conferência pela equipe iService')])
                     ListTile(
                       leading: Icon(feito ? Symbols.check_circle_rounded : Symbols.pending_rounded, fill: 1, color: feito ? c.sucesso : c.alerta),
                       title: Text(texto),

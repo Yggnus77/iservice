@@ -91,6 +91,12 @@ insert into public.documentos (profissional_id, tipo, arquivo_path)
 select id, t, 'documentos/' || id || '/' || t from public.profissionais, unnest(array['documento_frente', 'selfie_documento']::public.tipo_documento[]) t;
 
 select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.ok((public.enviar_cadastro_profissional() -> 'pendencias') ?& array['antecedentes', 'antecedentes_estadual'],
+  'todas as profissões pedem as duas certidões de antecedentes');
+select pg_temp.admin();
+insert into public.documentos (profissional_id, tipo, arquivo_path)
+select id, t, 'documentos/' || id || '/' || t from public.profissionais, unnest(array['antecedentes', 'antecedentes_estadual']::public.tipo_documento[]) t;
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.ok((public.enviar_cadastro_profissional() ->> 'status') = 'em_analise', 'cadastro completo vai para análise');
 do $$ begin
   update public.profissionais set status = 'aprovado' where id = auth.uid();
@@ -123,6 +129,9 @@ select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.ok((select count(*) from public.perfis where id = '00000000-0000-0000-0000-0000000000c1') = 0, 'nome de cliente sem pedido em comum não aparece');
 select pg_temp.ok(cardinality(public.pendencias_profissional(auth.uid())) = 0, 'profissional consulta as próprias pendências');
 select pg_temp.ok(public.pendencias_profissional('00000000-0000-0000-0000-0000000000a2') is null, 'e não as de outro profissional');
+select pg_temp.admin();
+update public.documentos set status = 'recusado' where profissional_id = '00000000-0000-0000-0000-0000000000a1' and tipo::text = 'antecedentes_estadual';
+select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
 do $$ begin
   insert into public.profissional_profissoes (profissional_id, profissao_id) values (auth.uid(), 'baba');
   raise exception 'FALHOU: aprovado virou babá sem antecedentes';

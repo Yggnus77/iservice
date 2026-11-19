@@ -123,7 +123,11 @@ export const tipoDocumento: Record<string, string> = {
   documento_frente: 'Documento (frente)',
   documento_verso: 'Documento (verso)',
   selfie_documento: 'Selfie com o documento',
-  antecedentes: 'Certidão de antecedentes',
+  antecedentes: 'Certidão da Polícia Federal',
+  antecedentes_estadual: 'Certidão criminal estadual (TJDFT)',
+  cnh: 'CNH',
+  documento_veiculo: 'Documento do veículo (CRLV)',
+  vinculo_empresa: 'Vínculo com empresa licenciada',
   comprovante_endereco: 'Comprovante de endereço',
 };
 
@@ -141,7 +145,11 @@ export const pendencia: Record<string, string> = {
   especialidades_e_precos: 'Preço médio de cada especialidade (a partir do mínimo)',
   documento: 'Foto do documento',
   selfie: 'Selfie com o documento',
-  antecedentes: 'Certidão de antecedentes',
+  antecedentes: 'Certidão da Polícia Federal',
+  antecedentes_estadual: 'Certidão criminal estadual',
+  cnh: 'CNH',
+  documento_veiculo: 'Documento do veículo',
+  vinculo_empresa: 'Vínculo com empresa licenciada',
 };
 
 export const nomesAcao: Record<string, string> = {
@@ -172,6 +180,8 @@ export const nomesAcao: Record<string, string> = {
   remover_equipe: 'Removeu da equipe',
   foto_equipe: 'Trocou a foto de alguém da equipe',
   remover_foto_equipe: 'Tirou a foto de alguém da equipe',
+  editar_equipe: 'Corrigiu nome ou e-mail de alguém da equipe',
+  senha_equipe: 'Definiu uma senha nova para alguém da equipe',
   apagar_sugestao_profissao: 'Apagou uma sugestão de profissão',
   anotar: 'Fez uma anotação interna',
   apagar_nota: 'Apagou uma anotação interna',

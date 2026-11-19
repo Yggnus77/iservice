@@ -20,10 +20,29 @@ class MinhasProfissoes {
 }
 
 class DocumentoEnviado {
-  const DocumentoEnviado({required this.tipo, required this.status, this.observacao});
+  const DocumentoEnviado({required this.tipo, required this.status, this.observacao, this.validoAte});
   final String tipo;
   final String status;
   final String? observacao;
+
+  /// Até quando o documento aprovado vale (certidões 12 meses, documentos 24 meses).
+  final DateTime? validoAte;
+
+  bool get vencido {
+    final v = validoAte;
+    if (v == null) return false;
+    final hoje = DateTime.now();
+    return v.isBefore(DateTime(hoje.year, hoje.month, hoje.day));
+  }
+
+  /// Vale para o cadastro: não foi recusado e está dentro da validade.
+  bool get vale => status != 'recusado' && !vencido;
+
+  /// Vence nos próximos 15 dias (já dá para mandar um novo).
+  bool get vencendo {
+    final v = validoAte;
+    return v != null && !vencido && v.difference(DateTime.now()).inDays <= 15;
+  }
 }
 
 class ProfissionalRepo {
@@ -110,8 +129,16 @@ class ProfissionalRepo {
       });
 
   Future<List<DocumentoEnviado>> documentos() => _t(() async {
-        final l = await _db.from('documentos').select('tipo, status, observacao').eq('profissional_id', _uid).order('criado_em');
-        return [for (final d in l) DocumentoEnviado(tipo: d['tipo'], status: d['status'], observacao: d['observacao'])];
+        final l = await _db.from('documentos').select('tipo, status, observacao, valido_ate').eq('profissional_id', _uid).order('criado_em');
+        return [
+          for (final d in l)
+            DocumentoEnviado(
+              tipo: d['tipo'],
+              status: d['status'],
+              observacao: d['observacao'],
+              validoAte: d['valido_ate'] == null ? null : DateTime.tryParse(d['valido_ate'] as String),
+            ),
+        ];
       });
 
   Future<void> enviarDocumento(String tipo, Uint8List bytes, {String extensao = 'jpg', String contentType = 'image/jpeg'}) => _t(() async {

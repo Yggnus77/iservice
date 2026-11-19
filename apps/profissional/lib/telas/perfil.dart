@@ -21,6 +21,8 @@ final _perfilPublicoProvider = FutureProvider.autoDispose<PerfilProfissional?>((
 });
 
 /// Perfil do profissional: foto, sobre, preços, área, portfólio, avaliações, acessibilidade e ajuda.
+final _meusDocumentosProvider = FutureProvider.autoDispose((ref) => ref.read(profissionalRepo).documentos());
+
 class TelaPerfilPro extends ConsumerWidget {
   const TelaPerfilPro({super.key});
 
@@ -76,6 +78,30 @@ class TelaPerfilPro extends ConsumerWidget {
                   trailing: const Icon(Symbols.chevron_right_rounded),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const _TelaPrecos())),
                 ),
+                Consumer(builder: (context, ref, _) {
+                  final docs = ref.watch(_meusDocumentosProvider).value ?? const <DocumentoEnviado>[];
+                  // Último de cada tipo é o que vale.
+                  final ultimos = {for (final d in docs) d.tipo: d}.values;
+                  final vencido = ultimos.any((d) => d.status == 'aprovado' && d.vencido);
+                  final vencendo = ultimos.any((d) => d.status == 'aprovado' && d.vencendo);
+                  return ListTile(
+                    leading: const Icon(Symbols.folder_shared_rounded),
+                    title: const Text('Documentos e certidões'),
+                    subtitle: Text(
+                      vencido
+                          ? 'Um documento venceu. Envie um novo.'
+                          : vencendo
+                              ? 'Um documento vence em breve. Já pode enviar um novo.'
+                              : 'Certidões valem 12 meses; documentos, 24 meses.',
+                      style: vencido || vencendo ? TextStyle(color: vencido ? c.perigo : c.alerta) : null,
+                    ),
+                    trailing: const Icon(Symbols.chevron_right_rounded),
+                    onTap: () async {
+                      await context.push('/documentos');
+                      ref.invalidate(_meusDocumentosProvider);
+                    },
+                  );
+                }),
                 ListTile(
                   leading: const Icon(Symbols.radar_rounded),
                   title: const Text('Área de atendimento'),

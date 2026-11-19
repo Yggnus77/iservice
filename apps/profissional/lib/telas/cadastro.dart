@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:iservice_core/iservice_core.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../estado.dart';
 
@@ -241,10 +242,13 @@ class _PassoProfissoesState extends ConsumerState<_PassoProfissoes> {
             const SizedBox(width: 10),
             Expanded(child: Text(p.nome, style: t.titleMedium)),
           ]),
-          if (p.exigeAntecedentes)
+          if (p.documentosExtras.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Para ${p.nome} a certidão de antecedentes criminais é obrigatória (passo 5).', style: t.bodySmall?.copyWith(color: c.alerta)),
+              child: Text(
+                'Para ${p.nome} você também envia ${p.documentosExtras.map((d) => _extras[d]?.$1.toLowerCase() ?? d).join(' e ')} (passo 5).',
+                style: t.bodySmall?.copyWith(color: c.alerta),
+              ),
             ),
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, children: [
@@ -267,11 +271,83 @@ final _sugestoesProvider = FutureProvider((ref) => ref.read(profissionalRepo).mi
 // ---------------------------------------------------------------------------
 
 final _documentosProvider = FutureProvider.autoDispose((ref) => ref.read(profissionalRepo).documentos());
+
+/// Documentos que algumas profissões pedem a mais: nome, explicação e ícone.
+const _extras = {
+  'cnh': ('CNH', 'Carteira de motorista com a categoria do veículo (e EAR, se tiver).', Symbols.id_card_rounded),
+  'documento_veiculo': ('Documento do veículo', 'CRLV do veículo que você usa nos fretes.', Symbols.local_shipping_rounded),
+  'vinculo_empresa': ('Vínculo com empresa licenciada', 'Carteira, contrato ou declaração da empresa de dedetização licenciada pela Vigilância Sanitária.',
+      Symbols.verified_rounded),
+};
+
+const _linkPF = 'https://servicos.pf.gov.br/epol-sinic-publico/';
+const _linkTJDFT = 'https://www.tjdft.jus.br/servicos/certidoes/certidao-nada-consta';
+
+/// Passo a passo para tirar as certidões (grátis, pela internet).
+Future<bool?> _comoTirarCertidao(BuildContext context, {required bool estadual}) => showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        final t = Theme.of(ctx).textTheme;
+        final passos = estadual
+            ? const [
+                'Abra o site do TJDFT (botão abaixo) e escolha a certidão criminal de 1º grau.',
+                'Preencha nome completo, CPF e os dados pedidos. É grátis.',
+                'Baixe a certidão e tire um print da tela ou uma foto bem nítida.',
+                'Mora fora do DF? Tire a certidão criminal no site do tribunal do seu estado.',
+              ]
+            : const [
+                'Abra o site da Polícia Federal (botão abaixo) e toque em "Emitir certidão".',
+                'Preencha nome completo, CPF, data de nascimento e nome da mãe. É grátis.',
+                'Baixe a certidão e tire um print da tela ou uma foto bem nítida.',
+              ];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(estadual ? 'Certidão criminal do TJDFT' : 'Certidão da Polícia Federal', style: t.titleLarge),
+            const SizedBox(height: 6),
+            Text('Vale a emitida nos últimos 90 dias. Pedimos as duas certidões de todos os profissionais: é o que dá segurança para o cliente receber você em casa.',
+                style: t.bodySmall),
+            const SizedBox(height: 14),
+            for (final (i, passo) in passos.indexed)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  CircleAvatar(radius: 12, child: Text('${i + 1}', style: t.labelMedium)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(passo)),
+                ]),
+              ),
+            const SizedBox(height: 6),
+            OutlinedButton.icon(
+              onPressed: () => launchUrl(Uri.parse(estadual ? _linkTJDFT : _linkPF), mode: LaunchMode.externalApplication),
+              icon: const Icon(Symbols.open_in_new_rounded),
+              label: Text(estadual ? 'Abrir o site do TJDFT' : 'Abrir o site da Polícia Federal'),
+            ),
+            const SizedBox(height: 10),
+            BotaoPrincipal(rotulo: 'Já tenho, enviar foto', aoTocar: () => Navigator.pop(ctx, true)),
+          ]),
+        );
+      },
+    );
 final _certificacoesProvider = FutureProvider.autoDispose((ref) => ref.read(profissionalRepo).certificacoes());
 
+/// Documentos e certidões fora do cadastro (Perfil > Documentos): mandar um novo
+/// quando vence ou quando a equipe pede.
+class TelaDocumentos extends StatelessWidget {
+  const TelaDocumentos({super.key});
+
+  @override
+  Widget build(BuildContext context) => _PassoDocumentos(aoContinuar: () => context.pop(), avulso: true);
+}
+
 class _PassoDocumentos extends ConsumerStatefulWidget {
-  const _PassoDocumentos({required this.aoContinuar});
+  const _PassoDocumentos({required this.aoContinuar, this.avulso = false});
   final VoidCallback aoContinuar;
+
+  /// Aberto pelo Perfil, fora do cadastro.
+  final bool avulso;
 
   @override
   ConsumerState<_PassoDocumentos> createState() => _PassoDocumentosState();
@@ -281,6 +357,10 @@ class _PassoDocumentosState extends ConsumerState<_PassoDocumentos> {
   String? _enviando;
 
   Future<void> _enviar(String tipo, {bool camera = false}) async {
+    if (tipo == 'antecedentes' || tipo == 'antecedentes_estadual') {
+      final ok = await _comoTirarCertidao(context, estadual: tipo == 'antecedentes_estadual');
+      if (ok != true || !mounted) return;
+    }
     final img = await ImagePicker().pickImage(
       source: camera ? ImageSource.camera : ImageSource.gallery,
       maxWidth: 2000,
@@ -346,38 +426,76 @@ class _PassoDocumentosState extends ConsumerState<_PassoDocumentos> {
     final sugeridas = ref.watch(certificacoesSugeridasProvider).value ?? const <CertificacaoSugerida>[];
     final minhas = ref.watch(minhasProfissoesProvider).value?.profissoes.keys.toSet() ?? <String>{};
     final profissoes = ref.watch(profissoesProvider).value ?? const <Profissao>[];
-    final exigeAntecedentes = profissoes.any((p) => minhas.contains(p.id) && p.exigeAntecedentes);
-    bool tem(String tipo) => docs.any((d) => d.tipo == tipo && d.status != 'recusado');
-    final completo = tem('documento_frente') && tem('selfie_documento') && (!exigeAntecedentes || tem('antecedentes'));
+    final minhasProfissoes = profissoes.where((p) => minhas.contains(p.id));
+    final exigeAntecedentes = minhasProfissoes.isEmpty || minhasProfissoes.any((p) => p.exigeAntecedentes);
+    final extras = {for (final p in minhasProfissoes) ...p.documentosExtras}.where(_extras.containsKey).toList()..sort();
+    // O último enviado de cada tipo é o que vale.
+    DocumentoEnviado? ultimo(String tipo) => docs.where((d) => d.tipo == tipo).lastOrNull;
+    bool tem(String tipo) => docs.any((d) => d.tipo == tipo && d.vale);
+    final completo = tem('documento_frente') &&
+        tem('selfie_documento') &&
+        (!exigeAntecedentes || (tem('antecedentes') && tem('antecedentes_estadual'))) &&
+        extras.every(tem);
     final t = Theme.of(context).textTheme;
+    final c = context.cores;
+
+    String situacao(String tipo, String texto) {
+      final d = ultimo(tipo);
+      if (d == null) return texto;
+      if (d.status == 'recusado') return 'Recusado: ${d.observacao ?? 'envie de novo'}';
+      if (d.vencido) return 'Venceu em ${dataCurta(d.validoAte!)}. Toque para enviar um novo.';
+      if (d.vencendo) return 'Vence em ${dataCurta(d.validoAte!)}. Já pode enviar um novo.';
+      if (d.status == 'aprovado') return d.validoAte == null ? 'Conferido' : 'Conferido · vale até ${dataCurta(d.validoAte!)}';
+      return 'Enviado, aguardando conferência';
+    }
 
     final itens = [
       ('documento_frente', 'Documento com foto (frente)', 'RG, CNH ou carteira de trabalho.', Symbols.badge_rounded, false),
       ('documento_verso', 'Documento (verso)', 'Opcional para CNH.', Symbols.flip_rounded, false),
       ('selfie_documento', 'Selfie segurando o documento', 'Rosto e documento visíveis na mesma foto.', Symbols.photo_camera_front_rounded, true),
-      if (exigeAntecedentes) ('antecedentes', 'Certidão de antecedentes criminais', 'Emita grátis no site da Polícia Federal ou do TJDFT.', Symbols.gavel_rounded, false),
+      if (exigeAntecedentes) ...[
+        ('antecedentes', 'Certidão de antecedentes da Polícia Federal', 'Grátis pela internet. Toque para ver o passo a passo.', Symbols.gavel_rounded, false),
+        ('antecedentes_estadual', 'Certidão criminal do TJDFT', 'Ou do tribunal do seu estado. Toque para ver o passo a passo.', Symbols.balance_rounded, false),
+      ],
+      for (final e in extras) (e, _extras[e]!.$1, _extras[e]!.$2, _extras[e]!.$3, false),
     ];
 
     return ModeloPasso(
-      cabecalho: const CabecalhoPasso(
-        passo: 5,
-        total: _total,
-        titulo: 'Documentos e certificações',
-        texto: 'Conferimos tudo antes de liberar seu perfil. Seus documentos não aparecem para os clientes.',
-      ),
-      rotuloBotao: 'Continuar',
-      aoContinuar: completo && _enviando == null ? widget.aoContinuar : null,
+      cabecalho: widget.avulso
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Documentos e certidões', style: t.headlineSmall),
+                const SizedBox(height: 6),
+                Text('Certidões valem 12 meses e documentos 24 meses. Avisamos 15 dias antes de vencer. Seus documentos não aparecem para os clientes.',
+                    style: t.bodyMedium?.copyWith(color: c.textoSuave)),
+              ]),
+            )
+          : const CabecalhoPasso(
+              passo: 5,
+              total: _total,
+              titulo: 'Documentos e certificações',
+              texto: 'Conferimos tudo em até 2 dias úteis antes de liberar seu perfil. Seus documentos não aparecem para os clientes.',
+            ),
+      rotuloBotao: widget.avulso ? 'Pronto' : 'Continuar',
+      aoContinuar: (completo || widget.avulso) && _enviando == null ? widget.aoContinuar : null,
       filhos: [
         for (final (tipo, titulo, texto, icone, camera) in itens) ...[
           Card(
             child: ListTile(
-              leading: Icon(tem(tipo) ? Symbols.check_circle_rounded : icone, fill: tem(tipo) ? 1 : 0, color: tem(tipo) ? context.cores.sucesso : context.cores.acaoTexto),
-              title: Text(titulo, style: t.titleSmall),
-              subtitle: Text(
-                docs.where((d) => d.tipo == tipo).lastOrNull?.status == 'recusado'
-                    ? 'Recusado: ${docs.where((d) => d.tipo == tipo).last.observacao ?? 'envie de novo'}'
-                    : (tem(tipo) ? 'Enviado' : texto),
+              leading: Icon(
+                tem(tipo) && !(ultimo(tipo)?.vencendo ?? false) ? Symbols.check_circle_rounded : icone,
+                fill: tem(tipo) ? 1 : 0,
+                color: !tem(tipo) && ultimo(tipo) != null
+                    ? c.perigo
+                    : (ultimo(tipo)?.vencendo ?? false)
+                        ? c.alerta
+                        : tem(tipo)
+                            ? c.sucesso
+                            : c.acaoTexto,
               ),
+              title: Text(titulo, style: t.titleSmall),
+              subtitle: Text(situacao(tipo, texto)),
               trailing: _enviando == tipo
                   ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2))
                   : Icon(camera ? Symbols.photo_camera_rounded : Symbols.upload_rounded),

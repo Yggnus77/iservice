@@ -65,7 +65,7 @@ PROFISSOES = [
          esp=['Diária', 'Meio período', 'Noite', 'Recém-nascidos', 'Crianças com deficiência', 'Levar e buscar na escola'],
          abre='Precisa de alguém de confiança para cuidar das crianças hoje? Encontre uma babá perto de você em Brasília e no Entorno, com certidão de antecedentes verificada.',
          quando=['Surgiu um compromisso e você precisa de alguém hoje.', 'Quer uma babá para a noite ou meio período.', 'Precisa que alguém leve ou busque na escola.'],
-         faq=[('A babá tem antecedentes verificados?', 'Sim. No iService, a certidão de antecedentes criminais é obrigatória para babás. Sem ela, o cadastro não é aprovado.'),
+         faq=[('A babá tem antecedentes verificados?', 'Sim. No iService, todo profissional, inclusive a babá, apresenta certidão de antecedentes criminais da Polícia Federal e do TJDFT, renovada todo ano. Sem elas, o cadastro não é aprovado.'),
               ('Posso conversar com a babá antes?', 'Sim. Depois do pedido, o chat do app fica aberto para vocês combinarem os detalhes.')]),
     dict(slug='diarista', nome='Diarista e faxineira', busca='diarista', icone='cleaning_services',
          esp=['Faxina completa', 'Limpeza pós-obra', 'Passadoria', 'Limpeza de vidros', 'Organização', 'Limpeza comercial'],
@@ -303,7 +303,7 @@ def pagina_profissionais(cabeca, rodape):
         ('Quem define o preço do serviço?', 'Você. O app mostra a faixa de preço da região só como referência para o cliente.'),
         ('Preciso ser MEI?', 'Não é obrigatório para se cadastrar. Se você for MEI, o app tem um relatório de ganhos que ajuda a acompanhar o limite anual.'),
         ('Como recebo os pedidos?', 'O cliente escolhe você pelo perfil e só você recebe o pedido. Você aceita ou recusa, sem disputa com outros profissionais.'),
-        ('O que preciso para o cadastro?', 'Foto de perfil, documento com foto, CPF, endereço, as profissões que você exerce, suas especialidades e certificados. Para babás, a certidão de antecedentes é obrigatória.'),
+        ('O que preciso para o cadastro?', 'Foto de perfil, documento com foto, CPF, endereço, as profissões que você exerce, suas especialidades e as certidões de antecedentes criminais da Polícia Federal e do TJDFT (grátis pela internet). Fretes pede também CNH e documento do veículo.'),
     ]
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'WebPage', 'name': titulo, 'description': descricao, 'url': url,
