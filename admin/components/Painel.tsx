@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
-  BellRing, LineChart, Search,
+  BellRing, LineChart, Search, UserPlus,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -78,7 +78,7 @@ const rotas: [string, Permissao][] = [
   ['/emergencias', 'emergencias'], ['/garantia', 'garantia'], ['/avaliacoes', 'avaliacoes'], ['/denuncias', 'denuncias'],
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
-  ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'],
+  ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'crescimento'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -98,6 +98,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Crescimento', href: '/relatorios/', rotulo: 'Relatórios', icone: <LineChart /> },
+  { grupo: 'Crescimento', href: '/captacao/', rotulo: 'Captação', icone: <UserPlus /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
   { grupo: 'Crescimento', href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
   { grupo: 'Crescimento', href: '/sugestoes/', rotulo: 'Sugestões de profissões', icone: <Lightbulb /> },

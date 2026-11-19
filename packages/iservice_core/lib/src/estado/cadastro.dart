@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -133,11 +134,19 @@ class RascunhoCadastro {
 
 const _chave = 'iservice.rascunho_cadastro';
 
+/// Código de indicação vindo do link (iservice.app.br/profissional/?indicacao=ABC1234),
+/// usado pelos captadores. Só existe na versão web; no celular devolve null.
+String? codigoIndicacaoDoLink() {
+  if (!kIsWeb) return null;
+  final codigo = Uri.base.queryParameters['indicacao']?.trim().toUpperCase();
+  return (codigo == null || codigo.isEmpty || codigo.length > 20) ? null : codigo;
+}
+
 final rascunhoCadastroProvider = NotifierProvider<RascunhoNotifier, RascunhoCadastro>(RascunhoNotifier.new);
 
 class RascunhoNotifier extends Notifier<RascunhoCadastro> {
   @override
-  RascunhoCadastro build() => const RascunhoCadastro();
+  RascunhoCadastro build() => RascunhoCadastro(indicacao: codigoIndicacaoDoLink());
 
   void atualizar(RascunhoCadastro r) => state = r;
 
