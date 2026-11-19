@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AlertTriangle, BadgeCheck, BellRing, Search, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, BellRing, Clock, Search } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Abas, Carregando, ErroCaixa, Pessoa, Selo, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
 import { Ajuda } from '@/components/Ajuda';
@@ -12,8 +12,28 @@ import { haQuanto, pendencia, statusCadastro, telefone } from '@/lib/formatos';
 type Linha = {
   id: string; nome: string; email: string; telefone: string; foto_url: string; status: string; motivo_status: string | null;
   profissoes: string[]; exige_antecedentes: boolean; regiao: string | null; documentos_pendentes: number; documentos_recusados: number;
-  criado_em: string; atualizado_em: string; suspenso: boolean;
+  criado_em: string; atualizado_em: string; suspenso: boolean; enviado_em?: string;
 };
+
+/** Prazo da Política de Verificação: 48 horas úteis (sábado e domingo não contam). */
+function prazoAnalise(enviado: string): Date {
+  const d = new Date(enviado);
+  let horas = 48;
+  while (horas > 0) {
+    d.setHours(d.getHours() + 1);
+    const dia = d.getDay();
+    if (dia !== 0 && dia !== 6) horas--;
+  }
+  return d;
+}
+
+function SeloPrazo({ enviado }: { enviado: string }) {
+  const falta = prazoAnalise(enviado).getTime() - Date.now();
+  const horas = Math.round(Math.abs(falta) / 3600000);
+  const texto = horas < 1 ? 'menos de 1h' : horas < 48 ? `${horas}h` : `${Math.round(horas / 24)} dias`;
+  if (falta < 0) return <Selo tom="vermelho" icone={<AlertTriangle />}>Atrasado {texto}</Selo>;
+  return <Selo tom={falta < 12 * 3600000 ? 'laranja' : 'neutro'} icone={<Clock />}>Faltam {texto}</Selo>;
+}
 
 type Aba = 'em_analise' | 'recusado' | 'rascunho' | 'aprovado' | 'suspenso';
 
@@ -125,7 +145,7 @@ export default function Cadastros() {
     <>
       <Cabecalho titulo="Cadastros de profissionais" texto="Confira documento, selfie e antecedentes antes de liberar alguém para atender."
         ajuda={<>
-          <strong>Para aprovar:</strong> enviaram tudo e esperam a conferência (o mais antigo no topo).<br />
+          <strong>Para aprovar:</strong> enviaram tudo e esperam a conferência (o mais antigo no topo). A Política de Verificação promete resposta em até 48 horas úteis.<br />
           <strong>Ajustes pedidos:</strong> a equipe pediu para reenviar algo.<br />
           <strong>Ainda preenchendo:</strong> começaram e pararam no meio. Mande um lembrete dizendo o que falta.<br />
           Abra o cadastro para ver documentos, selfie, preços e certidão antes de aprovar.
@@ -154,7 +174,7 @@ export default function Cadastros() {
             <div className="tabela-rolagem">
               <table className="tabela">
                 <thead>
-                  <tr><th>Profissional</th><th>Profissões</th><th>Região</th><th>Documentos</th><th>{aba === 'em_analise' ? 'Na fila' : 'Atualizado'}</th><th>Situação</th></tr>
+                  <tr><th>Profissional</th><th>Profissões</th><th>Região</th><th>Documentos</th><th>{aba === 'em_analise' ? 'Prazo (48h úteis)' : 'Atualizado'}</th><th>Situação</th></tr>
                 </thead>
                 <tbody>
                   {dados.map((l) => (
@@ -163,7 +183,6 @@ export default function Cadastros() {
                       <td>
                         <div className="linha-flex" style={{ gap: 6 }}>
                           {l.profissoes.length ? l.profissoes.map((p) => <Selo key={p}>{p}</Selo>) : <span className="fraco">—</span>}
-                          {l.exige_antecedentes ? <Selo tom="roxo" icone={<ShieldAlert />}>Antecedentes</Selo> : null}
                         </div>
                       </td>
                       <td>{l.regiao ?? <span className="fraco">—</span>}</td>
@@ -171,7 +190,8 @@ export default function Cadastros() {
                         {Number(l.documentos_recusados) ? <Selo tom="vermelho" icone={<AlertTriangle />}>{l.documentos_recusados} para reenviar</Selo> :
                           Number(l.documentos_pendentes) ? <Selo tom="laranja">{l.documentos_pendentes} para conferir</Selo> : <Selo tom="verde">Conferidos</Selo>}
                       </td>
-                      <td className="fraco">{haQuanto(l.atualizado_em)}</td>
+                      <td className="fraco">{aba === 'em_analise' ? <div><SeloPrazo enviado={l.enviado_em ?? l.atualizado_em} />
+                        <div className="texto-fraco" style={{ marginTop: 4 }}>Enviado {haQuanto(l.enviado_em ?? l.atualizado_em)}</div></div> : haQuanto(l.atualizado_em)}</td>
                       <td><SeloStatus mapa={statusCadastro} valor={l.status} /></td>
                     </tr>
                   ))}

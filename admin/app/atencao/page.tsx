@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Ajuda } from '@/components/Ajuda';
-import { Abas, Carregando, DialogoTexto, ErroCaixa, Pessoa, Selo, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
+import { Abas, Carregando, DialogoTexto, ErroCaixa, Pessoa, Selo, SeloStatus, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
 import { rpc } from '@/lib/supabase';
 import { data, dataHora, haQuanto, statusPedido } from '@/lib/formatos';
 import { DialogoValidade } from '@/components/Validade';
@@ -72,6 +72,7 @@ export default function PrecisaDeAtencao() {
   const [validade, setValidade] = useState<ItemDocumento | null>(null);
   const [novoDoc, setNovoDoc] = useState<ItemDocumento | null>(null);
   const { executar } = useAcao();
+  const avisar = useAviso();
   const fim = () => { recarregar(); atualizarResumo(); };
 
   const abas = ([
@@ -185,7 +186,7 @@ export default function PrecisaDeAtencao() {
               <div className="titulo"><div>
                 <h2 className="com-ajuda">Documentos e certificações vencendo
                   <Ajuda titulo="Validade dos documentos">
-                    A certidão de antecedentes aprovada vale 6 meses. Certificações têm a data que a equipe colocar.
+                    As certidões aprovadas valem 12 meses e os documentos 24 meses; vencido, o perfil sai das buscas até chegar um novo. Certificações têm a data que a equipe colocar.
                     O profissional recebe um aviso no app 30 dias antes e outro no dia em que vence.
                     Use <strong>Pedir documento novo</strong> para ele mandar outro pelo app, e <strong>Mudar validade</strong> se a data estiver errada.
                   </Ajuda>
@@ -231,7 +232,10 @@ export default function PrecisaDeAtencao() {
         inicial={advertir?.motivos[0]?.texto ?? ''}
         sugestoes={['Cancelou serviços depois de aceitar', 'Deixou clientes sem resposta', 'Atrasos sem avisar o cliente', 'Reclamações sobre a qualidade do serviço']}
         confirmar={async (v) => {
-          const ok = await executar(() => rpc('admin_advertir', { p_usuario: advertir!.profissional_id, p_motivo: v }), 'Advertência enviada.');
+          const ok = await executar(async () => {
+            const n = await rpc<number>('admin_advertir', { p_usuario: advertir!.profissional_id, p_motivo: v });
+            avisar((n % 3 === 0 ? `Advertência enviada. Foi a ${n}ª: a conta ficou suspensa por 30 dias, como manda a Política de Verificação.` : `Advertência enviada (${n}ª). Na 3ª, a conta é suspensa por 30 dias.`));
+          });
           if (ok) fim();
           return ok;
         }} />

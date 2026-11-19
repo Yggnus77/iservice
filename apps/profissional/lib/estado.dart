@@ -49,7 +49,7 @@ int passoPendente(List<String> pend) {
   if (pend.any(const {'nome', 'nascimento', 'cpf', 'telefone'}.contains)) return 1;
   if (pend.any(const {'endereco', 'area_atendimento'}.contains)) return 2;
   if (pend.contains('profissao')) return 4;
-  if (pend.any(const {'documento', 'selfie', 'antecedentes'}.contains)) return 5;
+  if (pend.any(const {'documento', 'selfie', 'antecedentes', 'antecedentes_estadual', 'cnh', 'documento_veiculo', 'vinculo_empresa'}.contains)) return 5;
   return 6;
 }
 
@@ -65,5 +65,9 @@ const nomesPendencias = {
   'especialidades_e_precos': 'preço médio de cada especialidade, a partir do mínimo da região',
   'documento': 'foto do documento',
   'selfie': 'selfie com o documento',
-  'antecedentes': 'certidão de antecedentes',
+  'antecedentes': 'certidão de antecedentes da Polícia Federal',
+  'antecedentes_estadual': 'certidão criminal do TJDFT (ou do seu estado)',
+  'cnh': 'CNH',
+  'documento_veiculo': 'documento do veículo (CRLV)',
+  'vinculo_empresa': 'comprovante de vínculo com empresa licenciada',
 };

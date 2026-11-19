@@ -35,7 +35,7 @@ function Profissoes() {
   const [aberta, setAberta] = useState<string | null>(null);
   const [nova, setNova] = useState(false);
   const [novaEsp, setNovaEsp] = useState<Record<string, string>>({});
-  const [form, setForm] = useState({ nome: '', preco_base: '80', icone: 'handyman', exige_antecedentes: false });
+  const [form, setForm] = useState({ nome: '', preco_base: '80', icone: 'handyman', exige_antecedentes: true });
 
   if (erro) return <ErroCaixa erro={erro} tentar={recarregar} />;
   if (carregando && !dados) return <Carregando />;
@@ -66,7 +66,7 @@ function Profissoes() {
       id, nome: form.nome.trim(), icone: form.icone || 'handyman', cor_inicio: '#4a90f0', cor_fim: '#1a5bc4', preco_base: Number(form.preco_base) || 80,
       exige_antecedentes: form.exige_antecedentes, ativa: false, ordem,
     }).select()), 'Profissão criada (desligada até você ligar).');
-    if (ok) { setNova(false); setForm({ nome: '', preco_base: '80', icone: 'handyman', exige_antecedentes: false }); recarregar(); }
+    if (ok) { setNova(false); setForm({ nome: '', preco_base: '80', icone: 'handyman', exige_antecedentes: true }); recarregar(); }
   };
 
   return (

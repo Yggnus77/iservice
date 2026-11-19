@@ -1,5 +1,6 @@
 export type Documento = {
   id: number; tipo: string; arquivo_path: string; status: string; observacao: string | null; criado_em: string; revisado_em: string | null;
+  arquivo_apagado_em?: string | null; valido_ate?: string | null;
 };
 
 export type Certificacao = {

@@ -130,8 +130,8 @@ insert into public.documentos (profissional_id, tipo, arquivo_path, status) valu
 select pg_temp.como('00000000-0000-0000-0000-0000000090b1');
 select public.admin_revisar_documento((select id from public.documentos where profissional_id = '00000000-0000-0000-0000-0000000090a1' and tipo = 'antecedentes'), true);
 reset role;
-select pg_temp.ok((select valido_ate = (now() at time zone 'America/Sao_Paulo')::date + 182 from public.documentos
-  where profissional_id = '00000000-0000-0000-0000-0000000090a1' and tipo = 'antecedentes'), 'certidão aprovada vale 6 meses');
+select pg_temp.ok((select valido_ate = (now() at time zone 'America/Sao_Paulo')::date + 365 from public.documentos
+  where profissional_id = '00000000-0000-0000-0000-0000000090a1' and tipo = 'antecedentes'), 'certidão aprovada vale 12 meses');
 select set_config('t.doc', (select id::text from public.documentos where profissional_id = '00000000-0000-0000-0000-0000000090a1' and tipo = 'antecedentes'), true);
 select pg_temp.como('00000000-0000-0000-0000-0000000090e1');
 select pg_temp.falha($$select public.admin_definir_validade('documento', current_setting('t.doc')::bigint, current_date + 10)$$, 'suporte não muda a validade');
@@ -146,6 +146,9 @@ update public.documentos set valido_ate = (now() at time zone 'America/Sao_Paulo
 select pg_temp.ok(public.avisar_validades() = 1, 'no vencimento sai o aviso de "venceu"');
 select pg_temp.ok((select count(*) from public.notificacoes where usuario_id = '00000000-0000-0000-0000-0000000090a1'
   and tipo in ('documento_vencendo', 'documento_vencido')) = 2, 'o profissional recebe os dois avisos');
+select pg_temp.ok((select status = 'recusado' and not disponivel and motivo_status like '%Corrigir cadastro%' from public.profissionais
+  where id = '00000000-0000-0000-0000-0000000090a1'), 'certidão vencida tira o perfil das buscas até enviar outra');
+update public.profissionais set status = 'aprovado', motivo_status = null where id = '00000000-0000-0000-0000-0000000090a1';
 
 -- ---------------------------------------------------------------- respostas prontas
 select pg_temp.como('00000000-0000-0000-0000-0000000090e1');

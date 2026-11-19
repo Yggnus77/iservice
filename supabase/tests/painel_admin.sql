@@ -51,8 +51,11 @@ insert into public.profissional_profissoes values ('00000000-0000-0000-0000-0000
 insert into public.profissional_especialidades (profissional_id, especialidade_id, preco)
 select pp.profissional_id, e.id, 150 from public.profissional_profissoes pp join public.especialidades e on e.profissao_id = pp.profissao_id and e.ordem = 0;
 insert into public.documentos (profissional_id, tipo, arquivo_path)
-select id, t, id || '/' || t || '.jpg' from public.profissionais, unnest(array['documento_frente', 'selfie_documento']::public.tipo_documento[]) t;
-insert into public.documentos (profissional_id, tipo, arquivo_path) values ('00000000-0000-0000-0000-0000000000b2', 'antecedentes', '00000000-0000-0000-0000-0000000000b2/antecedentes.pdf');
+select id, t, id || '/' || t || '.jpg' from public.profissionais, unnest(array['documento_frente', 'selfie_documento', 'antecedentes_estadual']::public.tipo_documento[]) t;
+-- Antecedentes da PF (todas as profissões pedem desde 19/11/2026).
+insert into public.documentos (profissional_id, tipo, arquivo_path) values
+  ('00000000-0000-0000-0000-0000000000b1', 'antecedentes', '00000000-0000-0000-0000-0000000000b1/antecedentes.pdf'),
+  ('00000000-0000-0000-0000-0000000000b2', 'antecedentes', '00000000-0000-0000-0000-0000000000b2/antecedentes.pdf');
 select pg_temp.como('00000000-0000-0000-0000-0000000000b1');
 select public.enviar_cadastro_profissional();
 select pg_temp.como('00000000-0000-0000-0000-0000000000b2');
@@ -86,7 +89,7 @@ select pg_temp.admin();
 select pg_temp.como('00000000-0000-0000-0000-0000000000ad');
 select pg_temp.ok((select count(*) from public.admin_cadastros()) = 2, 'fila mostra os cadastros em análise');
 select pg_temp.ok((select exige_antecedentes from public.admin_cadastros() where id = '00000000-0000-0000-0000-0000000000b2'), 'fila destaca quem precisa de antecedentes');
-select pg_temp.ok((select jsonb_array_length(public.admin_usuario('00000000-0000-0000-0000-0000000000b2') -> 'profissional' -> 'documentos')) = 3
+select pg_temp.ok((select jsonb_array_length(public.admin_usuario('00000000-0000-0000-0000-0000000000b2') -> 'profissional' -> 'documentos')) = 4
   and (public.admin_usuario('00000000-0000-0000-0000-0000000000b2') -> 'perfil' ->> 'cpf') is not null, 'ficha traz documentos e dados completos');
 do $$ begin
   perform public.admin_revisar_documento((select id from public.documentos where profissional_id = '00000000-0000-0000-0000-0000000000b1' and tipo = 'selfie_documento'), false, '');
@@ -109,7 +112,7 @@ select public.admin_decidir_cadastro('00000000-0000-0000-0000-0000000000b1', tru
 select public.admin_decidir_cadastro('00000000-0000-0000-0000-0000000000b2', true);
 select pg_temp.admin();
 select pg_temp.ok((select bool_and(status = 'aprovado' and verificado) from public.profissionais), 'aprovação marca como verificado');
-select pg_temp.ok((select status = 'aprovado' from public.documentos where tipo = 'antecedentes'), 'aprovar o cadastro aprova a certidão de antecedentes');
+select pg_temp.ok((select bool_and(status = 'aprovado' and valido_ate is not null) from public.documentos where tipo::text in ('antecedentes', 'antecedentes_estadual')), 'aprovar o cadastro aprova as certidões e dá validade');
 select pg_temp.ok((select count(*) from public.admin_acoes where acao in ('aprovar_cadastro', 'recusar_documento')) = 3, 'cada decisão fica no registro');
 update public.profissionais set disponivel = true;
 
