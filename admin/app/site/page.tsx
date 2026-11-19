@@ -8,7 +8,14 @@ import { rpc } from '@/lib/supabase';
 import { diaCurto, numero } from '@/lib/formatos';
 
 type Dia = { dia: string; visitas: number; baixar_cliente: number; baixar_profissional: number; cadastros_clientes: number; cadastros_profissionais: number };
-type Site = { inicio: string; fim: string; dias: Dia[]; por_plataforma: Record<string, number>; paginas: { pagina: string; visitas: number }[] };
+type Site = { inicio: string; fim: string; dias: Dia[]; por_plataforma: Record<string, number>; paginas: { pagina: string; visitas: number }[]; origens?: { origem: string; meio: string | null; visitas: number; baixar: number }[] };
+
+const nomesOrigem: Record<string, string> = {
+  direto: 'Direto ou sem informação', google: 'Google', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp',
+  panfleto: 'Panfleto (QR)', meta: 'Anúncio Meta', youtube: 'YouTube', tiktok: 'TikTok', bing: 'Bing', twitter: 'X (Twitter)', linkedin: 'LinkedIn',
+};
+const nomeOrigem = (o: { origem: string; meio: string | null }) =>
+  `${nomesOrigem[o.origem] ?? o.origem}${o.meio === 'pago' ? ' (pago)' : o.meio && o.origem !== 'meta' ? ` · ${o.meio}` : ''}`;
 
 const nomesPagina: Record<string, string> = {
   '/': 'Página inicial', '/index.html': 'Página inicial', '/termos.html': 'Termos de Uso', '/privacidade.html': 'Privacidade',
@@ -46,7 +53,7 @@ export default function SiteEDownloads() {
 
   return (
     <>
-      <Cabecalho ajuda={<>Visitas ao site iservice.app.br e cliques em “Baixar”. Cada pessoa conta uma vez por dia e não usamos cookies. Compare com os cadastros para ver quantos visitantes viram usuários.</>} titulo="Site e downloads" texto="Quem visitou iservice.app.br e clicou para baixar os apps. Cada pessoa conta uma vez por dia, sem cookies." />
+      <Cabecalho ajuda={<>Visitas ao site iservice.app.br e cliques em “Baixar”. Cada pessoa conta uma vez por dia e não usamos cookies. Compare com os cadastros para ver quantos visitantes viram usuários. Em “De onde vieram”, use links com ?utm_source=instagram, whatsapp, panfleto etc. para saber qual canal traz mais gente.</>} titulo="Site e downloads" texto="Quem visitou iservice.app.br e clicou para baixar os apps. Cada pessoa conta uma vez por dia, sem cookies." />
       <div className="filtros">
         <Abas ativa={periodo} mudar={setPeriodo} abas={[{ id: '7', rotulo: '7 dias' }, { id: '30', rotulo: '30 dias' }, { id: '90', rotulo: '90 dias' }]} />
       </div>
@@ -104,6 +111,29 @@ export default function SiteEDownloads() {
               </section>
             </div>
 
+            <div className="pilha">
+            <section className="cartao">
+              <div className="titulo"><div><h2>De onde vieram</h2><p>Pelo link de campanha (utm_source) ou pelo site anterior.</p></div></div>
+              {!s.origens?.length ? (
+                <div className="corpo"><span className="texto-suave">Ainda sem visitas com origem registrada. A contagem por origem começou em 19/11/2026.</span></div>
+              ) : (
+                <div className="tabela-rolagem">
+                  <table className="tabela">
+                    <thead><tr><th>Origem</th><th>Visitas</th><th>Clicaram em Baixar</th></tr></thead>
+                    <tbody>
+                      {s.origens.map((o) => (
+                        <tr key={`${o.origem}|${o.meio ?? ''}`}>
+                          <td>{nomeOrigem(o)}</td>
+                          <td>{numero(o.visitas)}</td>
+                          <td><strong>{numero(o.baixar)}</strong> <span className="texto-suave">({pct(o.baixar, o.visitas)})</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
             <section className="cartao">
               <div className="titulo"><div><h2>Páginas mais vistas</h2><p>No período escolhido.</p></div></div>
               <div className="corpo">
@@ -120,6 +150,7 @@ export default function SiteEDownloads() {
                 </p>
               </div>
             </section>
+            </div>
           </div>
         </>
       )}
