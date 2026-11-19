@@ -251,6 +251,7 @@ class _CartaoSolicitacaoState extends ConsumerState<_CartaoSolicitacao> {
             icone: Symbols.payments_rounded,
             texto: [
               if (p.precoInformado == null) 'Preço combinado no local' else 'Seu preço: a partir de ${reais(p.precoInformado)}',
+              if (p.deslocamento > 0) '+ ${reais(p.deslocamento)} de deslocamento',
               if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
               if (p.taxaForaHorario > 0) '+ ${reais(p.taxaForaHorario)} fora do horário comercial',
             ].join(' '),

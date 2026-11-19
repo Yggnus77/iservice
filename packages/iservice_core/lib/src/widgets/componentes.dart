@@ -295,13 +295,13 @@ class CartaoProfissional extends StatelessWidget {
             if (preco != null)
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text('em média', style: t.bodySmall?.copyWith(fontSize: 11)),
-                Text(reais(preco!.preco), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
+                Text(reais(preco!.preco + (preco!.cobranca == Cobranca.hora ? 0 : Deslocamento.valor(p.distanciaKm))), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
                 Text(preco!.cobranca.unidade, style: t.bodySmall?.copyWith(fontSize: 11)),
               ])
             else if (p.precoAPartir != null)
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text('a partir de', style: t.bodySmall?.copyWith(fontSize: 11)),
-                Text(reais(p.precoAPartir), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
+                Text(reais(p.precoAPartir! + Deslocamento.valor(p.distanciaKm)), style: t.titleSmall?.copyWith(color: c.acaoTexto)),
               ]),
           ]),
         ),

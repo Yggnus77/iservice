@@ -10,7 +10,7 @@ import { dataHora } from '@/lib/formatos';
 type Config = { chave: string; valor: unknown; descricao: string | null; atualizado_em: string };
 
 // Chaves que mudam regras sensíveis ficam marcadas para a equipe pensar duas vezes.
-const sensiveis = new Set(['cobranca_ativa', 'prazo_resposta_min', 'dias_garantia', 'dias_exclusao_conta', 'acrescimo_fora_horario', 'horario_comercial', 'piso_preco_percentual']);
+const sensiveis = new Set(['cobranca_ativa', 'prazo_resposta_min', 'dias_garantia', 'dias_exclusao_conta', 'acrescimo_fora_horario', 'horario_comercial', 'piso_preco_percentual', 'deslocamento_base', 'deslocamento_por_km', 'taxa_servico', 'taxa_servico_ativa']);
 
 function Linha({ c, salvo }: { c: Config; salvo: () => void }) {
   const original = JSON.stringify(c.valor);

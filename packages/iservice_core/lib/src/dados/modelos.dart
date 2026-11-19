@@ -590,6 +590,8 @@ class Pedido {
     required this.enderecoTexto,
     required this.taxaUrgencia,
     this.taxaForaHorario = 0,
+    this.deslocamento = 0,
+    this.taxaServico = 0,
     required this.responderAte,
     required this.criadoEm,
     this.janela,
@@ -626,6 +628,15 @@ class Pedido {
 
   /// Acréscimo da plataforma para serviço fora do horário comercial (0 quando não há).
   final double taxaForaHorario;
+
+  /// Deslocamento pela distância, somado ao preço (o cliente vê um valor só).
+  final double deslocamento;
+
+  /// Taxa de serviço do cliente (0 enquanto o pagamento pelo app não estiver ligado).
+  final double taxaServico;
+
+  /// Preço do profissional já com o deslocamento (o que o cliente vê).
+  double? get precoComDeslocamento => precoInformado == null ? null : precoInformado! + deslocamento;
   final double? valorCobrado;
   final DateTime responderAte;
   final DateTime criadoEm;
@@ -694,6 +705,8 @@ class Pedido {
         precoInformado: _dn(j['preco_informado']),
         taxaUrgencia: _d(j['taxa_urgencia']),
         taxaForaHorario: _d(j['taxa_fora_horario']),
+        deslocamento: _d(j['deslocamento']),
+        taxaServico: _d(j['taxa_servico']),
         valorCobrado: _dn(j['valor_cobrado']),
         responderAte: DateTime.parse(j['responder_ate']),
         criadoEm: DateTime.parse(j['criado_em']),
@@ -722,6 +735,8 @@ class Pedido {
         precoInformado: _dn(j['preco_informado']),
         taxaUrgencia: _d(j['taxa_urgencia']),
         taxaForaHorario: _d(j['taxa_fora_horario']),
+        deslocamento: _d(j['deslocamento']),
+        taxaServico: _d(j['taxa_servico']),
         valorCobrado: _dn(j['valor_cobrado']),
         responderAte: DateTime.parse(j['responder_ate']),
         criadoEm: DateTime.parse(j['criado_em']),
@@ -845,5 +860,34 @@ class ResumoGanhos {
         porDia: [for (final d in (j['por_dia'] as List? ?? const [])) (DateTime.parse(d['dia']), _d(d['valor']))],
         ano: _d(j['ano']),
         limiteMei: _d(j['limite_mei']),
+      );
+}
+
+
+/// Cobrança de um pedido pelo app (Asaas). Só existe com o pagamento pelo app ligado.
+class PagamentoPedido {
+  const PagamentoPedido({required this.id, required this.tipo, required this.status, required this.valor,
+      this.pixCopiaCola, this.linkPagamento, this.venceEm});
+  final String id;
+  final String tipo;
+
+  /// criando, aguardando, pago, a_liberar, liberado, estornado, cancelado, falhou.
+  final String status;
+  final double valor;
+  final String? pixCopiaCola;
+  final String? linkPagamento;
+  final DateTime? venceEm;
+
+  bool get aguardando => status == 'criando' || status == 'aguardando' || status == 'falhou';
+  bool get pago => status == 'pago' || status == 'a_liberar' || status == 'liberado';
+
+  factory PagamentoPedido.fromJson(Map<String, dynamic> j) => PagamentoPedido(
+        id: j['id'],
+        tipo: j['tipo'] ?? 'principal',
+        status: j['status'] ?? 'criando',
+        valor: _d(j['valor']),
+        pixCopiaCola: j['pix_copia_cola'],
+        linkPagamento: j['link_pagamento'],
+        venceEm: _data(j['vence_em']),
       );
 }

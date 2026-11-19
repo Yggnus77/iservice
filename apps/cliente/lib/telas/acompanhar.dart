@@ -216,6 +216,8 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             ),
           ),
         ],
+        for (final g in ref.watch(pagamentosDoPedidoProvider(p.id)).value ?? const <PagamentoPedido>[])
+          if (g.aguardando && p.status != StatusPedido.cancelado) ...[const SizedBox(height: 16), _CartaoPagar(g: g)],
         if (p.status == StatusPedido.aCaminho) ...[
           const SizedBox(height: 16),
           MapaAoVivo(pedidoId: p.id, nomeProfissional: nome, fotoProfissional: p.outraParteFoto),
@@ -257,9 +259,10 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         _Linha(Symbols.schedule_rounded, 'Quando', p.quandoTexto),
         _Linha(Symbols.location_on_rounded, 'Onde', p.enderecoTexto),
         if (p.descricao.isNotEmpty) _Linha(Symbols.description_rounded, 'Descrição', p.descricao),
-        if (p.precoInformado != null) _Linha(Symbols.sell_rounded, 'Preço informado', 'a partir de ${reais(p.precoInformado)}'),
+        if (p.precoInformado != null) _Linha(Symbols.sell_rounded, 'Preço informado', 'a partir de ${reais(p.precoComDeslocamento)}'),
         if (p.taxaUrgencia > 0) _Linha(Symbols.bolt_rounded, 'Taxa de urgência', reais(p.taxaUrgencia)),
         if (p.taxaForaHorario > 0) _Linha(Symbols.nights_stay_rounded, 'Fora do horário comercial', '+ ${reais(p.taxaForaHorario)}'),
+        if (p.taxaServico > 0) _Linha(Symbols.receipt_long_rounded, 'Taxa de serviço', '+ ${reais(p.taxaServico)}'),
         if (p.valorCobrado != null) _Linha(Symbols.payments_rounded, 'Valor cobrado', reais(p.valorCobrado)),
         const SizedBox(height: 16),
         if (ativo) ...[
@@ -442,3 +445,59 @@ String _rotuloEtapa(StatusPedido s) => switch (s) {
       StatusPedido.emAtendimento => 'Em serviço',
       _ => s.rotulo,
     };
+
+
+/// Cobrança pelo app: Pix copia e cola ou a página do Asaas (cartão).
+class _CartaoPagar extends StatelessWidget {
+  const _CartaoPagar({required this.g});
+  final PagamentoPedido g;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    final pronto = g.status == 'aguardando';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Icon(Symbols.payments_rounded, color: c.acaoTexto),
+            const SizedBox(width: 10),
+            Expanded(child: Text(g.tipo == 'complemento' ? 'Pague a diferença do valor final' : 'Pague para confirmar', style: t.titleMedium)),
+            Text(reais(g.valor), style: t.titleMedium?.copyWith(color: c.acaoTexto)),
+          ]),
+          const SizedBox(height: 6),
+          Text(
+            g.tipo == 'complemento'
+                ? 'O valor final ficou acima do combinado. Pague a diferença pelo app.'
+                : 'O valor fica guardado com o iService e só vai para o profissional depois do serviço concluído. Se o pedido for cancelado, você recebe de volta.',
+            style: t.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          if (!pronto)
+            const Carregando()
+          else ...[
+            if (g.pixCopiaCola != null)
+              BotaoPrincipal(
+                rotulo: 'Copiar código Pix',
+                icone: Symbols.content_copy_rounded,
+                aoTocar: () async {
+                  await Clipboard.setData(ClipboardData(text: g.pixCopiaCola!));
+                  if (context.mounted) mostrarMensagem(context, 'Código Pix copiado. Cole no app do seu banco.');
+                },
+              ),
+            if (g.linkPagamento != null) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => launchUrl(Uri.parse(g.linkPagamento!), mode: LaunchMode.externalApplication),
+                icon: const Icon(Symbols.credit_card_rounded),
+                label: const Text('Pagar com cartão'),
+              ),
+            ],
+          ],
+        ]),
+      ),
+    );
+  }
+}

@@ -94,6 +94,10 @@ final precoMinimoProvider = FutureProvider.autoDispose.family<double?, (int, Str
     (ref, k) => ref.read(catalogoRepo).precoMinimo(k.$1, k.$2, k.$3));
 
 /// Acréscimo fora do horário comercial para (preço, momento do serviço).
+final pagamentosDoPedidoProvider = StreamProvider.autoDispose.family<List<PagamentoPedido>, String>(
+    (ref, pedidoId) => ref.read(pedidosRepo).pagamentos(pedidoId));
+final deslocamentoPrevistoProvider = FutureProvider.autoDispose.family<double, (String, int)>(
+    (ref, k) => ref.read(catalogoRepo).deslocamentoPrevisto(k.$1, k.$2));
 final taxaForaHorarioProvider = FutureProvider.autoDispose.family<double, (double?, DateTime)>(
     (ref, k) => ref.read(catalogoRepo).taxaForaHorario(k.$1, k.$2));
 

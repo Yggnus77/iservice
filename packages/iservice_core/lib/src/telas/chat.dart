@@ -34,6 +34,17 @@ class _TelaChatState extends ConsumerState<TelaChat> {
   Future<void> _enviar([String? pronta]) async {
     final t = (pronta ?? _texto.text).trim();
     if (t.isEmpty || _enviando) return;
+    if (temContato(t)) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Contatos ficam na plataforma'),
+          content: const Text(avisoContatoOculto),
+          actions: [FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendi, vou editar'))],
+        ),
+      );
+      return;
+    }
     setState(() => _enviando = true);
     try {
       await ref.read(chatRepo).enviar(widget.pedidoId, t);
