@@ -1,20 +1,22 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
-  ArrowRightLeft, BriefcaseBusiness, Camera, Copy, Crown, Headset, Hourglass, KeyRound, Loader2, Mail, MailCheck, Megaphone, MessageCircle,
-  ShieldCheck, ShieldUser, Trash2, UserCog, UserPlus, UsersRound,
+  ArrowRightLeft, BriefcaseBusiness, Camera, Copy, Crown, Eye, EyeOff, Headset, Hourglass, KeyRound, Loader2, Mail, MailCheck, Megaphone, MessageCircle,
+  Send, ShieldCheck, ShieldUser, Trash2, UserCog, UserPen, UserPlus, UsersRound, WandSparkles,
 } from 'lucide-react';
 import { Cabecalho, usePainel, type Cargo } from '@/components/Painel';
 import { DialogoFoto } from '@/components/FotoPerfil';
 import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
-import { rpc } from '@/lib/supabase';
-import { data, haQuanto, type Tom } from '@/lib/formatos';
+import { db, rpc } from '@/lib/supabase';
+import { data, dataHora, haQuanto, telefone as formatarTelefone, type Tom } from '@/lib/formatos';
 
 type Membro = {
   email: string; nome: string; papel: Cargo; cargo_nome?: string; usuario_id: string | null; foto_url: string | null;
   situacao: 'ativo' | 'convite_pendente'; convidado_por: string | null; convidado_em: string; entrou_em: string | null;
   ultimo_acesso: string | null; voce: boolean; pode_gerir?: boolean; pode_foto?: boolean;
+  // Do SQL de dados da equipe (sem ele, o botão Dados não aparece).
+  pode_editar?: boolean; email_login?: string | null; senha_alterada_em?: string | null; telefone?: string | null;
 };
 
 /** Os cargos, na ordem em que aparecem. O que cada um pode fazer é conferido também no banco. */
@@ -86,6 +88,128 @@ function Compartilhar({ m }: { m: { nome: string; email: string; situacao: Membr
   );
 }
 
+const senhaBoa = (s: string) => s.length >= 8 && s.length <= 72 && /[A-Za-z]/.test(s) && /\d/.test(s);
+
+/** Senha provisória fácil de ditar: 3 letras maiúsculas, 3 minúsculas e 4 números, sem letras parecidas. */
+function gerarSenha() {
+  const pegar = (conjunto: string, n: number) => {
+    const v = new Uint32Array(n);
+    crypto.getRandomValues(v);
+    return Array.from(v, (x) => conjunto[x % conjunto.length]).join('');
+  };
+  return pegar('ABCDEFGHJKMNPQRSTUVWXYZ', 3) + pegar('abcdefghjkmnpqrstuvwxyz', 3) + pegar('23456789', 4);
+}
+
+/** Dados de acesso de uma pessoa da equipe: nome, e-mail, cargo e senha nova. */
+function DialogoDados({ m, fechar, salvo }: { m: Membro | null; fechar: () => void; salvo: (mudouMeuEmail: boolean, fechar: boolean) => void }) {
+  const { executar, ocupado } = useAcao();
+  const avisar = useAviso();
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [verSenha, setVerSenha] = useState(false);
+  const [senhaFeita, setSenhaFeita] = useState<string | null>(null);
+  useEffect(() => {
+    if (!m) return;
+    setNome(m.nome); setEmail(m.email); setSenha(''); setVerSenha(false); setSenhaFeita(null);
+  }, [m]);
+  if (!m) return null;
+  const temConta = !!m.usuario_id && m.situacao === 'ativo';
+  const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+  const mudou = nome.trim() !== m.nome || email.trim().toLowerCase() !== m.email;
+  const primeiro = m.nome.trim().split(/\s+/)[0];
+
+  const salvarDados = async () => {
+    const novo = email.trim().toLowerCase();
+    if (novo !== m.email && !window.confirm(
+      `${m.voce ? 'Você vai' : `${primeiro} vai`} passar a entrar com ${novo}. A senha continua a mesma. Confirmar?`)) return;
+    const ok = await executar(() => rpc('admin_editar_membro', { p_email: m.email, p_nome: nome.trim(), p_novo_email: novo }), 'Dados salvos.');
+    if (ok) salvo(m.voce && novo !== m.email, true);
+  };
+  const salvarSenha = async () => {
+    const ok = await executar(() => rpc('admin_definir_senha_membro', { p_email: m.email, p_senha: senha }));
+    if (ok) { setSenhaFeita(senha); setSenha(''); salvo(false, false); }
+  };
+  const enviarLink = async () => {
+    const { error } = await db().auth.resetPasswordForEmail(m.email, { redirectTo: `${window.location.origin}/admin/` });
+    if (error) avisar('Não foi possível enviar agora. Tente de novo em alguns minutos.', true);
+    else avisar(`Enviamos para ${m.email} o link para criar uma senha nova.`);
+  };
+  const copiarSenha = async () => {
+    if (!senhaFeita) return;
+    const texto = `Sua senha do painel iService foi trocada.\n\nEntre em ${ENDERECO} com o e-mail ${m.email} e a senha provisória: ${senhaFeita}\n\nDepois, troque por uma senha sua em "Esqueci minha senha".`;
+    try { await navigator.clipboard.writeText(texto); avisar('Mensagem copiada.'); } catch { avisar('Não foi possível copiar.', true); }
+  };
+
+  return (
+    <Dialogo aberto fechar={fechar} largo icone={<UserPen />} titulo={m.voce ? 'Seus dados de acesso' : `Dados de acesso de ${primeiro}`}
+      texto="Corrija o nome e o e-mail de login, ou defina uma senha nova. Tudo fica no Registro da equipe."
+      rodape={<button className="botao contorno" onClick={fechar}>Fechar</button>}>
+      <dl className="dados" style={{ marginBottom: 16 }}>
+        <div><dt>Cargo</dt><dd><SeloCargo papel={m.papel} /></dd></div>
+        <div><dt>Situação</dt><dd>{temConta ? 'Com acesso' : 'Aguardando primeiro acesso'}</dd></div>
+        <div><dt>Último acesso</dt><dd>{m.ultimo_acesso ? dataHora(m.ultimo_acesso) : 'Nunca'}</dd></div>
+        <div><dt>Celular</dt><dd>{m.telefone ? formatarTelefone(m.telefone) : '—'}</dd></div>
+      </dl>
+
+      <form style={{ display: 'flex', flexDirection: 'column', gap: 14 }} onSubmit={(e) => { e.preventDefault(); if (mudou && emailOk && nome.trim().length >= 2) salvarDados(); }}>
+        <div className="campo">
+          <label htmlFor="dados-nome">Nome</label>
+          <input id="dados-nome" className="entrada" maxLength={80} value={nome} onChange={(e) => setNome(e.target.value)} />
+        </div>
+        <div className="campo">
+          <label htmlFor="dados-email">E-mail de login</label>
+          <input id="dados-email" className="entrada" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span className="ajuda">{temConta ? 'É com este e-mail que a pessoa entra no painel e no app.' : 'O convite vale para este e-mail.'}</span>
+        </div>
+        <div className="linha-flex" style={{ justifyContent: 'flex-end' }}>
+          <button type="submit" className="botao primario" disabled={ocupado || !mudou || !emailOk || nome.trim().length < 2}>
+            {ocupado ? <Loader2 className="girar" /> : <UserPen />} Salvar nome e e-mail
+          </button>
+        </div>
+      </form>
+
+      <div className="separador" style={{ margin: '18px 0' }} />
+      <div className="campo">
+        <span className="rotulo">Senha</span>
+        <div className="alerta-faixa azul" style={{ margin: '0 0 10px' }}>
+          <KeyRound />
+          <div>A senha fica guardada criptografada: ninguém consegue ver, nem o dono. Para resolver um esquecimento, defina uma senha nova
+            {m.voce ? '' : ' e passe para a pessoa'}, ou mande o link para ela criar a própria.
+            {m.senha_alterada_em ? <> Última troca pelo painel: {dataHora(m.senha_alterada_em)}.</> : null}</div>
+        </div>
+        {!temConta ? <p className="texto-fraco">A pessoa ainda não criou a conta. Use “Reenviar” para mandar as instruções do primeiro acesso.</p> : senhaFeita ? (
+          <div className="alerta-faixa verde" style={{ margin: 0 }}>
+            <ShieldCheck />
+            <div><strong>Senha nova salva: <span className="mono">{senhaFeita}</span></strong>
+              {m.voce ? 'Use esta senha da próxima vez que entrar.' : `${primeiro} já pode entrar com ela. As sessões abertas foram encerradas.`}
+              {!m.voce ? <div style={{ marginTop: 8 }}><button className="botao contorno pequeno" onClick={copiarSenha}><Copy /> Copiar mensagem para {primeiro}</button></div> : null}
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={(e) => { e.preventDefault(); if (senhaBoa(senha)) salvarSenha(); }}>
+            <div className="linha-flex" style={{ gap: 8, alignItems: 'stretch' }}>
+              <input className="entrada" style={{ flex: 1, minWidth: 180 }} type={verSenha ? 'text' : 'password'} autoComplete="new-password"
+                placeholder="Senha nova" value={senha} onChange={(e) => setSenha(e.target.value)} aria-label="Senha nova" maxLength={72} />
+              <button type="button" className="botao contorno" onClick={() => setVerSenha((v) => !v)} aria-label={verSenha ? 'Esconder senha' : 'Mostrar senha'}>
+                {verSenha ? <EyeOff /> : <Eye />}
+              </button>
+              <button type="button" className="botao contorno" onClick={() => { setSenha(gerarSenha()); setVerSenha(true); }}><WandSparkles /> Gerar</button>
+            </div>
+            <span className="ajuda">Pelo menos 8 caracteres, com letras e números.</span>
+            <div className="linha-flex" style={{ marginTop: 12, justifyContent: 'flex-end' }}>
+              <button type="button" className="botao contorno" disabled={ocupado} onClick={enviarLink}><Send /> Enviar link por e-mail</button>
+              <button type="submit" className="botao primario" disabled={ocupado || !senhaBoa(senha)}>
+                {ocupado ? <Loader2 className="girar" /> : <KeyRound />} Salvar senha nova
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </Dialogo>
+  );
+}
+
 export default function Equipe() {
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Membro[]>('admin_equipe'), []);
   const { executar, ocupado } = useAcao();
@@ -96,6 +220,7 @@ export default function Equipe() {
   const [enviar, setEnviar] = useState<{ nome: string; email: string; situacao: Membro['situacao']; papel?: Cargo; novo?: boolean } | null>(null);
   const [remover, setRemover] = useState<Membro | null>(null);
   const [foto, setFoto] = useState<Membro | null>(null);
+  const [editar, setEditar] = useState<Membro | null>(null);
   const [mudar, setMudar] = useState<Membro | null>(null);
   const [cargoMudar, setCargoMudar] = useState<Cargo>('suporte');
   const [passarDono, setPassarDono] = useState(false);
@@ -108,6 +233,7 @@ export default function Equipe() {
   // A própria foto sempre; a de um colega conforme o cargo (o banco confere de novo).
   const podeFoto = (m: Membro) => !!m.usuario_id && (m.voce || (m.pode_foto ?? (m.papel !== 'dono' && m.situacao === 'ativo')));
   const podeGerir = (m: Membro) => !m.voce && (m.pode_gerir ?? m.papel !== 'dono');
+  const podeEditar = (m: Membro) => !!m.pode_editar;
   const candidatosDono = dados?.filter((m) => !m.voce && m.situacao === 'ativo') ?? [];
 
   const ativos = dados?.filter((m) => m.situacao === 'ativo').length ?? 0;
@@ -151,7 +277,7 @@ export default function Equipe() {
 
   return (
     <>
-      <Cabecalho ajuda={<>Quem da equipe tem acesso ao painel e com qual cargo. Cada cargo vê só o que precisa (o Suporte não vê documentos, o Marketing não vê dados pessoais). Convide pelo e-mail: a pessoa cria a senha no primeiro acesso.</>} titulo="Equipe"
+      <Cabecalho ajuda={<>Quem da equipe tem acesso ao painel e com qual cargo. Cada cargo vê só o que precisa (o Suporte não vê documentos, o Marketing não vê dados pessoais). Convide pelo e-mail: a pessoa cria a senha no primeiro acesso. Em <strong>Dados</strong> você vê e corrige nome, e-mail e cargo, e define uma senha nova (a atual ninguém vê, ela fica criptografada).</>} titulo="Equipe"
         texto={meuCargo === 'responsavel' ? 'O seu time de Atendimento. Cada pessoa tem o próprio login e o acesso do próprio cargo.'
           : 'Cada pessoa tem o próprio login e vê só o que o cargo dela permite.'}
         acoes={<>
@@ -190,6 +316,12 @@ export default function Equipe() {
                         <td className="fraco" style={{ whiteSpace: 'nowrap' }}>{m.ultimo_acesso ? haQuanto(m.ultimo_acesso) : 'Nunca'}</td>
                         <td>
                           <div className="linha-flex" style={{ gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap', maxWidth: 300, marginLeft: 'auto' }}>
+                            {podeEditar(m) ? (
+                              <button className="botao contorno pequeno" onClick={() => setEditar(m)} title="Nome, e-mail e senha"
+                                aria-label={m.voce ? 'Seus dados de acesso' : `Dados de acesso de ${m.nome}`}>
+                                <UserPen /> Dados
+                              </button>
+                            ) : null}
                             {podeFoto(m) ? (
                               <button className="botao contorno pequeno" onClick={() => setFoto(m)}
                                 title={m.voce ? 'Sua foto de perfil' : `Foto de perfil de ${m.nome}`} aria-label={m.voce ? 'Trocar sua foto de perfil' : `Trocar a foto de ${m.nome}`}>
@@ -314,6 +446,13 @@ export default function Equipe() {
           </div>
         ) : <p className="texto-fraco">Só dá para passar para alguém da equipe que já fez o primeiro acesso.</p>}
       </Dialogo>
+
+      <DialogoDados m={editar} fechar={() => setEditar(null)}
+        salvo={(mudouMeuEmail, fecharDialogo) => {
+          if (mudouMeuEmail) { window.alert('Seu e-mail de login mudou. Entre de novo com o e-mail novo.'); db().auth.signOut().finally(() => window.location.reload()); return; }
+          if (fecharDialogo) setEditar(null);
+          recarregar();
+        }} />
 
       <DialogoFoto
         pessoa={foto?.usuario_id ? { id: foto.usuario_id, nome: foto.nome, foto: foto.voce ? painel.foto : foto.foto_url } : null}
