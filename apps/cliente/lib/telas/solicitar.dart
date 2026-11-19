@@ -144,6 +144,10 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
         final regiao = (ref.watch(regioesProvider).value ?? const <Regiao>[]).where((r) => r.id == endereco?.regiaoId).firstOrNull;
         // Acréscimo da plataforma fora do horário comercial, calculado pelo banco para o momento do serviço.
         final momento = _momentoDoServico(quando);
+        // Deslocamento pela distância até o endereço: entra no preço, num valor só.
+        final desloc = endereco == null ? 0.0 : ref.watch(deslocamentoPrevistoProvider((p.id, endereco.id))).value ?? 0.0;
+        final porHora = esp?.cobranca == Cobranca.hora;
+        final precoMostrado = esp?.preco == null ? null : esp!.preco! + (porHora ? 0 : desloc);
         final foraHorario = esp?.preco == null || momento == null
             ? 0.0
             : ref.watch(taxaForaHorarioProvider((esp!.preco, momento))).value ?? 0.0;
@@ -255,17 +259,23 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
-                  _Linha('Preço de ${primeiroNome(p.nome)}', esp?.preco == null ? 'Combinado no local' : 'em média ${reais(esp!.preco)} ${esp.cobranca.unidade}'),
+                  _Linha('Preço de ${primeiroNome(p.nome)}', precoMostrado == null
+                      ? 'Combinado no local'
+                      : porHora
+                          ? '${reais(esp!.preco! + desloc)} na 1ª hora, depois ${reais(esp.preco)} por hora'
+                          : 'em média ${reais(precoMostrado)} ${esp!.cobranca.unidade}'),
                   if (faixa != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 2, bottom: 4),
                       child: Text(
-                        'Comum ${regiao == null ? 'na região' : 'em ${regiao.nome}'}: ${faixaReais(faixa.minimo, faixa.maximo)} ${esp!.cobranca.unidade}',
+                        'Comum ${regiao == null ? 'na região' : 'em ${regiao.nome}'}: ${porHora ? faixaReais(faixa.minimo, faixa.maximo) : faixaReais(faixa.minimo + desloc, faixa.maximo + desloc)} ${esp!.cobranca.unidade}',
                         style: t.bodySmall,
                       ),
                     ),
                   if (quando == QuandoPedido.agora) _Linha('Taxa de urgência', reais(taxa)),
                   if (foraHorario > 0) _Linha('Fora do horário comercial', '+ ${reais(foraHorario)}'),
+                  if (precoMostrado != null && Deslocamento.taxaServicoAtiva)
+                    _Linha('Taxa de serviço', reais(Deslocamento.taxaSobre(esp!.preco! + desloc + (quando == QuandoPedido.agora ? taxa : 0) + foraHorario))),
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -278,7 +288,7 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
                   Row(children: [
                     Icon(Symbols.payments_rounded, size: 18, color: c.textoSuave),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Você paga direto ao profissional, depois do serviço.', style: t.bodySmall)),
+                    Expanded(child: Text(Deslocamento.taxaServicoAtiva ? 'Você paga pelo app. O valor só vai para o profissional depois do serviço concluído.' : 'Você paga direto ao profissional, depois do serviço.', style: t.bodySmall)),
                   ]),
                 ]),
               ),

@@ -78,7 +78,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _FolhaConcluir(sugestao: p.precoInformado == null ? null : p.precoInformado! + p.taxaUrgencia + p.taxaForaHorario),
+      builder: (_) => _FolhaConcluir(sugestao: p.precoInformado == null ? null : p.precoInformado! + p.deslocamento + p.taxaUrgencia + p.taxaForaHorario),
     );
     if (r == null) return;
     var ok = false;
@@ -229,6 +229,7 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
                     ? 'Cobrado: ${reais(p.valorCobrado)}'
                     : [
                         if (p.precoInformado == null) 'Preço combinado no local' else 'A partir de ${reais(p.precoInformado)}',
+                        if (p.deslocamento > 0) '+ ${reais(p.deslocamento)} de deslocamento',
                         if (p.taxaUrgencia > 0) '+ ${reais(p.taxaUrgencia)} de urgência',
                         if (p.taxaForaHorario > 0) '+ ${reais(p.taxaForaHorario)} fora do horário comercial',
                       ].join(' '),

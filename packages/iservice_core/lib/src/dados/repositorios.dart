@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
+import '../util/formatos.dart';
 import 'modelos.dart';
 
 /// Erro já com a mensagem pronta para mostrar ao usuário.
@@ -113,7 +114,9 @@ class CatalogoRepo {
 
   Future<Map<String, dynamic>> config() => _tentar(() async {
         final linhas = await _db.from('app_config').select('chave, valor');
-        return {for (final l in linhas) l['chave'] as String: l['valor']};
+        final config = {for (final l in linhas) l['chave'] as String: l['valor']};
+        Deslocamento.configurar(config);
+        return config;
       });
 
   /// Região mais próxima de um ponto (para quem busca pelo GPS, sem endereço salvo).
@@ -130,6 +133,12 @@ class CatalogoRepo {
   Future<double?> precoMinimo(int especialidadeId, String? regiaoId, [Cobranca cobranca = Cobranca.servico]) => _tentar(() async {
         final r = await _db.rpc('preco_minimo', params: {'p_especialidade': especialidadeId, 'p_regiao': regiaoId, 'p_cobranca': cobranca.valor});
         return (r as num?)?.toDouble();
+      });
+
+  /// Deslocamento previsto do profissional até um endereço do cliente.
+  Future<double> deslocamentoPrevisto(String profissionalId, int enderecoId) => _tentar(() async {
+        final r = await _db.rpc('deslocamento_previsto', params: {'p_profissional': profissionalId, 'p_endereco_id': enderecoId});
+        return (r as num?)?.toDouble() ?? 0.0;
       });
 
   /// Acréscimo fora do horário comercial para um serviço com este preço neste momento (0 no horário comercial).
@@ -465,6 +474,13 @@ class PedidosRepo {
       .eq('id', base.id)
       .where((l) => l.isNotEmpty)
       .map((l) => Pedido.daTabela(l.first, base: base));
+
+  /// Cobranças do pedido pelo app, em tempo real (lista vazia com o pagamento desligado).
+  Stream<List<PagamentoPedido>> pagamentos(String pedidoId) => _db
+      .from('pagamentos')
+      .stream(primaryKey: ['id'])
+      .eq('pedido_id', pedidoId)
+      .map((l) => l.map(PagamentoPedido.fromJson).toList());
 
   /// Posição do profissional a caminho (some quando ele chega).
   Stream<PosicaoAoVivo?> posicaoAoVivo(String pedidoId) => _db

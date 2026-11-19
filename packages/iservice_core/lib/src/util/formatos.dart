@@ -137,3 +137,51 @@ String textoAcrescimoForaHorario(Map<String, dynamic> config) {
   final p = pct == pct.roundToDouble() ? pct.toStringAsFixed(0) : pct.toStringAsFixed(1).replaceAll('.', ',');
   return 'Fora do horário comercial ($horario), em domingos e feriados, a plataforma acrescenta $p% ao preço do profissional.';
 }
+
+
+/// Deslocamento somado a todo pedido: parte fixa + valor por km entre o profissional
+/// e o cliente (mesma regra de public.valor_deslocamento). O cliente vê um valor só,
+/// já com o deslocamento. Os números vêm do app_config ao carregar a configuração.
+class Deslocamento {
+  Deslocamento._();
+  static double base = 20;
+  static double porKm = 1.5;
+  static double taxaServico = 0.1;
+  static bool taxaServicoAtiva = false;
+
+  static void configurar(Map<String, dynamic> config) {
+    base = (config['deslocamento_base'] as num?)?.toDouble() ?? base;
+    porKm = (config['deslocamento_por_km'] as num?)?.toDouble() ?? porKm;
+    taxaServico = (config['taxa_servico'] as num?)?.toDouble() ?? taxaServico;
+    taxaServicoAtiva = config['taxa_servico_ativa'] == true;
+  }
+
+  /// Valor do deslocamento para a distância (arredondado a R$ 1).
+  static double valor(double? km) => km == null || km < 0 ? 0 : (base + km * porKm).roundToDouble();
+
+  /// Taxa de serviço do cliente sobre um valor (0 enquanto estiver desligada).
+  static double taxaSobre(double valor) =>
+      !taxaServicoAtiva || valor <= 0 ? 0 : (valor * taxaServico * 100).roundToDouble() / 100;
+}
+
+
+/// O texto tem telefone, e-mail, link, @ de rede social ou Pix/WhatsApp?
+/// Mesma ideia de public.ocultar_contatos (o banco esconde de qualquer jeito;
+/// aqui o app avisa antes de enviar).
+bool temContato(String texto) {
+  final padroes = [
+    RegExp(r'[A-Za-z0-9._%+-]+\s*(@|\(at\)|\[at\])\s*[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+', caseSensitive: false),
+    RegExp(r'(https?://|www\.)\S+', caseSensitive: false),
+    RegExp(r'\b[A-Za-z0-9-]+\.(com|net|org|me|app|io|ly|link|bio|site|online|br)(\.br)?\b', caseSensitive: false),
+    RegExp(r'(^|\s)@[A-Za-z0-9._]{3,}'),
+    RegExp(r'\+?\d([\s().-]*\d){8,}'),
+    RegExp(r'\b(pix|whats\s*app|whats|zap\s*zap|zap|wpp|telegram|instagram|insta|facebook|messenger|signal)\b', caseSensitive: false),
+  ];
+  return padroes.any((r) => r.hasMatch(texto));
+}
+
+/// Texto do aviso mostrado quando alguém tenta passar um contato.
+const avisoContatoOculto =
+    'Por segurança, não é permitido trocar telefone, e-mail, redes sociais ou Pix. '
+    'Tudo é combinado e pago pela plataforma, com garantia do iService. '
+    'Se enviar, esse trecho aparece como "[contato oculto]".';
