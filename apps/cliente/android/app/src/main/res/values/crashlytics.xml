@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Identificador que o Firebase Crashlytics exige no app. Normalmente o
+     plugin do Gradle do Crashlytics gera este valor; aqui ele é fixo para não
+     depender do plugin. Só precisa existir: os erros vêm do código Dart. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/com.crashlytics.android.build_id">
+    <string name="com.crashlytics.android.build_id" translatable="false" tools:ignore="UnusedResources">c05c2a403e3d460e98c21349905da4eb</string>
+</resources>

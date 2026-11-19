@@ -10,6 +10,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR');
   await ConfigIService.iniciar();
+  await iniciarMonitorFalhas(AppIService.cliente);
   runApp(ProviderScope(
     overrides: [appProvider.overrideWithValue(AppIService.cliente)],
     child: const AppCliente(),
