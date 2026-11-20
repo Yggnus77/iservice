@@ -24,6 +24,8 @@ class _TelaGanhosState extends ConsumerState<TelaGanhos> {
   Widget build(BuildContext context) {
     final ganhos = ref.watch(ganhosProvider(_periodo));
     final concluidos = ref.watch(pedidosProProvider('concluidos')).value ?? const <Pedido>[];
+    final receb = ref.watch(recebimentosProvider).value;
+    final pagoPeloApp = receb?.ativo ?? false;
     final t = Theme.of(context).textTheme;
     final c = context.cores;
 
@@ -33,6 +35,7 @@ class _TelaGanhosState extends ConsumerState<TelaGanhos> {
         onRefresh: () async {
           ref.invalidate(ganhosProvider);
           ref.invalidate(pedidosProProvider);
+          ref.invalidate(recebimentosProvider);
         },
         child: ListView(padding: const EdgeInsets.fromLTRB(Medidas.margemTela, 0, Medidas.margemTela, 24), children: [
           SegmentedButton<String>(
@@ -46,6 +49,10 @@ class _TelaGanhosState extends ConsumerState<TelaGanhos> {
             onSelectionChanged: (s) => setState(() => _periodo = s.first),
           ),
           const SizedBox(height: 16),
+          if (receb != null && receb.ativo) ...[
+            _AtalhoRecebimentos(r: receb),
+            const SizedBox(height: 16),
+          ],
           ganhos.when(
             loading: () => const SizedBox(height: 240, child: Carregando()),
             error: (e, _) => ErroNaTela(erro: e, aoTentar: () => ref.invalidate(ganhosProvider)),
@@ -101,9 +108,40 @@ class _TelaGanhosState extends ConsumerState<TelaGanhos> {
           Row(children: [
             Icon(Symbols.info_rounded, size: 16, color: c.textoSuave),
             const SizedBox(width: 6),
-            Expanded(child: Text('Valores informados por você ao concluir. O cliente paga direto a você.', style: t.bodySmall)),
+            Expanded(
+              child: Text(
+                pagoPeloApp
+                    ? 'Valores dos serviços concluídos. O cliente paga pelo app e o seu valor cai em Recebimentos.'
+                    : 'Valores informados por você ao concluir.',
+                style: t.bodySmall,
+              ),
+            ),
           ]),
         ]),
+      ),
+    );
+  }
+}
+
+/// Atalho para a tela Recebimentos, com o que falta fazer na conta.
+class _AtalhoRecebimentos extends StatelessWidget {
+  const _AtalhoRecebimentos({required this.r});
+  final Recebimentos r;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final c = context.cores;
+    final pendente = !r.contaAprovada;
+    return Card(
+      child: ListTile(
+        leading: Icon(pendente ? Symbols.error_rounded : Symbols.account_balance_wallet_rounded,
+            color: pendente ? c.alerta : c.acaoTexto, fill: 1),
+        title: Text('Recebimentos', style: t.titleSmall),
+        subtitle: Text(pendente ? 'Ative a sua conta para receber pelos serviços' : '${reais(r.aReceber)} a receber',
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: const Icon(Symbols.chevron_right_rounded),
+        onTap: () => context.push('/recebimentos'),
       ),
     );
   }

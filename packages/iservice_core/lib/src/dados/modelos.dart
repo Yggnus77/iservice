@@ -896,3 +896,83 @@ class PagamentoPedido {
         venceEm: _data(j['vence_em']),
       );
 }
+
+/// Recebimentos do profissional pelo app: conta no Asaas, valores e repasses.
+class Recebimentos {
+  const Recebimentos({
+    required this.ativo,
+    required this.taxaServicoPct,
+    this.contaStatus,
+    this.contaSituacao,
+    this.linkDocumentos,
+    required this.aReceber,
+    required this.aguardandoCliente,
+    required this.recebidoMes,
+    required this.itens,
+  });
+
+  /// Pagamento pelo app ligado.
+  final bool ativo;
+  final int taxaServicoPct;
+
+  /// pendente, ativa ou falhou (criação da conta no Asaas). Nulo: ainda não existe.
+  final String? contaStatus;
+
+  /// aguardando_ativacao, em_analise, aprovada ou recusada (documentos no Asaas).
+  final String? contaSituacao;
+  final String? linkDocumentos;
+  final double aReceber;
+  final double aguardandoCliente;
+  final double recebidoMes;
+  final List<Recebimento> itens;
+
+  bool get contaAprovada => contaStatus == 'ativa' && contaSituacao == 'aprovada';
+
+  factory Recebimentos.fromJson(Map<String, dynamic> j) {
+    final conta = j['conta'] as Map<String, dynamic>?;
+    return Recebimentos(
+      ativo: j['ativo'] == true,
+      taxaServicoPct: (j['taxa_servico_pct'] as num?)?.toInt() ?? 10,
+      contaStatus: conta?['status'],
+      contaSituacao: conta?['situacao'],
+      linkDocumentos: conta?['link_documentos'],
+      aReceber: _d(j['a_receber']),
+      aguardandoCliente: _d(j['aguardando_cliente']),
+      recebidoMes: _d(j['recebido_mes']),
+      itens: [for (final i in (j['itens'] as List? ?? const [])) Recebimento.fromJson(i as Map<String, dynamic>)],
+    );
+  }
+}
+
+class Recebimento {
+  const Recebimento({required this.pedidoId, required this.status, required this.valor, required this.data,
+      this.servico, this.cliente, required this.complemento});
+  final String pedidoId;
+
+  /// aguardando, pago, a_liberar, liberado, estornado, cancelado, falhou.
+  final String status;
+  final double valor;
+  final DateTime data;
+  final String? servico;
+  final String? cliente;
+  final bool complemento;
+
+  String get rotulo => switch (status) {
+        'aguardando' || 'falhou' => 'Aguardando o cliente',
+        'pago' => 'Pago, liberado ao concluir',
+        'a_liberar' => 'Liberando para você',
+        'liberado' => 'Na sua conta',
+        'estornado' => 'Devolvido ao cliente',
+        _ => 'Cancelado',
+      };
+
+  factory Recebimento.fromJson(Map<String, dynamic> j) => Recebimento(
+        pedidoId: j['pedido_id'],
+        status: j['status'] ?? 'aguardando',
+        valor: _d(j['valor']),
+        data: DateTime.parse(j['data']),
+        servico: j['servico'],
+        cliente: j['cliente'],
+        complemento: j['tipo'] == 'complemento',
+      );
+}

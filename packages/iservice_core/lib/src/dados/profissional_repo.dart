@@ -190,6 +190,9 @@ class ProfissionalRepo {
         return ResumoGanhos.fromJson(r as Map<String, dynamic>);
       });
 
+  Future<Recebimentos> recebimentos() =>
+      _t(() async => Recebimentos.fromJson(await _db.rpc('meus_recebimentos') as Map<String, dynamic>));
+
   Future<void> responderAvaliacao(String pedidoId, String resposta) =>
       _t(() => _db.from('avaliacoes').update({'resposta': resposta}).eq('pedido_id', pedidoId));
 }
