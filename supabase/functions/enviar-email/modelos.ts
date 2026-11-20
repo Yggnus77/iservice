@@ -210,7 +210,7 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
           { texto: "Envie o cadastro para análise. Avisamos por e-mail assim que for aprovado.", estado: "proximo" },
         ],
         botao: { texto: "Completar meu cadastro", link: urlApp("profissional") },
-        nota: "Neste início, o iService é grátis para profissionais.",
+        nota: "O cadastro é grátis e sem mensalidade. Você recebe 100% do preço que definir.",
       }
       : {
         assunto: `Boas-vindas ao iService, ${primeiroNome(c.nome) || "que bom ter você aqui"}!`,
@@ -225,7 +225,7 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
         passos: [
           { texto: "Escolha o serviço: eletricista, encanador, chaveiro, faxina e muito mais." },
           { texto: "Veja primeiro os mais bem avaliados da sua região, com preço e distância." },
-          { texto: "Peça direto ao profissional escolhido e acompanhe tudo pelo app." },
+          { texto: "Peça ao profissional escolhido, pague pelo app com segurança e acompanhe tudo por lá." },
         ],
         botao: { texto: "Encontrar um profissional", link: urlApp("cliente") },
         nota: "Todo serviço contratado pelo app tem a Garantia iService: se algo der errado, nossa equipe ajuda a resolver.",
