@@ -144,6 +144,54 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
     };
   },
 
+  // Resumo de segunda-feira para o dono e os gerentes (os 8 indicadores do piloto).
+  resumo_semanal: (c) => {
+    const d = c.dados as Record<string, Record<string, unknown>>;
+    const a = d.atual ?? {}, p = d.anterior ?? {}, m = d.metas ?? {};
+    const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
+    const fmt = (v: unknown, suf = "") => {
+      const n = num(v);
+      return n === null || isNaN(n) ? "sem dados" : `${n.toLocaleString("pt-BR")}${suf}`;
+    };
+    // "12 (antes 9) · meta 150 até 20/12 · no alvo"
+    const linha = (atual: unknown, antes: unknown, suf: string, meta: string, ok: boolean | null) =>
+      `${fmt(atual, suf)} (semana anterior: ${fmt(antes, suf)})${meta ? ` · ${meta}` : ""}${ok === null ? "" : ok ? " · no alvo" : " · abaixo da meta"}`;
+    const cmp = (v: unknown, alvo: unknown, maior: boolean): boolean | null => {
+      const x = num(v), y = num(alvo);
+      if (x === null || y === null) return null;
+      return maior ? x >= y : x <= y;
+    };
+    const ate = texto(m.aprovados_ate) ? dataBr(`${texto(m.aprovados_ate)}T12:00:00`).slice(0, 5) : "";
+    const semResultado = ((a.sem_resultado_profissoes ?? []) as { nome: string; buscas: number }[])
+      .map((x) => `${x.nome} (${x.buscas})`).join(", ");
+    const periodo = `${dataBr(`${texto(d.inicio)}T12:00:00`).slice(0, 5)} a ${dataBr(`${texto(d.fim)}T12:00:00`).slice(0, 5)}`;
+    return {
+      assunto: `Resumo da semana no iService · ${periodo}`,
+      previa: `${fmt(a.aprovados)} profissionais aprovados, ${fmt(a.concluidos)} pedidos concluídos.`,
+      selo: { texto: `Semana de ${periodo}`, tom: "azul" },
+      titulo: "Os números da semana",
+      saudacao: primeiroNome(c.nome) ? `Bom dia, ${primeiroNome(c.nome)}!` : "Bom dia!",
+      paragrafos: ["Estes são os 8 indicadores do piloto, de segunda a domingo, com a semana anterior ao lado e a meta de cada um."],
+      detalhes: [
+        ["Profissionais aprovados", linha(a.aprovados, p.aprovados, "", num(m.aprovados) ? `meta ${fmt(m.aprovados)}${ate ? ` até ${ate}` : ""}` : "", null)],
+        ["Profissões mais buscadas com o mínimo", linha(a.profissoes_cobertas, p.profissoes_cobertas, ` de ${fmt(a.profissoes_total)}`,
+          num(m.profissoes_minimo) ? `meta: todas com ${fmt(m.profissoes_minimo)} ou mais` : "", cmp(a.profissoes_cobertas, a.profissoes_total, true))],
+        ["Buscas sem resultado", linha(a.buscas_sem_resultado_pct, p.buscas_sem_resultado_pct, "%",
+          num(m.buscas_sem_resultado_max) !== null ? `meta até ${fmt(m.buscas_sem_resultado_max)}%` : "", cmp(a.buscas_sem_resultado_pct, m.buscas_sem_resultado_max, false))],
+        ["Pedidos concluídos", linha(a.concluidos, p.concluidos, "", num(m.concluidos) !== null ? `meta ${fmt(m.concluidos)} por semana` : "meta a partir de 04/01",
+          cmp(a.concluidos, m.concluidos, true))],
+        ["Pedidos aceitos", linha(a.aceite_pct, p.aceite_pct, "%", `meta ${fmt(m.aceite_min)}% ou mais`, cmp(a.aceite_pct, m.aceite_min, true))],
+        ["Tempo de resposta (mediana)", linha(a.resposta_min, p.resposta_min, " min", `meta até ${fmt(m.resposta_max_min)} min`, cmp(a.resposta_min, m.resposta_max_min, false))],
+        ["Nota média", linha(a.nota, p.nota, "", `meta ${fmt(m.nota_min)} ou mais`, cmp(a.nota, m.nota_min, true))],
+        ["Suporte no prazo", linha(a.suporte_no_prazo_pct, p.suporte_no_prazo_pct, "%", `meta ${fmt(m.suporte_no_prazo_min)}% ou mais`,
+          cmp(a.suporte_no_prazo_pct, m.suporte_no_prazo_min, true))],
+      ],
+      depois: semResultado ? [`Profissões com mais buscas sem resultado na semana: <b>${esc(semResultado)}</b>. Vale reforçar a captação nelas.`] : undefined,
+      botao: { texto: "Abrir os Relatórios", link: `${SITE}/admin/relatorios/` },
+      nota: "As metas ficam em Configurações do painel (metas_piloto). Este resumo vai para o dono e para quem tem o cargo Gerente geral.",
+    };
+  },
+
   boas_vindas: (c) =>
     c.app === "profissional"
       ? {
