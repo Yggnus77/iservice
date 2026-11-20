@@ -613,3 +613,9 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .resposta-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie); text-align: left; cursor: pointer; width: 100%; }
 .resposta-item:hover { border-color: var(--azul); background: var(--azul-suave); }
 .resposta-item .previa { display: block; color: var(--texto-suave); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Faixa de emergência aberta, no alto de todas as telas */
+.alerta-emergencia { text-decoration: none; position: sticky; top: 8px; z-index: 30; animation: pulso-emergencia 1.6s ease-in-out infinite; }
+.alerta-emergencia:hover { text-decoration: none; filter: brightness(.98); }
+@keyframes pulso-emergencia { 0%, 100% { box-shadow: 0 0 0 0 rgba(198, 40, 40, .35); } 50% { box-shadow: 0 0 0 6px rgba(198, 40, 40, 0); } }
+@media (prefers-reduced-motion: reduce) { .alerta-emergencia { animation: none; } }

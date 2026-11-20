@@ -11,6 +11,7 @@ import { Ajuda } from '@/components/Ajuda';
 import { RespostasProntas, preencher } from '@/components/RespostasProntas';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Abas, Avatar, Carregando, Dialogo, ErroCaixa, Interruptor, Pessoa, Selo, SeloStatus, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
+import { MudarGravidade, Prazos, ordenarPorPrazo, usePrazos, type Prazo } from '@/components/Prazo';
 import { rpc, ErroPainel } from '@/lib/supabase';
 import { urlArquivo } from '@/lib/arquivos';
 import { dataHora, haQuanto } from '@/lib/formatos';
@@ -23,7 +24,7 @@ const ENDERECO = 'suporte@iservice.app.br';
 const ATUALIZAR_MS = 30000;
 
 // ------------------------------------------------------------------ lista
-function ItemLista({ c, ativo, mostrarResponsavel, abrir }: { c: ItemConversa; ativo: boolean; mostrarResponsavel: boolean; abrir: () => void }) {
+function ItemLista({ c, ativo, mostrarResponsavel, abrir, prazo }: { c: ItemConversa; ativo: boolean; mostrarResponsavel: boolean; abrir: () => void; prazo?: Prazo }) {
   const nome = c.contato_nome || c.contato_email;
   return (
     <button className={`caixa-item ${ativo ? 'ativo' : ''} ${c.nao_lida ? 'nao-lida' : ''}`} onClick={abrir} aria-current={ativo ? 'true' : undefined}>
@@ -37,6 +38,7 @@ function ItemLista({ c, ativo, mostrarResponsavel, abrir }: { c: ItemConversa; a
         <span className="caixa-item-previa">{c.ultima_direcao === 'enviada' ? 'Você: ' : ''}{c.previa || 'Sem texto'}</span>
         <span className="caixa-item-rodape">
           <span className="mono">{c.protocolo}</span>
+          <Prazos p={prazo} encerrado={c.status === 'encerrado'} />
           {c.assunto.startsWith('Reclamação pelo site') ? <Selo tom="vermelho">Reclamação · site</Selo> : null}
           {c.usuario_id ? <Selo tom={c.e_profissional ? 'laranja' : 'azul'}>{c.e_profissional ? 'Profissional' : 'Cliente'}</Selo> : null}
           {mostrarResponsavel ? (c.responsavel_nome
@@ -122,6 +124,7 @@ function Balao({ m, contato, reenviar, verOriginal, ocupado }: {
 // ------------------------------------------------------------------ conversa aberta
 function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodizio[]; voltar: () => void; mudou: () => void }) {
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Conversa>('admin_suporte_conversa', { p_id: id }), [id]);
+  const prazos = usePrazos('email', [id]);
   const { executar, ocupado } = useAcao();
   const avisar = useAviso();
   const [modo, setModo] = useState<'responder' | 'nota'>('responder');
@@ -209,6 +212,14 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         </div>
         <SeloStatus mapa={statusConversa} valor={c.status} />
       </div>
+
+      {prazos.prazos.get(id) ? (
+        <div className="caixa-acoes">
+          <Prazos p={prazos.prazos.get(id)} encerrado={c.status === 'encerrado'} />
+          <span className="espaco" />
+          <MudarGravidade tipo="email" p={prazos.prazos.get(id)} aoMudar={() => { prazos.recarregar(); mudou(); }} />
+        </div>
+      ) : null}
 
       <div className="caixa-acoes">
         <span className="texto-suave">
@@ -392,6 +403,7 @@ function Pagina() {
   const equipe = useCarregar(() => rpc<MembroRodizio[]>('admin_suporte_equipe'), []);
 
   const recarregarLista = lista.recarregar;
+  const prazosLista = usePrazos('email', lista.dados?.map((c) => c.id) ?? []);
   useEffect(() => {
     const t = setInterval(() => { if (document.visibilityState === 'visible') recarregarLista(); }, ATUALIZAR_MS);
     return () => clearInterval(t);
@@ -459,7 +471,9 @@ function Pagina() {
                   titulo={buscaAtiva ? 'Nada encontrado' : status === 'aberto' ? (meus ? 'Nenhum e-mail novo para você' : 'Nenhum e-mail em aberto') : status === 'em_atendimento' ? 'Nenhum atendimento em andamento' : 'Nenhuma conversa encerrada'}
                   texto={!buscaAtiva && status === 'aberto' ? 'Quando chegar um e-mail, ele aparece aqui.' : undefined} />
               ) : <>
-                {lista.dados.map((c) => <ItemLista key={c.id} c={c} ativo={c.id === aberta} mostrarResponsavel={!meus} abrir={() => abrir(c.id)} />)}
+                {(status === 'encerrado' || buscaAtiva ? lista.dados : ordenarPorPrazo(lista.dados, prazosLista.prazos)).map((c) => (
+                  <ItemLista key={c.id} c={c} ativo={c.id === aberta} mostrarResponsavel={!meus} abrir={() => abrir(c.id)} prazo={prazosLista.prazos.get(c.id)} />
+                ))}
                 {total > lista.dados.length ? (
                   <button className="botao fantasma cheio" disabled={lista.carregando} onClick={() => setLimite((l) => l + 50)}>
                     {lista.carregando ? <Loader2 className="girar" /> : null} Mostrar mais ({total - lista.dados.length})

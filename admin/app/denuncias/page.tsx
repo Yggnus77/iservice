@@ -6,6 +6,7 @@ import { Suspense, useState } from 'react';
 import { Eye, EyeOff, Flag, Star } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Abas, Carregando, DialogoTexto, ErroCaixa, Estrelas, Miniatura, Selo, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
+import { MudarGravidade, Prazos, ordenarPorPrazo, usePrazos } from '@/components/Prazo';
 import { rpc } from '@/lib/supabase';
 import { dataHora, haQuanto, statusDenuncia } from '@/lib/formatos';
 
@@ -25,9 +26,11 @@ function Denuncias() {
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Denuncia[]>('admin_denuncias', { p_status: filtro }), [filtro]);
   const { executar, ocupado } = useAcao();
   const [decidir, setDecidir] = useState<{ d: Denuncia; status: 'procedente' | 'improcedente' } | null>(null);
+  const { prazos, recarregar: recarregarPrazos } = usePrazos('denuncia', dados?.map((d) => d.id) ?? []);
+  const lista = dados ? ordenarPorPrazo(dados, prazos) : null;
 
   const analisar = async (d: Denuncia) => {
-    if (await executar(() => rpc('admin_resolver_denuncia', { p_denuncia: d.id, p_status: 'em_analise' }), 'Denúncia em análise.')) recarregar();
+    if (await executar(() => rpc('admin_resolver_denuncia', { p_denuncia: d.id, p_status: 'em_analise' }), 'Denúncia em análise.')) { recarregar(); recarregarPrazos(); }
   };
 
   return (
@@ -37,7 +40,7 @@ function Denuncias() {
         <section className="cartao"><Vazio icone={<Flag size={24} />} titulo="Nenhuma denúncia aberta" /></section>
       ) : (
         <div className="pilha">
-          {dados.map((d) => (
+          {lista!.map((d) => (
             <section className="cartao" key={d.id}>
               <div className="titulo">
                 <div>
@@ -47,6 +50,7 @@ function Denuncias() {
                     {d.pedido_id ? <> · pedido <Link className="mono" href={`/pedido/?id=${d.pedido_id}`}>{d.codigo}</Link></> : null}</p>
                 </div>
                 <div className="linha-flex">
+                  <Prazos p={prazos.get(d.id)} encerrado={d.status === 'procedente' || d.status === 'improcedente'} />
                   {d.denuncias_do_alvo > 1 ? <Selo tom="vermelho">{d.denuncias_do_alvo} denúncias contra esta pessoa</Selo> : null}
                   <SeloStatus mapa={statusDenuncia} valor={d.status} />
                 </div>
@@ -57,6 +61,7 @@ function Denuncias() {
                 {d.status === 'aberta' || d.status === 'em_analise' ? (
                   <div className="linha-flex">
                     {d.status === 'aberta' ? <button className="botao contorno pequeno" disabled={ocupado} onClick={() => analisar(d)}>Começar análise</button> : null}
+                    <MudarGravidade tipo="denuncia" p={prazos.get(d.id)} aoMudar={recarregarPrazos} />
                     <span className="espaco" />
                     <button className="botao contorno pequeno" disabled={ocupado} onClick={() => setDecidir({ d, status: 'improcedente' })}>Improcedente</button>
                     <button className="botao perigo pequeno" disabled={ocupado} onClick={() => setDecidir({ d, status: 'procedente' })}>Procedente</button>

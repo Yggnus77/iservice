@@ -9,6 +9,7 @@ export 'src/estado/cadastro.dart';
 export 'src/estado/provedores.dart';
 export 'src/monitor_falhas.dart';
 export 'src/push.dart';
+export 'src/telas/ajuda.dart';
 export 'src/telas/chat.dart';
 export 'src/telas/confirmar_celular.dart';
 export 'src/telas/conta.dart';

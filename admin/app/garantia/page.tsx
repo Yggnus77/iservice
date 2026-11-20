@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ExternalLink, Loader2, Send, ShieldCheck, StickyNote } from 'lucide-react';
 import { Cabecalho, usePainel } from '@/components/Painel';
 import { Abas, Carregando, ErroCaixa, Miniatura, Selo, SeloStatus, Vazio, useAcao, useCarregar } from '@/components/ui';
+import { MudarGravidade, Prazos, ordenarPorPrazo, usePrazos, type Prazo } from '@/components/Prazo';
 import { rpc } from '@/lib/supabase';
 import { dataHora, haQuanto, moeda, statusReclamacao } from '@/lib/formatos';
 
@@ -19,7 +20,7 @@ type Reclamacao = {
 type Historico = { id: number; autor: string | null; status: string | null; texto: string; interno: boolean; criado_em: string };
 type Aba = 'abertas' | 'resolvida' | 'encerrada' | 'todas';
 
-function Mediacao({ r, aoMudar }: { r: Reclamacao; aoMudar: () => void }) {
+function Mediacao({ r, prazo, aoMudar }: { r: Reclamacao; prazo?: Prazo; aoMudar: () => void }) {
   const { executar, ocupado } = useAcao();
   const decide = usePainel().pode('garantia_decidir');
   const hist = useCarregar(() => rpc<Historico[]>('admin_reclamacao_historico', { p_reclamacao: r.id }), [r.id]);
@@ -49,6 +50,7 @@ function Mediacao({ r, aoMudar }: { r: Reclamacao; aoMudar: () => void }) {
           <div><dt>Cliente</dt><dd>{r.cliente}</dd></div>
           <div><dt>Profissional</dt><dd>{r.profissional}</dd></div>
         </dl>
+        {prazo ? <div className="linha-flex"><Prazos p={prazo} encerrado={fecha && r.status !== 'aberta'} /><span className="espaco" /><MudarGravidade tipo="garantia" p={prazo} aoMudar={aoMudar} /></div> : null}
         <div className="citacao">{r.descricao}</div>
         {r.fotos?.length ? <div className="miniaturas">{r.fotos.map((f, i) => <Miniatura key={f} bucket="pedidos" caminho={f} titulo={`Foto ${i + 1}`} />)}</div> : null}
         {r.resolucao ? <div className="alerta-faixa azul" style={{ margin: 0 }}><div><strong>Resolução</strong>{r.resolucao}</div></div> : null}
@@ -106,7 +108,9 @@ export default function Garantia() {
   const [aba, setAba] = useState<Aba>('abertas');
   const [sel, setSel] = useState<number | null>(null);
   const { dados, erro, carregando, recarregar } = useCarregar(() => rpc<Reclamacao[]>('admin_reclamacoes', { p_status: aba }), [aba]);
-  const atual = dados?.find((r) => r.id === sel) ?? dados?.[0] ?? null;
+  const { prazos, recarregar: recarregarPrazos } = usePrazos('garantia', dados?.map((r) => r.id) ?? []);
+  const lista = dados ? ordenarPorPrazo(dados, prazos) : null;
+  const atual = lista?.find((r) => r.id === sel) ?? lista?.[0] ?? null;
 
   return (
     <>
@@ -125,11 +129,11 @@ export default function Garantia() {
               <table className="tabela">
                 <thead><tr><th>Reclamação</th><th>Partes</th><th>Aberta</th><th>Situação</th></tr></thead>
                 <tbody>
-                  {dados.map((r) => (
+                  {lista!.map((r) => (
                     <tr key={r.id} className="clicavel" onClick={() => setSel(r.id)} style={atual?.id === r.id ? { background: 'var(--azul-suave)' } : undefined}>
                       <td><strong>{r.motivo}</strong><div className="fraco"><span className="mono">{protocolo(r.id)}</span> · <span className="mono">{r.codigo}</span> · {r.profissao}</div></td>
                       <td>{r.cliente}<div className="fraco">com {r.profissional}</div></td>
-                      <td className="fraco">{haQuanto(r.criada_em)}{r.status === 'aberta' && Date.now() - new Date(r.criada_em).getTime() > 86400000 ? <div><Selo tom="vermelho">+24 h sem resposta</Selo></div> : null}</td>
+                      <td className="fraco">{haQuanto(r.criada_em)}{prazos.size ? <div><Prazos p={prazos.get(r.id)} encerrado={r.status === 'resolvida' || r.status === 'encerrada'} /></div> : r.status === 'aberta' && Date.now() - new Date(r.criada_em).getTime() > 86400000 ? <div><Selo tom="vermelho">+24 h sem resposta</Selo></div> : null}</td>
                       <td><SeloStatus mapa={statusReclamacao} valor={r.status} /></td>
                     </tr>
                   ))}
@@ -137,7 +141,7 @@ export default function Garantia() {
               </table>
             </div>
           </section>
-          {atual ? <Mediacao r={atual} aoMudar={() => { recarregar(); atualizarResumo(); }} /> : null}
+          {atual ? <Mediacao r={atual} prazo={prazos.get(atual.id)} aoMudar={() => { recarregar(); recarregarPrazos(); atualizarResumo(); }} /> : null}
         </div>
       )}
     </>

@@ -121,6 +121,29 @@ function dataBr(v: unknown): string {
 // Modelos de cada etapa (chave = tipo da notificação)
 // ---------------------------------------------------------------------------
 export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
+  // Alerta para a equipe (dono e plantão) quando alguém aperta o botão de emergência.
+  emergencia_equipe: (c) => {
+    const tel = texto(c.dados.telefone).replace(/\D/g, "");
+    return {
+      assunto: `EMERGÊNCIA: ${texto(c.dados.pessoa) || "uma pessoa"} acionou o botão de emergência`,
+      previa: "Ligue agora para a pessoa. Prazo: 15 minutos.",
+      selo: { texto: "Emergência · gravidade 1", tom: "perigo" },
+      titulo: "Botão de emergência acionado",
+      paragrafos: [
+        "Alguém apertou o botão de emergência no app. Ligue agora para a pessoa (prazo de 15 minutos). Se houver risco, oriente a ligar para o 190 ou o 192 e fique na linha.",
+      ],
+      destaque: { rotulo: "O que aconteceu", texto: c.corpo, tom: "perigo" },
+      detalhes: [
+        ["Pessoa", `${texto(c.dados.pessoa) || "Sem nome"}${texto(c.dados.papel) ? ` (${texto(c.dados.papel)})` : ""}`],
+        ["Telefone", texto(c.dados.telefone) || "Sem telefone no cadastro"],
+        ["Pedido", texto(c.dados.pedido) ? `#${texto(c.dados.pedido)}` : "Fora de um pedido"],
+      ],
+      botao: tel ? { texto: "Ligar agora", link: `tel:+55${tel}`, tom: "perigo" } : { texto: "Abrir no painel", link: `${SITE}/admin/emergencias/`, tom: "perigo" },
+      depois: [`Depois da ligação, registre no painel: <b>Emergências</b> (${SITE}/admin/emergencias/).`],
+      saudacao: "Equipe iService,",
+    };
+  },
+
   boas_vindas: (c) =>
     c.app === "profissional"
       ? {
