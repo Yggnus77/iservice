@@ -71,3 +71,9 @@ const nomesPendencias = {
   'documento_veiculo': 'documento do veículo (CRLV)',
   'vinculo_empresa': 'comprovante de vínculo com empresa licenciada',
 };
+
+/// Conta de recebimento e repasses do pagamento pelo app.
+final recebimentosProvider = FutureProvider<Recebimentos>((ref) {
+  ref.watch(_mudancas);
+  return ref.read(profissionalRepo).recebimentos();
+});

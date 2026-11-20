@@ -12,7 +12,8 @@
 //   ASAAS_WEBHOOK_TOKEN  token escolhido ao cadastrar o webhook no Asaas
 //   ASAAS_RENDA_PADRAO   renda mensal informada ao criar a subconta do profissional (padrão 3000)
 // Webhook no Asaas: URL https://<projeto>.supabase.co/functions/v1/pagamentos,
-//   eventos de cobrança (PAYMENT_*), com o mesmo token de ASAAS_WEBHOOK_TOKEN.
+//   eventos de cobrança (PAYMENT_*) e de situação de conta (ACCOUNT_STATUS_*),
+//   com o mesmo token de ASAAS_WEBHOOK_TOKEN.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -178,22 +179,72 @@ async function criarConta(profissionalId: string) {
   const { data: e } = await db.from("enderecos").select("logradouro, numero, bairro, cep, complemento")
     .eq("usuario_id", profissionalId).order("principal", { ascending: false }).limit(1).maybeSingle();
   try {
-    const conta = await asaas<{ id: string; walletId: string }>("POST", "/accounts", {
+    const conta = await asaas<{ id: string; walletId: string; apiKey?: string }>("POST", "/accounts", {
       name: p!.nome, email: p!.email, cpfCnpj: p!.cpf, birthDate: p!.nascimento, mobilePhone: so(p!.telefone).replace(/^55/, ""),
       incomeValue: RENDA_PADRAO, address: e?.logradouro, addressNumber: e?.numero || "S/N", complement: e?.complemento ?? undefined,
       province: e?.bairro, postalCode: e?.cep,
     });
+    // A chave da subconta só vem nesta resposta: guarda no Vault para conferir a situação depois.
+    if (conta.apiKey) await db.rpc("guardar_chave_subconta", { p_profissional: profissionalId, p_chave: conta.apiKey });
     await db.from("contas_recebimento").upsert({
       profissional_id: profissionalId, asaas_conta_id: conta.id, asaas_carteira_id: conta.walletId, status: "ativa", erro: null,
-      atualizada_em: new Date().toISOString(),
+      situacao: "aguardando_ativacao", atualizada_em: new Date().toISOString(),
     });
+    await db.rpc("notificar", {
+      p_usuario: profissionalId, p_tipo: "conta_recebimento", p_titulo: "Ative a sua conta de recebimento",
+      p_corpo: "Criamos a sua conta no Asaas para receber pelos serviços. Abra Ganhos > Recebimentos e envie o documento e a selfie.",
+      p_dados: {},
+    }).then(() => {}, () => {});
   } catch (err) {
     await db.from("contas_recebimento").upsert({ profissional_id: profissionalId, status: "falhou", erro: String(err).slice(0, 500) });
   }
 }
 
+// Situação da subconta no Asaas (ativação e documentos), com a chave da própria subconta.
+type Situacao = "aguardando_ativacao" | "em_analise" | "aprovada" | "recusada";
+async function conferirConta(profissionalId: string) {
+  const { data: chaveSub } = await db.rpc("chave_subconta", { p_profissional: profissionalId });
+  if (!chaveSub) return;
+  const comSub = async <T>(caminho: string): Promise<T> => {
+    const r = await fetch(API + caminho, { headers: { "access_token": String(chaveSub), "User-Agent": "iservice" } });
+    if (!r.ok) throw new Error(`Asaas GET ${caminho}: ${r.status}`);
+    return await r.json() as T;
+  };
+  try {
+    const st = await comSub<{ general?: string; documentation?: string }>("/myAccount/status");
+    let situacao: Situacao = "em_analise";
+    if (st.general === "APPROVED") situacao = "aprovada";
+    else if (st.general === "REJECTED" || st.documentation === "REJECTED") situacao = "recusada";
+    else if (!st.documentation || st.documentation === "PENDING") situacao = "aguardando_ativacao";
+    let link: string | null = null;
+    if (situacao !== "aprovada") {
+      const docs = await comSub<{ data?: { onboardingUrl?: string; status?: string }[] }>("/myAccount/documents").catch(() => null);
+      link = docs?.data?.find((d) => d.onboardingUrl && d.status !== "APPROVED")?.onboardingUrl ?? null;
+    }
+    const { data: antes } = await db.from("contas_recebimento").select("situacao").eq("profissional_id", profissionalId).single();
+    await db.from("contas_recebimento").update({
+      situacao, link_documentos: link, conferida_em: new Date().toISOString(),
+    }).eq("profissional_id", profissionalId);
+    if (antes?.situacao !== situacao && (situacao === "aprovada" || situacao === "recusada")) {
+      await db.rpc("notificar", {
+        p_usuario: profissionalId, p_tipo: "conta_recebimento",
+        p_titulo: situacao === "aprovada" ? "Conta de recebimento aprovada" : "Precisamos de um novo documento",
+        p_corpo: situacao === "aprovada"
+          ? "Pronto: os pagamentos dos seus serviços já podem cair na sua conta."
+          : "O Asaas não aprovou um documento. Abra Ganhos > Recebimentos e envie de novo.",
+        p_dados: {},
+      }).then(() => {}, () => {});
+    }
+  } catch (e) {
+    console.error("conferirConta", profissionalId, e);
+  }
+}
+
 // A cada 15 minutos (public.processar_pagamentos): refaz o que ficou pela metade.
 async function sincronizar() {
+  const { data: aConferir } = await db.from("contas_recebimento").select("profissional_id")
+    .eq("status", "ativa").neq("situacao", "aprovada").order("conferida_em", { ascending: true, nullsFirst: true }).limit(20);
+  for (const c of aConferir ?? []) await conferirConta(c.profissional_id);
   const { data: contas } = await db.from("contas_recebimento").select("profissional_id").neq("status", "ativa").limit(20);
   for (const c of contas ?? []) await criarConta(c.profissional_id);
   const { data: cobrancas } = await db.from("pagamentos").select("id").in("status", ["criando", "falhou"]).is("asaas_cobranca_id", null).limit(20);
@@ -202,7 +253,13 @@ async function sincronizar() {
 }
 
 // Webhook do Asaas: pagamento confirmado, estornado ou vencido.
-async function webhook(evento: { event?: string; payment?: { id: string; externalReference?: string } }) {
+async function webhook(evento: { event?: string; payment?: { id: string; externalReference?: string }; account?: { id?: string } }) {
+  // Situação de subconta mudou: confere de novo.
+  if (evento.event?.startsWith("ACCOUNT_STATUS_") && evento.account?.id) {
+    const { data: c } = await db.from("contas_recebimento").select("profissional_id").eq("asaas_conta_id", evento.account.id).maybeSingle();
+    if (c) await conferirConta(c.profissional_id);
+    return;
+  }
   const id = evento.payment?.id;
   if (!id) return;
   const { data: g } = await db.from("pagamentos").select("id, status, pedido_id, tipo, pedidos(status, profissional_id)").eq("asaas_cobranca_id", id).maybeSingle();
@@ -258,6 +315,7 @@ Deno.serve(async (req) => {
       case "estornar": await estornar(corpo.pedido_id); break;
       case "criar_conta": await criarConta(corpo.profissional_id); break;
       case "sincronizar": await sincronizar(); break;
+      case "conferir_conta": await conferirConta(corpo.profissional_id); break;
       default: return new Response("Ação desconhecida", { status: 400 });
     }
     return Response.json({ ok: true });

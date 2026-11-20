@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
-  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy,
+  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy, Wallet,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -80,7 +80,7 @@ const rotas: [string, Permissao][] = [
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
   ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'captacao'],
-  ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'],
+  ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'], ['/pagamentos', 'pedidos'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -94,6 +94,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/emails/', rotulo: 'E-mails', icone: <Mail />, contador: (r) => (r.emails?.meus_pendentes ?? 0) + (r.emails?.sem_responsavel ?? 0) },
   { grupo: 'Operação', href: '/cadastros/', rotulo: 'Cadastros', icone: <BadgeCheck />, contador: (r) => r.cadastros_em_analise },
   { grupo: 'Operação', href: '/pedidos/', rotulo: 'Pedidos', icone: <ClipboardList /> },
+  { grupo: 'Operação', href: '/pagamentos/', rotulo: 'Pagamentos', icone: <Wallet /> },
   { grupo: 'Operação', href: '/emergencias/', rotulo: 'Emergências', icone: <Siren />, contador: (r) => r.emergencias_abertas, alerta: true },
   { grupo: 'Operação', href: '/garantia/', rotulo: 'Garantia iService', icone: <ShieldCheck />, contador: (r) => r.reclamacoes_abertas },
   { grupo: 'Operação', href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
