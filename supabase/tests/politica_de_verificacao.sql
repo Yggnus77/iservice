@@ -69,7 +69,7 @@ insert into public.documentos (profissional_id, tipo, arquivo_path, status, revi
 select '00000000-0000-0000-0000-0000000070a2', t, '00000000-0000-0000-0000-0000000070a2/' || t, 'aprovado', now(), current_date + 100
 from unnest(array['documento_frente', 'selfie_documento', 'antecedentes', 'antecedentes_estadual']::public.tipo_documento[]) t;
 select pg_temp.ok(not 'antecedentes_estadual' = any (public.pendencias_profissional('00000000-0000-0000-0000-0000000070a2')), 'certidão dentro da validade conta');
-update public.documentos set valido_ate = current_date - 1 where profissional_id = '00000000-0000-0000-0000-0000000070a2' and tipo::text = 'antecedentes_estadual';
+update public.documentos set valido_ate = current_date - 2 where profissional_id = '00000000-0000-0000-0000-0000000070a2' and tipo::text = 'antecedentes_estadual';
 select pg_temp.ok('antecedentes_estadual' = any (public.pendencias_profissional('00000000-0000-0000-0000-0000000070a2')), 'certidão vencida volta a ser pendência');
 insert into public.documentos (profissional_id, tipo, arquivo_path) values
   ('00000000-0000-0000-0000-0000000070a1', 'documento_veiculo', '00000000-0000-0000-0000-0000000070a1/crlv.jpg');

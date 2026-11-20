@@ -197,5 +197,85 @@ Deno.serve(async (req) => {
     console.error("suporte_receber", error.message);
     return new Response("Falha ao guardar", { status: 500 });
   }
+
+  // Fora do horário de atendimento, a conversa nova recebe uma resposta automática
+  // com o horário de volta. Nunca responde a respostas automáticas e listas.
+  const automatico = /auto-(replied|generated)/i.test(cabecalho(email.headers, "auto-submitted")) ||
+    /bulk|junk|list|auto_reply/i.test(cabecalho(email.headers, "precedence")) ||
+    cabecalho(email.headers, "list-id") !== "" || cabecalho(email.headers, "x-autoreply") !== "";
+  const resultado = data as { conversa_id?: number; nova?: boolean } | null;
+  if (resultado?.nova && resultado.conversa_id && !automatico) {
+    await respostaAutomatica(resultado.conversa_id).catch((e) => console.error("resposta automática", String(e)));
+  }
   return Response.json(data);
 });
+
+// ---------------------------------------------------------------------------
+// Resposta automática fora do horário
+// ---------------------------------------------------------------------------
+const DIAS = ["", "segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
+
+function hora(h: string): string {
+  const [hh, mm] = h.split(":");
+  return mm === "00" ? `${Number(hh)}h` : `${Number(hh)}h${mm}`;
+}
+
+/** "de segunda a sábado, das 8h às 20h" */
+export function textoHorario(h: { dias?: number[]; inicio?: string; fim?: string }): string {
+  const dias = [...new Set(h.dias ?? [])].sort((a, b) => a - b);
+  const seguidos = dias.length > 1 && dias.every((d, i) => i === 0 || d === dias[i - 1] + 1);
+  const quando = dias.length === 7
+    ? "todos os dias"
+    : seguidos
+    ? `de ${DIAS[dias[0]]} a ${DIAS[dias[dias.length - 1]]}`
+    : dias.map((d) => DIAS[d]).join(", ").replace(/, ([^,]*)$/, " e $1");
+  return `${quando}, das ${hora(h.inicio ?? "08:00")} às ${hora(h.fim ?? "20:00")}`;
+}
+
+async function respostaAutomatica(conversa: number) {
+  const { data, error } = await db.rpc("suporte_resposta_automatica", { p_conversa: conversa });
+  if (error) throw error;
+  const r = data as {
+    enviar: boolean; para?: string; nome?: string | null; assunto?: string; protocolo?: string;
+    in_reply_to?: string | null; horario?: { dias?: number[]; inicio?: string; fim?: string }; whatsapp?: string;
+  };
+  if (!r?.enviar || !r.para) return;
+  const chaveEnvio = Deno.env.get("RESEND_API_KEY");
+  if (!chaveEnvio) return;
+  const remetente = Deno.env.get("SUPORTE_REMETENTE") ?? "suporte@iservice.app.br";
+  const primeiro = (r.nome ?? "").trim().split(/\s+/)[0];
+  const linhas = [
+    primeiro ? `Olá, ${primeiro}!` : "Olá!",
+    "",
+    `Recebemos a sua mensagem (protocolo ${r.protocolo}). Agora estamos fora do horário de atendimento, que é ${textoHorario(r.horario ?? {})}, no horário de Brasília.`,
+    "Assim que voltarmos, uma pessoa da nossa equipe responde por aqui. Não precisa mandar de novo.",
+    "",
+    "Se for uma emergência durante um serviço, use o botão de emergência no pedido, no app. Ele funciona 24 horas. Se houver risco, ligue para o 190 (polícia) ou o 192 (SAMU).",
+    "",
+    "Equipe iService",
+    "iservice.app.br",
+  ];
+  const texto = linhas.join("\n");
+  const html = `<div style="font-family:Montserrat,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#0A1F44;">${
+    linhas.map((l) => l ? `<p style="margin:0 0 4px 0;">${l.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>` : "<br>").join("")
+  }</div>`;
+  const headers: Record<string, string> = { "Auto-Submitted": "auto-replied", "X-Auto-Response-Suppress": "All" };
+  if (r.in_reply_to) {
+    headers["In-Reply-To"] = `<${r.in_reply_to}>`;
+    headers["References"] = `<${r.in_reply_to}>`;
+  }
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${chaveEnvio}`, "Idempotency-Key": `automatica-${conversa}` },
+    body: JSON.stringify({
+      from: `Suporte iService <${remetente}>`,
+      to: [r.para],
+      reply_to: remetente,
+      subject: `Re: ${(r.assunto ?? "").replace(/^\s*re:\s*/i, "")} [${r.protocolo}]`,
+      text: texto,
+      html,
+      headers,
+    }),
+  });
+  if (!resp.ok) console.error("Resend resposta automática", resp.status, await resp.text().catch(() => ""));
+}

@@ -7,13 +7,14 @@ import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
-  BellRing, LineChart, Search, UserPlus,
+  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
 import { DialogoFoto } from './FotoPerfil';
 import { Ajuda } from './Ajuda';
 import { BuscaGlobal } from './BuscaGlobal';
+import { AlertaEmergencia } from './AlertaEmergencia';
 
 export type Resumo = {
   dia: string;
@@ -79,6 +80,7 @@ const rotas: [string, Permissao][] = [
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
   ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'crescimento'],
+  ['/ajuda', 'comunicados'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -97,12 +99,14 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/avaliacoes/', rotulo: 'Avaliações', icone: <Star /> },
   { grupo: 'Operação', href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
+  { grupo: 'Operação', href: '/atendimento/', rotulo: 'Horário, plantão e prazos', icone: <Headset /> },
   { grupo: 'Crescimento', href: '/relatorios/', rotulo: 'Relatórios', icone: <LineChart /> },
   { grupo: 'Crescimento', href: '/captacao/', rotulo: 'Captação', icone: <UserPlus /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
   { grupo: 'Crescimento', href: '/site/', rotulo: 'Site e downloads', icone: <Globe /> },
   { grupo: 'Crescimento', href: '/sugestoes/', rotulo: 'Sugestões de profissões', icone: <Lightbulb /> },
   { grupo: 'Crescimento', href: '/comunicados/', rotulo: 'Comunicados', icone: <Megaphone /> },
+  { grupo: 'Crescimento', href: '/ajuda/', rotulo: 'Central de Ajuda', icone: <LifeBuoy /> },
   { grupo: 'Catálogo', href: '/catalogo/', rotulo: 'Profissões e regiões', icone: <LayoutGrid />, contador: (r) => r.especialidades_sugeridas },
   { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços e mínimos', icone: <Tags /> },
   { grupo: 'Catálogo', href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
@@ -382,9 +386,11 @@ export default function Painel({ children }: { children: ReactNode }) {
   // Contadores do menu (emergências principalmente) se atualizam sozinhos.
   useEffect(() => {
     if (acesso !== 'ok') return;
-    const t = setInterval(atualizarResumo, 60000);
+    // Quem atende emergências confere a cada 20 s; os outros, a cada minuto.
+    const emergencias = !meuAcesso || meuAcesso.permissoes.includes('emergencias');
+    const t = setInterval(atualizarResumo, emergencias ? 20000 : 60000);
     return () => clearInterval(t);
-  }, [acesso, atualizarResumo]);
+  }, [acesso, atualizarResumo, meuAcesso]);
 
   useEffect(() => setMenuAberto(false), [rota]);
 
@@ -446,6 +452,7 @@ export default function Painel({ children }: { children: ReactNode }) {
               <span className="espaco" />
               <button onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))} aria-label="Buscar no painel"><Search size={20} /></button>
             </div>
+            {pode('emergencias') ? <AlertaEmergencia abertas={resumo?.emergencias_abertas ?? 0} semFaixa={rota.startsWith('/emergencias')} /> : null}
             {liberada ? children : <SemPermissao cargo={meuAcesso?.cargo_nome} />}
           </main>
         </div>
