@@ -23,16 +23,18 @@ type Membro = {
 const cargos: { id: Cargo; nome: string; tom: Tom; icone: ReactNode; resumo: string }[] = [
   { id: 'dono', nome: 'Dono', tom: 'azul', icone: <Crown />, resumo: 'Tudo, inclusive Configurações e os gerentes.' },
   { id: 'gerente', nome: 'Gerente geral', tom: 'roxo', icone: <BriefcaseBusiness />,
-    resumo: 'Operação, Crescimento, Profissões, Preços e Comunicados. Convida e remove Responsáveis, Suporte e Marketing. Não entra em Configurações.' },
+    resumo: 'Operação, Crescimento, Profissões, Preços e Comunicados. Convida e remove Responsáveis, Suporte, Marketing e Captação. Não entra em Configurações.' },
   { id: 'responsavel', nome: 'Responsável de setor', tom: 'verde', icone: <ShieldUser />,
     resumo: 'Toda a Operação: e-mails de todos, aprova cadastros, decide a Garantia, resolve denúncias e suspende contas. Vê o próprio time na Equipe.' },
   { id: 'suporte', nome: 'Suporte', tom: 'laranja', icone: <Headset />,
     resumo: 'Atende os próprios e-mails e as emergências, consulta pedidos e pessoas e registra reclamações. CPF e documentos aparecem mascarados.' },
   { id: 'marketing', nome: 'Marketing', tom: 'neutro', icone: <Megaphone />,
-    resumo: 'Buscas e mapa, Site e downloads, Avaliações e Comunicados. Não vê dados pessoais.' },
+    resumo: 'Buscas e mapa, Site e downloads, Avaliações, Comunicados e Captação. Não vê dados pessoais.' },
+  { id: 'captacao', nome: 'Captação', tom: 'neutro', icone: <UserPlus />,
+    resumo: 'Só a página Captação: funil de cadastros, metas por profissão e quem indicou. Não vê dados pessoais nem manda comunicados.' },
 ];
 const cargoDe = (id: Cargo) => cargos.find((c) => c.id === id) ?? cargos[3];
-const nivel: Record<Cargo, number> = { dono: 4, gerente: 3, responsavel: 2, suporte: 1, marketing: 1 };
+const nivel: Record<Cargo, number> = { dono: 4, gerente: 3, responsavel: 2, suporte: 1, marketing: 1, captacao: 1 };
 
 function SeloCargo({ papel }: { papel: Cargo }) {
   const c = cargoDe(papel);
