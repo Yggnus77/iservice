@@ -99,7 +99,10 @@ begin
      'perform public.exigir_permissao(''emergencias'');')
   ) as t(funcao, antes, depois)
   loop
+    -- Colado pelo SQL Editor no Windows, o texto chega com \r\n: normaliza tudo para \n.
     v_def := replace(pg_get_functiondef(('public.' || r.funcao)::regprocedure), E'\r\n', E'\n');
+    r.antes := replace(r.antes, E'\r\n', E'\n');
+    r.depois := replace(r.depois, E'\r\n', E'\n');
     if position(r.antes in v_def) = 0 then
       if position(r.depois in v_def) > 0 then
         continue; -- já aplicado
