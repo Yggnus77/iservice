@@ -51,7 +51,7 @@ class _Carregando extends StatelessWidget {
 const _vantagens = [
   (Symbols.near_me_rounded, 'Clientes perto de você'),
   (Symbols.sell_rounded, 'Você define o preço'),
-  (Symbols.money_off_rounded, 'Sem mensalidade'),
+  (Symbols.money_off_rounded, 'Cadastro grátis'),
   (Symbols.emoji_events_rounded, 'Bom trabalho aparece'),
 ];
 
