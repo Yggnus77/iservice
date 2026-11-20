@@ -54,9 +54,9 @@ export type Permissao =
   | 'inicio' | 'emails' | 'emails_todos' | 'cadastros' | 'cadastros_decidir' | 'dados_pessoais' | 'pedidos' | 'emergencias'
   | 'garantia' | 'garantia_decidir' | 'avaliacoes' | 'avaliacoes_moderar' | 'denuncias' | 'pessoas' | 'pessoas_suspender'
   | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo'
-  | 'relatorios';
+  | 'relatorios' | 'captacao';
 
-export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing';
+export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing' | 'captacao';
 export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[] };
 
 type Ctx = {
@@ -79,8 +79,8 @@ const rotas: [string, Permissao][] = [
   ['/emergencias', 'emergencias'], ['/garantia', 'garantia'], ['/avaliacoes', 'avaliacoes'], ['/denuncias', 'denuncias'],
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
-  ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'crescimento'],
-  ['/ajuda', 'comunicados'],
+  ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'captacao'],
+  ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
