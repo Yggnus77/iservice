@@ -299,7 +299,7 @@ def pagina_profissionais(cabeca, rodape):
     descricao = ('Profissional autônomo em Brasília ou no Entorno? Cadastre-se grátis no iService, defina seu preço e receba '
                  'pedidos de clientes perto de você. Eletricista, encanador, diarista, chaveiro e outras profissões, 20 no total.')
     faq = [
-        ('Quanto custa para o profissional?', 'Nada. O cadastro é grátis, sem mensalidade e sem taxa por pedido. Você recebe 100% do preço que definir; a taxa de serviço de 10% é paga pelo cliente. A partir de 5 de janeiro de 2027, o cliente paga pelo app e o valor cai na sua conta de recebimento quando você conclui o serviço.'),
+        ('Quanto custa para o profissional?', 'O cadastro é grátis e não há taxa por pedido: você recebe 100% do preço que definir, e a taxa de serviço de 10% é paga pelo cliente. Em breve haverá planos opcionais, VIP e Premium, para quem quiser receber pedidos de mais longe. A partir de 5 de janeiro de 2027, o cliente paga pelo app e o valor cai na sua conta de recebimento quando você conclui o serviço.'),
         ('Quem define o preço do serviço?', 'Você. O app mostra a faixa de preço da região só como referência para o cliente.'),
         ('Preciso ser MEI?', 'Não é obrigatório para se cadastrar. Se você for MEI, o app tem um relatório de ganhos que ajuda a acompanhar o limite anual.'),
         ('Como recebo os pedidos?', 'O cliente escolhe você pelo perfil e só você recebe o pedido. Você aceita ou recusa, sem disputa com outros profissionais.'),
@@ -317,7 +317,7 @@ def pagina_profissionais(cabeca, rodape):
   <div class="envolve">
     <nav class="migalhas" aria-label="Você está em"><a href="index.html">Início</a> › Para profissionais</nav>
     <h1>Mais clientes perto de você, para quem trabalha por conta própria</h1>
-    <p>Se você é profissional autônomo em Brasília ou no Entorno, o iService leva até você quem precisa do seu serviço hoje. Cadastro grátis, sem mensalidade, e você recebe 100% do seu preço.</p>
+    <p>Se você é profissional autônomo em Brasília ou no Entorno, o iService leva até você quem precisa do seu serviço hoje. Cadastro grátis, e você recebe 100% do seu preço.</p>
     <div class="chamadas">
       <a class="btn btn-laranja" href="profissional/" data-baixar="profissional">Quero me cadastrar <span class="ms">arrow_forward</span></a>
       <a class="btn btn-branco" data-contato="whatsapp" data-manter-texto data-se-contato="whatsapp"><span class="ms">chat</span> Tirar dúvidas no WhatsApp</a>
@@ -473,7 +473,7 @@ def pagina_artigo(a, cabeca, rodape):
       <a class="btn btn-branco" href="profissionais.html">Como funciona para profissionais</a>"""
         lateral = """<div class="cartao-lateral">
       <b>Receba clientes perto de você</b>
-      <p>Cadastro grátis e sem mensalidade. Você define o preço e o pedido chega só para você.</p>
+      <p>Cadastro grátis. Você define o preço e o pedido chega só para você.</p>
       <a class="btn btn-laranja" href="profissional/" data-baixar="profissional">Quero me cadastrar</a>
     </div>"""
     else:

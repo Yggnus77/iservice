@@ -210,7 +210,7 @@ export const MODELOS: Record<string, (c: Contexto) => Conteudo> = {
           { texto: "Envie o cadastro para análise. Avisamos por e-mail assim que for aprovado.", estado: "proximo" },
         ],
         botao: { texto: "Completar meu cadastro", link: urlApp("profissional") },
-        nota: "O cadastro é grátis e sem mensalidade. Você recebe 100% do preço que definir.",
+        nota: "O cadastro é grátis. Você recebe 100% do preço que definir.",
       }
       : {
         assunto: `Boas-vindas ao iService, ${primeiroNome(c.nome) || "que bom ter você aqui"}!`,

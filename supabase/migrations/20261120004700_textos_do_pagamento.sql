@@ -5,7 +5,7 @@ update public.ajuda_perguntas set resposta =
 where publico = 'cliente' and pergunta = 'Quanto custa o serviço?';
 
 update public.ajuda_perguntas set resposta =
-  'Você. Informe o valor médio por serviço ou por diária no seu perfil, a partir do mínimo da sua região. Você recebe 100% desse valor: a taxa de serviço de 10% é paga pelo cliente, e não existe mensalidade.',
+  'Você. Informe o valor médio por serviço ou por diária no seu perfil, a partir do mínimo da sua região. Você recebe 100% desse valor: a taxa de serviço de 10% é paga pelo cliente, e não há cobrança por pedido.',
   atualizada_em = now()
 where publico = 'profissional' and pergunta = 'Quem define o meu preço?';
 
