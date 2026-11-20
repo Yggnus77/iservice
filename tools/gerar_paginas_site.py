@@ -299,7 +299,7 @@ def pagina_profissionais(cabeca, rodape):
     descricao = ('Profissional autônomo em Brasília ou no Entorno? Cadastre-se grátis no iService, defina seu preço e receba '
                  'pedidos de clientes perto de você. Eletricista, encanador, diarista, chaveiro e outras profissões, 20 no total.')
     faq = [
-        ('Quanto custa para o profissional?', 'O cadastro é grátis e não há taxa por pedido: você recebe 100% do preço que definir, e a taxa de serviço de 10% é paga pelo cliente. Em breve haverá planos opcionais, VIP e Premium, para quem quiser receber pedidos de mais longe. A partir de 5 de janeiro de 2027, o cliente paga pelo app e o valor cai na sua conta de recebimento quando você conclui o serviço.'),
+        ('Quanto custa para o profissional?', 'O cadastro é grátis e não há taxa por pedido: você recebe 100% do preço que definir, e a taxa de serviço de 10% é paga pelo cliente. Em breve haverá planos de assinatura, VIP e Premium, com condições que vamos anunciar antes. A partir de 5 de janeiro de 2027, o cliente paga pelo app e o valor cai na sua conta de recebimento quando você conclui o serviço.'),
         ('Quem define o preço do serviço?', 'Você. O app mostra a faixa de preço da região só como referência para o cliente.'),
         ('Preciso ser MEI?', 'Não é obrigatório para se cadastrar. Se você for MEI, o app tem um relatório de ganhos que ajuda a acompanhar o limite anual.'),
         ('Como recebo os pedidos?', 'O cliente escolhe você pelo perfil e só você recebe o pedido. Você aceita ou recusa, sem disputa com outros profissionais.'),
