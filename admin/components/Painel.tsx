@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
-  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy, Wallet,
+  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy, Wallet, KeyRound,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -49,15 +49,15 @@ export type ContagemEmails = {
   meus_nao_lidos: number; meus_pendentes: number; sem_responsavel: number; eu: string | null;
 };
 
-/** Permissões de cada cargo (a lista completa está no banco, em cargo_permissoes). */
+/** Permissões do painel (a lista completa está no banco, em permissoes_catalogo; cada cargo e pessoa liga as suas). */
 export type Permissao =
   | 'inicio' | 'emails' | 'emails_todos' | 'cadastros' | 'cadastros_decidir' | 'dados_pessoais' | 'pedidos' | 'emergencias'
   | 'garantia' | 'garantia_decidir' | 'avaliacoes' | 'avaliacoes_moderar' | 'denuncias' | 'pessoas' | 'pessoas_suspender'
   | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo'
-  | 'relatorios' | 'captacao';
+  | 'relatorios' | 'captacao' | 'cargos';
 
 export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing' | 'captacao';
-export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[] };
+export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[]; personalizado?: boolean };
 
 type Ctx = {
   resumo: Resumo | null; atualizarResumo: () => void; usuarioId: string; nome: string;
@@ -80,7 +80,7 @@ const rotas: [string, Permissao][] = [
   ['/pessoas', 'pessoas'], ['/pessoa', 'pessoas'], ['/buscas', 'crescimento'], ['/site', 'crescimento'], ['/sugestoes', 'crescimento'],
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
   ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'captacao'],
-  ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'], ['/pagamentos', 'pedidos'],
+  ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'], ['/pagamentos', 'pedidos'], ['/cargos', 'cargos'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -112,6 +112,7 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Catálogo', href: '/precos/', rotulo: 'Preços e mínimos', icone: <Tags /> },
   { grupo: 'Catálogo', href: '/configuracoes/', rotulo: 'Configurações', icone: <Settings /> },
   { grupo: 'Equipe', href: '/equipe/', rotulo: 'Equipe', icone: <UsersRound /> },
+  { grupo: 'Equipe', href: '/cargos/', rotulo: 'Cargos', icone: <KeyRound /> },
   { grupo: 'Equipe', href: '/registro/', rotulo: 'Registro da equipe', icone: <History /> },
 ];
 
