@@ -115,4 +115,21 @@ select pg_temp.falha($$select public.admin_definir_senha_membro('ana@teste.com',
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
 select pg_temp.falha($$select public.admin_equipe()$$, 'cliente não vê a equipe');
 
+-- ---------------------------------------------------------------- celular (migração 20261121004800)
+select pg_temp.como('00000000-0000-0000-0000-0000000000e2');
+select pg_temp.passa($$select public.admin_editar_celular_membro('suporte2@teste.com', '(61) 99876-5432')$$, 'suporte salva o próprio celular');
+select pg_temp.falha($$select public.admin_editar_celular_membro('ana@teste.com', '61998765432')$$, 'suporte não muda o celular do colega');
+select pg_temp.como('00000000-0000-0000-0000-0000000000d1');
+select pg_temp.falha($$select public.admin_editar_celular_membro('ana@teste.com', '9988')$$, 'celular sem DDD é recusado');
+select pg_temp.falha($$select public.admin_editar_celular_membro('convidada.certa@teste.com', '61998765432')$$, 'convite sem conta: celular depois do primeiro acesso');
+select pg_temp.passa($$select public.admin_editar_celular_membro('ana@teste.com', '+55 61 3333-4444')$$, 'dono salva o celular do suporte, com 55');
+select pg_temp.admin();
+select pg_temp.ok((select telefone from public.perfis where id = '00000000-0000-0000-0000-0000000000e2') = '61998765432', 'celular guardado só com DDD e número');
+select pg_temp.ok((select telefone from public.perfis where id = '00000000-0000-0000-0000-0000000000e1') = '6133334444', 'tira o 55 do Brasil');
+select pg_temp.ok(exists (select 1 from public.admin_acoes where acao = 'editar_equipe' and dados ? 'celular'), 'troca de celular fica no registro');
+select pg_temp.como('00000000-0000-0000-0000-0000000000d1');
+select pg_temp.passa($$select public.admin_editar_celular_membro('ana@teste.com', '')$$, 'apagar o celular');
+select pg_temp.admin();
+select pg_temp.ok((select telefone from public.perfis where id = '00000000-0000-0000-0000-0000000000e1') is null, 'celular apagado');
+
 rollback;

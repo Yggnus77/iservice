@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import {
-  ArrowRightLeft, BriefcaseBusiness, Camera, Copy, Crown, Eye, EyeOff, Headset, Hourglass, KeyRound, Loader2, Mail, MailCheck, Megaphone, MessageCircle,
+  ArrowRightLeft, BriefcaseBusiness, Camera, Copy, Crown, Eye, EyeOff, Headset, Hourglass, KeyRound, Loader2, Mail, MailCheck, Megaphone, MessageCircle, Phone,
   Send, ShieldCheck, ShieldUser, Trash2, UserCog, UserPen, UserPlus, UsersRound, WandSparkles,
 } from 'lucide-react';
 import { Cabecalho, usePainel, type Cargo } from '@/components/Painel';
@@ -111,9 +111,11 @@ function DialogoDados({ m, fechar, salvo }: { m: Membro | null; fechar: () => vo
   const [senha, setSenha] = useState('');
   const [verSenha, setVerSenha] = useState(false);
   const [senhaFeita, setSenhaFeita] = useState<string | null>(null);
+  const [celular, setCelular] = useState('');
   useEffect(() => {
     if (!m) return;
     setNome(m.nome); setEmail(m.email); setSenha(''); setVerSenha(false); setSenhaFeita(null);
+    setCelular(m.telefone ? formatarTelefone(m.telefone) : '');
   }, [m]);
   if (!m) return null;
   const temConta = !!m.usuario_id && m.situacao === 'ativo';
@@ -127,6 +129,14 @@ function DialogoDados({ m, fechar, salvo }: { m: Membro | null; fechar: () => vo
       `${m.voce ? 'Você vai' : `${primeiro} vai`} passar a entrar com ${novo}. A senha continua a mesma. Confirmar?`)) return;
     const ok = await executar(() => rpc('admin_editar_membro', { p_email: m.email, p_nome: nome.trim(), p_novo_email: novo }), 'Dados salvos.');
     if (ok) salvo(m.voce && novo !== m.email, true);
+  };
+  const digitosCelular = celular.replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '');
+  const celularOk = digitosCelular === '' || /^\d{10,11}$/.test(digitosCelular);
+  const mudouCelular = digitosCelular !== (m.telefone ?? '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '');
+  const salvarCelular = async () => {
+    const ok = await executar(() => rpc('admin_editar_celular_membro', { p_email: m.email, p_telefone: digitosCelular }),
+      digitosCelular ? 'Celular salvo.' : 'Celular removido.');
+    if (ok) salvo(false, true);
   };
   const salvarSenha = async () => {
     const ok = await executar(() => rpc('admin_definir_senha_membro', { p_email: m.email, p_senha: senha }));
@@ -145,7 +155,7 @@ function DialogoDados({ m, fechar, salvo }: { m: Membro | null; fechar: () => vo
 
   return (
     <Dialogo aberto fechar={fechar} largo icone={<UserPen />} titulo={m.voce ? 'Seus dados de acesso' : `Dados de acesso de ${primeiro}`}
-      texto="Corrija o nome e o e-mail de login, ou defina uma senha nova. Tudo fica no Registro da equipe."
+      texto="Corrija o nome, o e-mail de login e o celular, ou defina uma senha nova. Tudo fica no Registro da equipe."
       rodape={<button className="botao contorno" onClick={fechar}>Fechar</button>}>
       <dl className="dados" style={{ marginBottom: 16 }}>
         <div><dt>Cargo</dt><dd><SeloCargo papel={m.papel} /></dd></div>
@@ -168,6 +178,24 @@ function DialogoDados({ m, fechar, salvo }: { m: Membro | null; fechar: () => vo
           <button type="submit" className="botao primario" disabled={ocupado || !mudou || !emailOk || nome.trim().length < 2}>
             {ocupado ? <Loader2 className="girar" /> : <UserPen />} Salvar nome e e-mail
           </button>
+        </div>
+      </form>
+
+      <div className="separador" style={{ margin: '18px 0' }} />
+      <form onSubmit={(e) => { e.preventDefault(); if (temConta && mudouCelular && celularOk) salvarCelular(); }}>
+        <div className="campo">
+          <label htmlFor="dados-celular">Celular</label>
+          <div className="linha-flex" style={{ gap: 8, alignItems: 'stretch' }}>
+            <input id="dados-celular" className="entrada" style={{ flex: 1, minWidth: 180 }} type="tel" inputMode="tel" autoComplete="tel"
+              placeholder="(61) 99999-8888" maxLength={20} value={celular} disabled={!temConta}
+              onChange={(e) => setCelular(e.target.value)} onBlur={() => { if (/^\d{10,11}$/.test(digitosCelular)) setCelular(formatarTelefone(digitosCelular)); }} />
+            <button type="submit" className="botao primario" disabled={ocupado || !temConta || !mudouCelular || !celularOk}>
+              {ocupado ? <Loader2 className="girar" /> : <Phone />} Salvar celular
+            </button>
+          </div>
+          <span className="ajuda">{!temConta ? 'Dá para salvar o celular depois do primeiro acesso.'
+            : !celularOk ? 'Digite com DDD, por exemplo (61) 99999-8888.'
+            : 'Para a equipe falar com a pessoa e, quando ligar, para o plantão e os avisos. É o mesmo celular do app; trocar pede nova confirmação por SMS.'}</span>
         </div>
       </form>
 

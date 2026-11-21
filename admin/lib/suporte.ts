@@ -11,11 +11,13 @@ export const statusConversa: Record<StatusConversa, { rotulo: string; tom: Tom }
 };
 
 export type ItemConversa = {
-  id: number; protocolo: string; assunto: string; contato_email: string; contato_nome: string | null; usuario_id: string | null;
+  id: number; protocolo: string; assunto: string; contato_email: string | null; contato_nome: string | null; usuario_id: string | null;
   foto_url: string | null; e_profissional: boolean; status: StatusConversa; responsavel: string | null; responsavel_nome: string | null;
   nao_lida: boolean; mensagens: number; criada_em: string; ultima_mensagem_em: string; previa: string; ultima_direcao: 'recebida' | 'enviada' | null;
-  total: number;
+  total: number; canal?: Canal; contato_telefone?: string | null;
 };
+
+export type Canal = 'email' | 'whatsapp';
 
 export type Anexo = { nome: string; tipo: string; tamanho: number; caminho: string | null };
 
@@ -23,12 +25,14 @@ export type Mensagem = {
   id: number; direcao: 'recebida' | 'enviada' | 'nota' | 'evento'; de_email: string | null; de_nome: string | null;
   para: string[]; cc: string[]; assunto: string | null; texto: string | null; tem_html: boolean; autor_nome: string | null;
   envio: 'enviando' | 'enviado' | 'erro' | null; erro: string | null; anexos: Anexo[]; criada_em: string;
+  entregue_em?: string | null; lida_em?: string | null;
 };
 
 export type Conversa = {
-  id: number; protocolo: string; assunto: string; contato_email: string; contato_nome: string | null; status: StatusConversa;
+  id: number; protocolo: string; assunto: string; contato_email: string | null; contato_nome: string | null; status: StatusConversa;
   responsavel: string | null; responsavel_nome: string | null; nao_lida: boolean; criada_em: string; ultima_mensagem_em: string;
   encerrada_em: string | null; eu: string | null; outras: number;
+  canal?: Canal; contato_telefone?: string | null; janela_ate?: string | null; whatsapp_ativo?: boolean;
   pessoa: { id: string; nome: string; foto_url: string | null; e_profissional: boolean; telefone: string | null; pedidos: number } | null;
   mensagens: Mensagem[];
 };
@@ -38,9 +42,10 @@ export type MembroRodizio = {
   aberto: number; em_atendimento: number; encerrado_7d: number; voce: boolean;
 };
 
-/** Envia pela função responder-suporte (resposta, e-mail novo ou nova tentativa). */
-export async function enviarEmail(corpo: { conversa_id?: number | null; texto?: string; para?: string; assunto?: string; reenviar?: number }) {
-  const { data, error } = await db().functions.invoke<{ enviado?: boolean; conversa_id?: number; erro?: string }>('responder-suporte', { body: corpo });
+type RespostaEnvio = { enviado?: boolean; conversa_id?: number; erro?: string };
+
+async function invocar(funcao: 'responder-suporte' | 'whatsapp', corpo: Record<string, unknown>) {
+  const { data, error } = await db().functions.invoke<RespostaEnvio>(funcao, { body: corpo });
   if (error) {
     let msg = 'Não foi possível enviar. Confira a internet e tente de novo.';
     let conversa: number | undefined;
@@ -49,13 +54,25 @@ export async function enviarEmail(corpo: { conversa_id?: number | null; texto?: 
       if (r?.erro) msg = r.erro;
       conversa = r?.conversa_id;
     } else if (/Failed to send|fetch/i.test(error.message)) {
-      msg = 'A função de envio ainda não foi publicada no Supabase ou está fora do ar.';
+      msg = funcao === 'whatsapp'
+        ? 'O WhatsApp do atendimento ainda não foi ligado. Ele entra no ar depois do CNPJ e da verificação na Meta.'
+        : 'A função de envio ainda não foi publicada no Supabase ou está fora do ar.';
     }
     const e = new ErroPainel(msg, 'envio');
     (e as ErroPainel & { conversa?: number }).conversa = conversa;
     throw e;
   }
   return data!;
+}
+
+/** Envia pela função responder-suporte (resposta, e-mail novo ou nova tentativa). */
+export function enviarEmail(corpo: { conversa_id?: number | null; texto?: string; para?: string; assunto?: string; reenviar?: number }) {
+  return invocar('responder-suporte', corpo);
+}
+
+/** Envia pelo WhatsApp do atendimento (função whatsapp, API oficial da Meta). */
+export function enviarWhatsapp(corpo: { conversa_id?: number; texto?: string; reenviar?: number }) {
+  return invocar('whatsapp', corpo);
 }
 
 /**
