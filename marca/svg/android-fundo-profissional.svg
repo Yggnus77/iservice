@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="iService"><title>iService</title><defs>
-    <radialGradient id="afundo" cx="512" cy="439.4" r="379.5" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#14449A"/><stop offset=".55" stop-color="#0A1F44"/><stop offset="1" stop-color="#04102A"/></radialGradient>
-    <linearGradient id="aanel" x1="182" y1="182" x2="842" y2="842" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#3FA9FF"/><stop offset=".42" stop-color="#1673F5"/><stop offset=".62" stop-color="#FF8A00"/><stop offset="1" stop-color="#FFC24A"/></linearGradient>
-    <filter id="abrilho" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="9.9"/></filter></defs><rect width="1024" height="1024" fill="url(#afundo)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="iService"><title>iService</title><defs><linearGradient id="abg" x1="0" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="#FFB23F"/><stop offset="1" stop-color="#F26A00"/></linearGradient><filter id="asb" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#00163D" flood-opacity=".28"/></filter></defs><rect width="1024" height="1024" fill="url(#abg)"/></svg>
