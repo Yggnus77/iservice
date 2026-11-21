@@ -1,5 +1,5 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
-import { db, ErroPainel } from './supabase';
+import { db, ErroPainel, rpc } from './supabase';
 import type { Tom } from './formatos';
 
 export type StatusConversa = 'aberto' | 'em_atendimento' | 'encerrado';
@@ -17,7 +17,7 @@ export type ItemConversa = {
   total: number; canal?: Canal; contato_telefone?: string | null;
 };
 
-export type Canal = 'email' | 'whatsapp';
+export type Canal = 'email' | 'whatsapp' | 'app';
 
 export type Anexo = { nome: string; tipo: string; tamanho: number; caminho: string | null };
 
@@ -33,6 +33,7 @@ export type Conversa = {
   responsavel: string | null; responsavel_nome: string | null; nao_lida: boolean; criada_em: string; ultima_mensagem_em: string;
   encerrada_em: string | null; eu: string | null; outras: number;
   canal?: Canal; contato_telefone?: string | null; janela_ate?: string | null; whatsapp_ativo?: boolean;
+  contato_viu_em?: string | null; equipe_online?: boolean;
   pessoa: { id: string; nome: string; foto_url: string | null; e_profissional: boolean; telefone: string | null; pedidos: number } | null;
   mensagens: Mensagem[];
 };
@@ -73,6 +74,11 @@ export function enviarEmail(corpo: { conversa_id?: number | null; texto?: string
 /** Envia pelo WhatsApp do atendimento (função whatsapp, API oficial da Meta). */
 export function enviarWhatsapp(corpo: { conversa_id?: number; texto?: string; reenviar?: number }) {
   return invocar('whatsapp', corpo);
+}
+
+/** Responde uma conversa do chat do app: aparece no app da pessoa, com aviso no celular. */
+export async function responderApp(corpo: { conversa_id: number; texto: string }) {
+  return rpc<{ enviado: boolean; conversa_id: number }>('admin_suporte_responder_app', { p_id: corpo.conversa_id, p_texto: corpo.texto });
 }
 
 /**
