@@ -7,7 +7,7 @@ import { Abas, Carregando, Dialogo, ErroCaixa, Interruptor, Selo, Vazio, useAcao
 import { db, rpc } from '@/lib/supabase';
 
 type Publico = 'cliente' | 'profissional' | 'todos';
-type Pergunta = { id: number; publico: Publico; categoria: string; pergunta: string; resposta: string; ordem: number; ativa: boolean };
+type Pergunta = { id: number; publico: Publico; categoria: string; pergunta: string; resposta: string; ordem: number; ativa: boolean; palavras?: string };
 
 const PUBLICOS: Record<Publico, string> = { cliente: 'Clientes', profissional: 'Profissionais', todos: 'Todos' };
 
@@ -21,10 +21,13 @@ function Editor({ p, fechar, salvo }: { p: Partial<Pergunta> | null; fechar: () 
   if (chave !== ultima) { setUltima(chave); setF(p ?? {}); }
 
   const salvar = async () => {
-    const ok = await executar(() => rpc('admin_salvar_pergunta', {
-      p_id: f.id ?? null, p_publico: f.publico ?? 'todos', p_categoria: f.categoria ?? 'Geral', p_pergunta: f.pergunta ?? '',
-      p_resposta: f.resposta ?? '', p_ordem: f.ordem ?? 100, p_ativa: f.ativa ?? true,
-    }), 'Pergunta salva. Já aparece nos apps.');
+    const ok = await executar(async () => {
+      const id = await rpc<number>('admin_salvar_pergunta', {
+        p_id: f.id ?? null, p_publico: f.publico ?? 'todos', p_categoria: f.categoria ?? 'Geral', p_pergunta: f.pergunta ?? '',
+        p_resposta: f.resposta ?? '', p_ordem: f.ordem ?? 100, p_ativa: f.ativa ?? true,
+      });
+      await rpc('admin_palavras_pergunta', { p_id: id, p_palavras: f.palavras ?? '' });
+    }, 'Pergunta salva. Já aparece nos apps e no assistente do chat.');
     if (ok) { salvo(); fechar(); }
   };
 
@@ -54,6 +57,11 @@ function Editor({ p, fechar, salvo }: { p: Partial<Pergunta> | null; fechar: () 
           <textarea id="aj-resp" className="entrada" rows={6} maxLength={2000} value={f.resposta ?? ''} onChange={(e) => muda('resposta', e.target.value)} />
           <span className="ajuda">Escreva como se falasse com a pessoa: frases curtas e o caminho exato no app.</span>
         </div>
+        <div className="campo">
+          <label htmlFor="aj-palavras">Outros jeitos de perguntar</label>
+          <input id="aj-palavras" className="entrada" maxLength={400} placeholder="Ex.: cancelar, desistir, desmarcar" value={f.palavras ?? ''} onChange={(e) => muda('palavras', e.target.value)} />
+          <span className="ajuda">Separe por vírgula. O assistente do chat usa estas palavras para reconhecer a dúvida, mesmo escrita de outro jeito.</span>
+        </div>
         <div className="linha-flex">
           <div className="campo" style={{ width: 140 }}>
             <label htmlFor="aj-ordem">Ordem</label>
@@ -82,7 +90,7 @@ export default function CentralDeAjuda() {
 
   return (
     <>
-      <Cabecalho titulo="Central de Ajuda" texto="Perguntas frequentes que aparecem nos apps e no site, antes do botão de falar com o suporte."
+      <Cabecalho titulo="Central de Ajuda" texto="Perguntas frequentes que aparecem nos apps e no site. O assistente do chat do suporte responde com elas antes de chamar uma pessoa."
         ajuda={<>Uma boa Central de Ajuda resolve muitas dúvidas sem precisar de atendente. Quando a mesma pergunta chegar três vezes por e-mail ou WhatsApp, vale virar uma pergunta aqui.</>}
         acoes={<button className="botao primario" onClick={() => setEditar({ publico: 'todos', categoria: 'Geral', ordem: 100, ativa: true })}><Plus /> Nova pergunta</button>} />
       <div className="filtros">

@@ -12,23 +12,31 @@ import '../widgets/componentes.dart';
 
 /// Pergunta da Central de Ajuda (editada pela equipe no painel).
 class PerguntaAjuda {
-  const PerguntaAjuda({required this.categoria, required this.pergunta, required this.resposta});
+  const PerguntaAjuda({required this.categoria, required this.pergunta, required this.resposta, this.palavras = ''});
   final String categoria;
   final String pergunta;
   final String resposta;
+
+  /// Outros jeitos de perguntar a mesma coisa (separados por vírgula), para o assistente do chat.
+  final String palavras;
 }
 
 final ajudaProvider = FutureProvider.autoDispose<List<PerguntaAjuda>>((ref) async {
   final app = ref.read(appProvider);
   final linhas = await supabase
       .from('ajuda_perguntas')
-      .select('categoria, pergunta, resposta, publico')
+      .select('categoria, pergunta, resposta, palavras, publico')
       .inFilter('publico', [app.name, 'todos'])
       .order('ordem')
       .order('id');
   return [
     for (final l in linhas)
-      PerguntaAjuda(categoria: l['categoria'] as String, pergunta: l['pergunta'] as String, resposta: l['resposta'] as String),
+      PerguntaAjuda(
+        categoria: l['categoria'] as String,
+        pergunta: l['pergunta'] as String,
+        resposta: l['resposta'] as String,
+        palavras: (l['palavras'] as String?) ?? '',
+      ),
   ];
 });
 
