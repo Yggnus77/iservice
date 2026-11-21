@@ -646,3 +646,22 @@ table.tabela { width: 100%; border-collapse: collapse; }
   .dialogo .lista-permissoes fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .dialogo .lista-permissoes .permissao + .permissao { margin-top: 0; }
 }
+
+/* Caixa e Comercial */
+.barras .empilhada { display: flex; flex-direction: column-reverse; justify-content: flex-start; width: 100%; max-width: 44px; flex: 1; gap: 1px; }
+.barras .empilhada .barra { max-width: none; border-radius: 0; min-height: 0; }
+.barras .empilhada .barra:last-child { border-radius: 4px 4px 0 0; }
+.barra-meta { display: block; height: 8px; border-radius: 99px; background: var(--roxo-suave); overflow: hidden; margin: 2px 0 6px; }
+.barra-meta i { display: block; height: 100%; background: var(--roxo); border-radius: 99px; }
+.lista-numeros { list-style: none; margin: 0; padding: 0; }
+.lista-numeros li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--linha); font-size: 14px; }
+.lista-numeros li:last-child { border-bottom: 0; }
+.lista-numeros li span { display: inline-flex; align-items: center; gap: 6px; }
+.lista-numeros li strong { font-variant-numeric: tabular-nums; }
+.lista-numeros li.sub { padding-left: 16px; color: var(--texto-suave); font-size: 13.5px; }
+.lista-numeros li.alerta { color: #c62828; }
+.tabela tr.grupo-linha td { background: var(--fundo, #f4f6fa); font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-suave); padding-top: 8px; padding-bottom: 8px; }
+button.link { background: none; border: 0; padding: 0; color: var(--azul); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.tabela.comercial td { vertical-align: top; }
+.tabela.comercial .argumento { margin: 6px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--texto-suave); max-width: 360px; white-space: normal; }
+.tabela.indicadores-mes td:first-child { white-space: nowrap; }
