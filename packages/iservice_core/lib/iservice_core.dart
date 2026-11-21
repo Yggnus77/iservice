@@ -22,6 +22,7 @@ export 'src/telas/termos.dart';
 export 'src/telas/verificar_conta.dart';
 export 'src/tema/cores.dart';
 export 'src/tema/tema.dart';
+export 'src/util/assistente.dart';
 export 'src/util/formatos.dart';
 export 'src/util/icones.dart';
 export 'src/util/validacao.dart';
