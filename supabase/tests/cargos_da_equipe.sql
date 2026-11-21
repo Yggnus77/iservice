@@ -76,10 +76,10 @@ select set_config('t.livre', (select id::text from public.suporte_conversas wher
 -- ---------------------------------------------------------------- o que cada um recebe
 select pg_temp.como('00000000-0000-0000-0000-0000000000d1');
 select pg_temp.ok((public.admin_meu_acesso()->>'cargo') = 'dono', 'dono entra como Dono');
-select pg_temp.ok(public.pode('configuracoes'), 'só o dono tem Configurações');
+select pg_temp.ok(public.pode('configuracoes'), 'dono tem Configurações');
 select pg_temp.como('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.ok((public.admin_meu_acesso()->>'cargo_nome') = 'Gerente geral', 'gerente entra como Gerente geral');
-select pg_temp.ok(not public.pode('configuracoes') and public.pode('precos') and public.pode('catalogo'), 'gerente tem Preços e Catálogo, sem Configurações');
+select pg_temp.ok(public.pode('configuracoes') and public.pode('precos') and public.pode('catalogo') and public.pode('cargos'), 'gerente tem o mesmo acesso do dono, com Configurações e Cargos');
 select pg_temp.como('00000000-0000-0000-0000-0000000000e1');
 select pg_temp.ok((select jsonb_array_length(public.admin_meu_acesso()->'permissoes')) = 7, 'suporte recebe só as 7 permissões dele');
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
@@ -162,16 +162,17 @@ select pg_temp.ok((select count(*) = 6 from public.admin_equipe()), 'gerente vê
 select pg_temp.ok((select not pode_gerir from public.admin_equipe() where papel = 'dono'), 'gerente não pode gerir o dono');
 select pg_temp.passa($$select public.admin_convidar_equipe('novo@teste.com', 'Novo', 'suporte')$$, 'gerente convida alguém do Suporte');
 select pg_temp.ok((select papel = 'suporte' from public.admin_equipe() where email = 'novo@teste.com'), 'convite guarda o cargo');
-select pg_temp.falha($$select public.admin_convidar_equipe('outro@teste.com', 'Outro', 'gerente')$$, 'gerente não convida outro gerente');
+select pg_temp.passa($$select public.admin_convidar_equipe('outro2@teste.com', 'Outro Dois', 'gerente')$$, 'gerente convida outro gerente');
 select pg_temp.passa($$select public.admin_mudar_cargo('novo@teste.com', 'responsavel')$$, 'gerente promove Suporte a Responsável');
-select pg_temp.falha($$select public.admin_mudar_cargo('novo@teste.com', 'gerente')$$, 'gerente não promove ninguém a gerente');
+select pg_temp.passa($$select public.admin_mudar_cargo('novo@teste.com', 'gerente')$$, 'gerente promove alguém a gerente');
+select pg_temp.passa($$select public.admin_mudar_cargo('novo@teste.com', 'responsavel')$$, 'gerente rebaixa outro gerente');
 select pg_temp.falha($$select public.admin_mudar_cargo('dono@teste.com', 'suporte')$$, 'gerente não mexe no cargo do dono');
 select pg_temp.falha($$select public.admin_remover_equipe('dono@teste.com')$$, 'gerente não remove o dono');
 select pg_temp.passa($$select public.admin_remover_equipe('novo@teste.com')$$, 'gerente remove alguém abaixo dele');
 select pg_temp.falha($$select public.admin_transferir_dono('gerente@teste.com')$$, 'gerente não pega a posição de dono');
 select pg_temp.ok((select count(*) from public.admin_acoes) > 0, 'gerente lê o registro completo');
 select pg_temp.ok((select count(*) from public.admin_registro() where acao = 'convidar_equipe') > 0, 'gerente vê o convite no Registro');
-with x as (update public.app_config set valor = valor returning 1) select pg_temp.ok(count(*) = 0, 'gerente não muda Configurações') from x;
+with x as (update public.app_config set valor = valor returning 1) select pg_temp.ok(count(*) > 0, 'gerente muda Configurações') from x;
 with x as (update public.profissoes set nome = nome returning 1) select pg_temp.ok(count(*) > 0, 'gerente edita as Profissões') from x;
 
 -- ---------------------------------------------------------------- dono
@@ -186,6 +187,6 @@ select pg_temp.admin();
 select pg_temp.ok((select papel from public.equipe where email = 'gerente@teste.com') = 'dono'
   and (select papel from public.equipe where email = 'dono@teste.com') = 'gerente', 'antigo dono vira gerente e só existe um dono');
 select pg_temp.como('00000000-0000-0000-0000-0000000000d1');
-select pg_temp.ok(not public.pode('configuracoes'), 'antigo dono perde Configurações');
+select pg_temp.ok((public.admin_meu_acesso()->>'cargo') = 'gerente' and public.pode('configuracoes'), 'antigo dono vira gerente geral, com acesso completo');
 
 rollback;

@@ -16,6 +16,15 @@ function detalhe(a: Acao): string {
     if (typeof d[k] === 'string' && d[k]) partes.push(String(d[k]));
   }
   if (a.acao.endsWith('_equipe') && d.email) partes.push(`${d.nome ?? ''} (${d.email})`);
+  if (a.acao === 'editar_cargo' || a.acao === 'permissoes_equipe') {
+    if (a.acao === 'editar_cargo' && d.cargo_nome) partes.push(`Cargo ${d.cargo_nome}`);
+    if (a.acao === 'permissoes_equipe' && d.cargo_nome) partes.push(`cargo ${d.cargo_nome}`);
+    if (d.padrao) partes.push(a.acao === 'editar_cargo' ? 'voltou ao padrão' : 'voltou ao acesso do cargo');
+    const ligou = (d.ligou_nomes as string[] | undefined) ?? [];
+    const desligou = (d.desligou_nomes as string[] | undefined) ?? [];
+    if (ligou.length) partes.push(`ligou: ${ligou.join(', ')}`);
+    if (desligou.length) partes.push(`desligou: ${desligou.join(', ')}`);
+  }
   if (typeof d.destinatarios === 'number') partes.push(`${d.destinatarios} destinatários`);
   if (a.acao === 'ajustar_preco') partes.push(d.minimo == null ? 'ajuste removido' : `faixa ${d.faixa}: R$ ${d.minimo} a R$ ${d.maximo}`);
   const depois = d.depois as Record<string, unknown> | undefined;
@@ -48,7 +57,7 @@ export default function Registro() {
                       <td className="fraco" style={{ whiteSpace: 'nowrap' }}>{dataHora(a.criada_em)}</td>
                       <td>{a.admin ?? '—'}</td>
                       <td><strong>{nomesAcao[a.acao] ?? a.acao}</strong></td>
-                      <td>{a.alvo_nome ? <Link href={`/pessoa/?id=${a.alvo}`}>{a.alvo_nome}</Link> : <span className="fraco mono">{a.alvo ?? '—'}</span>}</td>
+                      <td>{a.alvo_nome ? <Link href={`/pessoa/?id=${a.alvo}`}>{a.alvo_nome}</Link> : a.acao === 'editar_cargo' ? <span>{String(a.dados?.cargo_nome ?? a.alvo)}</span> : <span className="fraco mono">{a.alvo ?? '—'}</span>}</td>
                       <td className="fraco" style={{ maxWidth: 420 }}>{detalhe(a)}</td>
                     </tr>
                   ))}

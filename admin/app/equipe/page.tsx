@@ -2,10 +2,12 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import {
-  ArrowRightLeft, BriefcaseBusiness, Camera, Copy, Crown, Eye, EyeOff, Headset, Hourglass, KeyRound, Loader2, Mail, MailCheck, Megaphone, MessageCircle, Phone,
-  Send, ShieldCheck, ShieldUser, Trash2, UserCog, UserPen, UserPlus, UsersRound, WandSparkles,
+  ArrowRightLeft, Camera, Copy, Crown, Eye, EyeOff, Hourglass, KeyRound, Loader2, Mail, MailCheck, MessageCircle, Phone,
+  RotateCcw, Save, Send, ShieldCheck, SlidersHorizontal, Trash2, UserCog, UserPen, UserPlus, UsersRound, WandSparkles,
 } from 'lucide-react';
-import { Cabecalho, usePainel, type Cargo } from '@/components/Painel';
+import Link from 'next/link';
+import { Cabecalho, usePainel, type Cargo, type Permissao } from '@/components/Painel';
+import { ListaPermissoes, SeloCargo, cargoDe, cargos, type ItemPermissao } from '@/components/Permissoes';
 import { DialogoFoto } from '@/components/FotoPerfil';
 import { Carregando, Dialogo, ErroCaixa, Pessoa, Selo, Vazio, useAcao, useAviso, useCarregar } from '@/components/ui';
 import { db, rpc } from '@/lib/supabase';
@@ -17,29 +19,11 @@ type Membro = {
   ultimo_acesso: string | null; voce: boolean; pode_gerir?: boolean; pode_foto?: boolean;
   // Do SQL de dados da equipe (sem ele, o botão Dados não aparece).
   pode_editar?: boolean; email_login?: string | null; senha_alterada_em?: string | null; telefone?: string | null;
+  // Do SQL de permissões por pessoa (sem ele, o botão Permissões não aparece).
+  pode_permissoes?: boolean; permissoes_proprias?: number;
 };
 
-/** Os cargos, na ordem em que aparecem. O que cada um pode fazer é conferido também no banco. */
-const cargos: { id: Cargo; nome: string; tom: Tom; icone: ReactNode; resumo: string }[] = [
-  { id: 'dono', nome: 'Dono', tom: 'azul', icone: <Crown />, resumo: 'Tudo, inclusive Configurações e os gerentes.' },
-  { id: 'gerente', nome: 'Gerente geral', tom: 'roxo', icone: <BriefcaseBusiness />,
-    resumo: 'Operação, Crescimento, Profissões, Preços e Comunicados. Convida e remove Responsáveis, Suporte, Marketing e Captação. Não entra em Configurações.' },
-  { id: 'responsavel', nome: 'Responsável de setor', tom: 'verde', icone: <ShieldUser />,
-    resumo: 'Toda a Operação: e-mails de todos, aprova cadastros, decide a Garantia, resolve denúncias e suspende contas. Vê o próprio time na Equipe.' },
-  { id: 'suporte', nome: 'Suporte', tom: 'laranja', icone: <Headset />,
-    resumo: 'Atende os próprios e-mails e as emergências, consulta pedidos e pessoas e registra reclamações. CPF e documentos aparecem mascarados.' },
-  { id: 'marketing', nome: 'Marketing', tom: 'neutro', icone: <Megaphone />,
-    resumo: 'Buscas e mapa, Site e downloads, Avaliações, Comunicados e Captação. Não vê dados pessoais.' },
-  { id: 'captacao', nome: 'Captação', tom: 'neutro', icone: <UserPlus />,
-    resumo: 'Só a página Captação: funil de cadastros, metas por profissão e quem indicou. Não vê dados pessoais nem manda comunicados.' },
-];
-const cargoDe = (id: Cargo) => cargos.find((c) => c.id === id) ?? cargos[3];
 const nivel: Record<Cargo, number> = { dono: 4, gerente: 3, responsavel: 2, suporte: 1, marketing: 1, captacao: 1 };
-
-function SeloCargo({ papel }: { papel: Cargo }) {
-  const c = cargoDe(papel);
-  return <Selo tom={c.tom} icone={c.icone}>{c.nome}</Selo>;
-}
 
 /** Lista de cargos para escolher, com o que cada um faz. */
 function EscolherCargo({ opcoes, valor, mudar }: { opcoes: Cargo[]; valor: Cargo; mudar: (c: Cargo) => void }) {
@@ -53,6 +37,59 @@ function EscolherCargo({ opcoes, valor, mudar }: { opcoes: Cargo[]; valor: Cargo
         </label>
       ))}
     </div>
+  );
+}
+
+type PermissoesMembro = {
+  email: string; nome: string; cargo: Cargo; cargo_nome: string; pode_editar: boolean;
+  catalogo: ItemPermissao[]; minhas: Permissao[]; do_cargo: Permissao[]; efetivas: Permissao[];
+};
+
+/** Liga e desliga telas e ações só para uma pessoa, além do que o cargo dela dá. */
+function DialogoPermissoes({ m, fechar, salvo }: { m: Membro | null; fechar: () => void; salvo: () => void }) {
+  const { executar, ocupado } = useAcao();
+  const [info, setInfo] = useState<PermissoesMembro | null>(null);
+  const [erro, setErro] = useState<unknown>(null);
+  const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!m) return;
+    setInfo(null); setErro(null);
+    rpc<PermissoesMembro>('admin_permissoes_membro', { p_email: m.email })
+      .then((d) => { setInfo(d); setMarcadas(new Set(d.efetivas)); })
+      .catch(setErro);
+  }, [m]);
+  if (!m) return null;
+  const doCargo = new Set(info?.do_cargo ?? []);
+  const minhas = new Set(info?.minhas ?? []);
+  const diferencas = info ? info.catalogo.filter((p) => marcadas.has(p.chave) !== doCargo.has(p.chave)).length : 0;
+  const mudou = !!info && (marcadas.size !== info.efetivas.length || info.efetivas.some((p) => !marcadas.has(p)));
+  const salvar = async (padrao: boolean) => {
+    const ok = await executar(() => rpc('admin_salvar_permissoes_membro', { p_email: m.email, p_permissoes: padrao ? null : [...marcadas] }),
+      padrao ? `${m.nome} voltou ao acesso do cargo.` : `Permissões de ${m.nome} salvas.`);
+    if (ok) salvo();
+  };
+  return (
+    <Dialogo aberto={!!m} fechar={fechar} largo icone={<SlidersHorizontal />} titulo={`Permissões de ${m.nome}`}
+      texto={<>Começa pelo que o cargo <strong>{cargoDe(m.papel).nome}</strong> dá. O que você mudar aqui vale só para esta pessoa. Se ela mudar de cargo, volta ao padrão do cargo novo.</>}
+      rodape={info?.pode_editar ? <>
+        <button className="botao contorno" disabled={ocupado || (diferencas === 0 && !(m.permissoes_proprias ?? 0))} onClick={() => salvar(true)}><RotateCcw /> Voltar ao cargo</button>
+        <button className="botao primario" disabled={ocupado || !mudou} onClick={() => salvar(false)}>{ocupado ? <Loader2 className="girar" /> : <Save />} Salvar</button>
+      </> : <button className="botao contorno" onClick={fechar}>Fechar</button>}>
+      {erro ? <ErroCaixa erro={erro} /> : !info ? <Carregando /> : (
+        <>
+          <p className="texto-fraco" style={{ margin: '0 0 12px' }}>
+            {diferencas === 0 ? 'Igual ao cargo.' : `${diferencas} ${diferencas === 1 ? 'diferença' : 'diferenças'} em relação ao cargo.`}
+          </p>
+          <ListaPermissoes catalogo={info.catalogo} ligadas={marcadas}
+            mudar={(chave, ligada) => setMarcadas((s) => { const n = new Set(s); if (ligada) n.add(chave); else n.delete(chave); return n; })}
+            travada={(p) => !info.pode_editar ? 'Você não muda as permissões desta pessoa.'
+              : p.chave === 'inicio' ? 'Sempre ligado para todos.'
+              : !marcadas.has(p.chave) && !minhas.has(p.chave) ? 'Você não tem este acesso, então não pode dar.' : null}
+            marca={(p) => marcadas.has(p.chave) && !doCargo.has(p.chave) ? <span className="marca mais">além do cargo</span>
+              : !marcadas.has(p.chave) && doCargo.has(p.chave) ? <span className="marca menos">tirado do cargo</span> : null} />
+        </>
+      )}
+    </Dialogo>
   );
 }
 
@@ -251,6 +288,7 @@ export default function Equipe() {
   const [remover, setRemover] = useState<Membro | null>(null);
   const [foto, setFoto] = useState<Membro | null>(null);
   const [editar, setEditar] = useState<Membro | null>(null);
+  const [permissoes, setPermissoes] = useState<Membro | null>(null);
   const [mudar, setMudar] = useState<Membro | null>(null);
   const [cargoMudar, setCargoMudar] = useState<Cargo>('suporte');
   const [passarDono, setPassarDono] = useState(false);
@@ -258,8 +296,8 @@ export default function Equipe() {
   const painel = usePainel();
   const meuCargo: Cargo = painel.acesso?.cargo ?? 'dono';
   const podeGerirEquipe = painel.pode('equipe_gerir');
-  // Cargos que eu posso dar: só os abaixo do meu (o dono passa a posição por um botão próprio).
-  const cargosQuePossoDar = cargos.map((c) => c.id).filter((c) => c !== 'dono' && nivel[meuCargo] > nivel[c]);
+  // Cargos que eu posso dar: o dono e o gerente geral dão todos (menos Dono, que tem botão próprio); os outros, só os abaixo.
+  const cargosQuePossoDar = cargos.map((c) => c.id).filter((c) => c !== 'dono' && (meuCargo === 'dono' || meuCargo === 'gerente' || nivel[meuCargo] > nivel[c]));
   // A própria foto sempre; a de um colega conforme o cargo (o banco confere de novo).
   const podeFoto = (m: Membro) => !!m.usuario_id && (m.voce || (m.pode_foto ?? (m.papel !== 'dono' && m.situacao === 'ativo')));
   const podeGerir = (m: Membro) => !m.voce && (m.pode_gerir ?? m.papel !== 'dono');
@@ -336,7 +374,10 @@ export default function Equipe() {
                     {dados.map((m) => (
                       <tr key={m.email}>
                         <td><Pessoa nome={m.voce ? `${m.nome} (você)` : m.nome} foto={m.voce ? painel.foto : m.foto_url} sub={m.email} /></td>
-                        <td><SeloCargo papel={m.papel} /></td>
+                        <td>
+                          <SeloCargo papel={m.papel} />
+                          {m.permissoes_proprias ? <div className="texto-fraco" style={{ marginTop: 4 }}>Acesso personalizado ({m.permissoes_proprias} {m.permissoes_proprias === 1 ? 'mudança' : 'mudanças'})</div> : null}
+                        </td>
                         <td>
                           <div className="linha-flex" style={{ gap: 6 }}>
                             {m.situacao === 'ativo' ? <Selo tom="verde" icone={<ShieldCheck />}>Com acesso</Selo> : <Selo tom="laranja" icone={<Hourglass />}>Aguardando primeiro acesso</Selo>}
@@ -356,6 +397,12 @@ export default function Equipe() {
                               <button className="botao contorno pequeno" onClick={() => setFoto(m)}
                                 title={m.voce ? 'Sua foto de perfil' : `Foto de perfil de ${m.nome}`} aria-label={m.voce ? 'Trocar sua foto de perfil' : `Trocar a foto de ${m.nome}`}>
                                 <Camera /> Foto
+                              </button>
+                            ) : null}
+                            {m.pode_permissoes ? (
+                              <button className="botao contorno pequeno" onClick={() => setPermissoes(m)} title="Ligar ou desligar telas e ações só para esta pessoa"
+                                aria-label={`Permissões de ${m.nome}`}>
+                                <SlidersHorizontal /> Permissões
                               </button>
                             ) : null}
                             {podeGerir(m) && painel.acesso ? (
@@ -398,7 +445,10 @@ export default function Equipe() {
         </section>
 
         <section className="cartao">
-          <div className="titulo"><div><h2>Cargos</h2><p>O que cada cargo vê e pode fazer no painel.</p></div></div>
+          <div className="titulo">
+            <div><h2>Cargos</h2><p>O que cada cargo vê e pode fazer no painel.</p></div>
+            {painel.acesso && painel.pode('cargos') ? <Link className="botao contorno pequeno" href="/cargos/"><KeyRound /> Editar cargos</Link> : null}
+          </div>
           <div className="corpo">
             <ul className="lista-cargos">
               {cargos.map((c) => (
@@ -459,7 +509,7 @@ export default function Equipe() {
       </Dialogo>
 
       <Dialogo aberto={passarDono} fechar={() => setPassarDono(false)} titulo="Passar a posição de dono" icone={<Crown />}
-        texto="A pessoa escolhida vira a dona do painel, com Configurações e os gerentes. Você passa a Gerente geral e não consegue desfazer sozinho."
+        texto="A pessoa escolhida vira a dona do painel e ninguém mais mexe no acesso dela. Você passa a Gerente geral (com o mesmo acesso, menos mexer no dono) e não consegue desfazer sozinho."
         rodape={<>
           <button className="botao contorno" onClick={() => setPassarDono(false)}>Cancelar</button>
           <button className="botao perigo" disabled={ocupado || !novoDono} onClick={confirmarPassarDono}>
@@ -476,6 +526,8 @@ export default function Equipe() {
           </div>
         ) : <p className="texto-fraco">Só dá para passar para alguém da equipe que já fez o primeiro acesso.</p>}
       </Dialogo>
+
+      <DialogoPermissoes m={permissoes} fechar={() => setPermissoes(null)} salvo={() => { setPermissoes(null); recarregar(); }} />
 
       <DialogoDados m={editar} fechar={() => setEditar(null)}
         salvo={(mudouMeuEmail, fecharDialogo) => {

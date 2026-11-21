@@ -619,3 +619,30 @@ table.tabela { width: 100%; border-collapse: collapse; }
 .alerta-emergencia:hover { text-decoration: none; filter: brightness(.98); }
 @keyframes pulso-emergencia { 0%, 100% { box-shadow: 0 0 0 0 rgba(198, 40, 40, .35); } 50% { box-shadow: 0 0 0 6px rgba(198, 40, 40, 0); } }
 @media (prefers-reduced-motion: reduce) { .alerta-emergencia { animation: none; } }
+
+/* Cargos e permissões */
+.lista-permissoes { display: grid; gap: 16px; }
+.lista-permissoes fieldset { border: 0; margin: 0; padding: 0; }
+.lista-permissoes legend { padding: 0; margin-bottom: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-fraco); }
+.lista-permissoes .permissao { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 12px; border: 1px solid var(--linha); border-radius: var(--raio-p); }
+.lista-permissoes .permissao + .permissao { margin-top: 6px; }
+.lista-permissoes .permissao.ligada { background: var(--superficie-suave); }
+.lista-permissoes .permissao strong { font-size: 13.5px; }
+.lista-permissoes .permissao small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.4; color: var(--texto-suave); }
+.lista-permissoes .marca { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; vertical-align: 1px; }
+.lista-permissoes .marca.mais { background: var(--verde-suave); color: var(--verde-texto); }
+.lista-permissoes .marca.menos { background: var(--laranja-suave); color: var(--laranja-texto); }
+.escolha-cargos { display: flex; flex-direction: column; gap: 8px; }
+.escolha-cargos button { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; cursor: pointer; border: 1.5px solid var(--linha); border-radius: var(--raio-p); }
+.escolha-cargos button:hover { background: var(--superficie-suave); }
+.escolha-cargos button[aria-pressed="true"] { border-color: var(--azul); background: var(--azul-suave); }
+.escolha-cargos button:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.escolha-cargos strong { display: block; font-size: 14px; }
+.escolha-cargos small { display: block; font-size: 12px; color: var(--texto-suave); }
+.grade.cargos-lado { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 960px) { .grade.cargos-lado { grid-template-columns: 1fr; } }
+.dialogo .pe { position: sticky; bottom: 0; background: var(--superficie); border-top: 1px solid var(--linha); }
+@media (min-width: 760px) {
+  .dialogo .lista-permissoes fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dialogo .lista-permissoes .permissao + .permissao { margin-top: 0; }
+}
