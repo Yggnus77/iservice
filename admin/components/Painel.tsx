@@ -7,7 +7,7 @@ import type { Session } from '@supabase/supabase-js';
 import {
   BadgeCheck, ClipboardList, Globe, Flag, Gauge, History, LayoutGrid, Loader2, LogOut, Map as MapaIcone, Megaphone, Menu,
   ShieldAlert, ShieldCheck, Siren, Star, Tags, Users, Settings, Lock, Mail, MailCheck, CheckCircle2, UserRound, UsersRound, Camera, Lightbulb,
-  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy, Wallet, KeyRound,
+  BellRing, LineChart, Search, UserPlus, Headset, LifeBuoy, Wallet, KeyRound, Landmark, Target,
 } from 'lucide-react';
 import { db, rpc, ErroPainel } from '@/lib/supabase';
 import { Avatar, Avisos, Carregando } from './ui';
@@ -54,7 +54,7 @@ export type Permissao =
   | 'inicio' | 'emails' | 'emails_todos' | 'cadastros' | 'cadastros_decidir' | 'dados_pessoais' | 'pedidos' | 'emergencias'
   | 'garantia' | 'garantia_decidir' | 'avaliacoes' | 'avaliacoes_moderar' | 'denuncias' | 'pessoas' | 'pessoas_suspender'
   | 'crescimento' | 'comunicados' | 'catalogo' | 'precos' | 'configuracoes' | 'equipe' | 'equipe_gerir' | 'registro' | 'registro_completo'
-  | 'relatorios' | 'captacao' | 'cargos';
+  | 'relatorios' | 'captacao' | 'cargos' | 'caixa' | 'comercial';
 
 export type Cargo = 'dono' | 'gerente' | 'responsavel' | 'suporte' | 'marketing' | 'captacao';
 export type MeuAcesso = { cargo: Cargo; cargo_nome: string; permissoes: Permissao[]; personalizado?: boolean };
@@ -81,6 +81,7 @@ const rotas: [string, Permissao][] = [
   ['/comunicados', 'comunicados'], ['/catalogo', 'catalogo'], ['/precos', 'precos'], ['/configuracoes', 'configuracoes'],
   ['/equipe', 'equipe'], ['/registro', 'registro'], ['/atencao', 'pedidos'], ['/relatorios', 'relatorios'], ['/captacao', 'captacao'],
   ['/ajuda', 'comunicados'], ['/atendimento', 'emergencias'], ['/pagamentos', 'pedidos'], ['/cargos', 'cargos'],
+  ['/caixa', 'caixa'], ['/comercial', 'comercial'],
 ];
 export function permissaoDaRota(href: string): Permissao {
   const r = (href.replace(/^\/admin/, '').split(/[?#]/)[0] || '/').replace(/\/$/, '') || '/';
@@ -101,6 +102,8 @@ const menu: { grupo: string; href: string; rotulo: string; icone: ReactNode; con
   { grupo: 'Operação', href: '/denuncias/', rotulo: 'Denúncias e avaliações', icone: <Flag />, contador: (r) => r.denuncias_abertas },
   { grupo: 'Operação', href: '/pessoas/', rotulo: 'Pessoas', icone: <Users /> },
   { grupo: 'Operação', href: '/atendimento/', rotulo: 'Horário, plantão e prazos', icone: <Headset /> },
+  { grupo: 'Financeiro', href: '/caixa/', rotulo: 'Caixa', icone: <Landmark /> },
+  { grupo: 'Financeiro', href: '/comercial/', rotulo: 'Comercial', icone: <Target /> },
   { grupo: 'Crescimento', href: '/relatorios/', rotulo: 'Relatórios', icone: <LineChart /> },
   { grupo: 'Crescimento', href: '/captacao/', rotulo: 'Captação', icone: <UserPlus /> },
   { grupo: 'Crescimento', href: '/buscas/', rotulo: 'Buscas e mapa', icone: <MapaIcone /> },
