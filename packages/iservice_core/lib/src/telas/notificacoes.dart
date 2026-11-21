@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../estado/provedores.dart';
@@ -15,6 +16,7 @@ IconData _icone(String tipo) => switch (tipo) {
       'pedido_concluido' => Symbols.task_alt_rounded,
       'pedido_recusado' || 'pedido_expirado' || 'pedido_cancelado' => Symbols.event_busy_rounded,
       'mensagem' => Symbols.chat_rounded,
+      'suporte' => Symbols.support_agent_rounded,
       'avaliacao_nova' => Symbols.star_rounded,
       'cadastro_aprovado' => Symbols.verified_rounded,
       'cadastro_recusado' || 'documento_recusado' => Symbols.error_rounded,
@@ -70,7 +72,9 @@ class _TelaNotificacoesState extends ConsumerState<TelaNotificacoes> {
                       if (n.corpo.isNotEmpty) Text(n.corpo),
                       Text(quandoFoi(n.criadaEm), style: t.labelSmall?.copyWith(color: c.textoSuave)),
                     ]),
-                    onTap: n.pedidoId == null ? null : () => widget.aoAbrirPedido(n.pedidoId!),
+                    onTap: n.tipo == 'suporte'
+                        ? () => GoRouter.of(context).push('/suporte')
+                        : n.pedidoId == null ? null : () => widget.aoAbrirPedido(n.pedidoId!),
                   );
                 },
               ),

@@ -393,6 +393,16 @@ export default function Painel({ children }: { children: ReactNode }) {
     return () => clearInterval(t);
   }, [acesso, atualizarResumo, meuAcesso]);
 
+  // Presença: com o painel aberto, quem atende o suporte aparece como "Equipe online" nos apps.
+  useEffect(() => {
+    if (acesso !== 'ok' || !podeEmails) return;
+    const avisar = () => { if (document.visibilityState === 'visible') rpc('admin_suporte_presenca').catch(() => undefined); };
+    avisar();
+    const t = setInterval(avisar, 60000);
+    document.addEventListener('visibilitychange', avisar);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', avisar); };
+  }, [acesso, podeEmails]);
+
   useEffect(() => setMenuAberto(false), [rota]);
 
   const sair = () => db().auth.signOut();

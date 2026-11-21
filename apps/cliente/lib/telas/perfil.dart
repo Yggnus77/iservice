@@ -138,6 +138,14 @@ class TelaPerfil extends ConsumerWidget {
                 ),
                 const Divider(indent: 56),
                 ListTile(
+                  leading: Icon(Symbols.forum_rounded, color: c.acaoTexto),
+                  title: const Text('Falar com o suporte'),
+                  subtitle: const Text('Chat com a equipe do iService'),
+                  trailing: const Icon(Symbols.chevron_right_rounded),
+                  onTap: () => context.push('/suporte'),
+                ),
+                const Divider(indent: 56),
+                ListTile(
                   leading: const Icon(Symbols.support_agent_rounded, color: Cores.verdeTexto),
                   title: const Text('Falar com o iService no WhatsApp'),
                   trailing: const Icon(Symbols.open_in_new_rounded, size: 18),

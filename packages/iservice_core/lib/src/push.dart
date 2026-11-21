@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'config.dart';
 import 'estado/provedores.dart';
@@ -116,6 +117,10 @@ class _RegistroPushState extends ConsumerState<RegistroPush> {
   }
 
   void _abrir(RemoteMessage m) {
+    if (m.data['tela'] == 'suporte' && mounted) {
+      unawaited(GoRouter.of(context).push('/suporte'));
+      return;
+    }
     final pedido = m.data['pedido_id'];
     if (pedido is String && pedido.isNotEmpty && mounted) widget.aoAbrirPedido(pedido);
   }

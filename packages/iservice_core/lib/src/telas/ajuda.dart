@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -140,6 +141,14 @@ class _TelaAjudaState extends ConsumerState<TelaAjuda> {
             const SizedBox(height: 6),
             Card(
               child: Column(children: [
+                ListTile(
+                  leading: Icon(Symbols.forum_rounded, color: c.acaoTexto),
+                  title: const Text('Conversar com o suporte'),
+                  subtitle: const Text('Chat com a equipe do iService, aqui no app'),
+                  trailing: const Icon(Symbols.chevron_right_rounded),
+                  onTap: () => context.push('/suporte'),
+                ),
+                const Divider(indent: 56),
                 ListTile(
                   leading: const Icon(Symbols.schedule_rounded),
                   title: const Text('Horário de atendimento'),

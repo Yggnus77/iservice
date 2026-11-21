@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, ArrowLeftRight, Check, CheckCheck, CheckCircle2, ChevronLeft, Clock, Code, Download, Inbox, Loader2, Mail, MailPlus, MessageCircle, Paperclip,
+  AlertTriangle, ArrowLeftRight, Smartphone, Check, CheckCheck, CheckCircle2, ChevronLeft, Clock, Code, Download, Inbox, Loader2, Mail, MailPlus, MessageCircle, Paperclip,
   MessageSquareText, RotateCcw, Search, Send, Shuffle, StickyNote, UserCheck,
 } from 'lucide-react';
 import { Ajuda } from '@/components/Ajuda';
@@ -16,7 +16,7 @@ import { rpc, ErroPainel } from '@/lib/supabase';
 import { urlArquivo } from '@/lib/arquivos';
 import { dataHora, haQuanto, telefone as formatarTelefone } from '@/lib/formatos';
 import {
-  enviarEmail, enviarWhatsapp, separarCitacao, statusConversa, tamanhoArquivo,
+  enviarEmail, enviarWhatsapp, responderApp, separarCitacao, statusConversa, tamanhoArquivo,
   type Anexo, type Canal, type Conversa, type ItemConversa, type Mensagem, type MembroRodizio, type StatusConversa,
 } from '@/lib/suporte';
 
@@ -30,6 +30,10 @@ function contatoDe(c: { contato_nome?: string | null; contato_email?: string | n
 
 function SeloWhatsapp() {
   return <Selo tom="verde"><MessageCircle size={11} style={{ verticalAlign: '-1px' }} /> WhatsApp</Selo>;
+}
+
+function SeloApp() {
+  return <Selo tom="azul"><Smartphone size={11} style={{ verticalAlign: '-1px' }} /> Chat do app</Selo>;
 }
 
 // ------------------------------------------------------------------ lista
@@ -47,7 +51,7 @@ function ItemLista({ c, ativo, mostrarResponsavel, abrir, prazo }: { c: ItemConv
         <span className="caixa-item-previa">{c.ultima_direcao === 'enviada' ? 'Você: ' : ''}{c.previa || 'Sem texto'}</span>
         <span className="caixa-item-rodape">
           <span className="mono">{c.protocolo}</span>
-          {c.canal === 'whatsapp' ? <SeloWhatsapp /> : null}
+          {c.canal === 'whatsapp' ? <SeloWhatsapp /> : c.canal === 'app' ? <SeloApp /> : null}
           <Prazos p={prazo} encerrado={c.status === 'encerrado'} />
           {c.assunto.startsWith('Reclamação pelo site') ? <Selo tom="vermelho">Reclamação · site</Selo> : null}
           {c.usuario_id ? <Selo tom={c.e_profissional ? 'laranja' : 'azul'}>{c.e_profissional ? 'Profissional' : 'Cliente'}</Selo> : null}
@@ -89,8 +93,8 @@ function Original({ id, fechar }: { id: number | null; fechar: () => void }) {
   );
 }
 
-function Balao({ m, contato, whatsapp, reenviar, verOriginal, ocupado }: {
-  m: Mensagem; contato: string; whatsapp: boolean; reenviar: (m: Mensagem) => void; verOriginal: (id: number) => void; ocupado: boolean;
+function Balao({ m, contato, whatsapp, app, vistoEm, reenviar, verOriginal, ocupado }: {
+  m: Mensagem; contato: string; whatsapp: boolean; app?: boolean; vistoEm?: string | null; reenviar: (m: Mensagem) => void; verOriginal: (id: number) => void; ocupado: boolean;
 }) {
   const [mostrarCitacao, setMostrarCitacao] = useState(false);
   const [novo, citado] = useMemo(() => (m.direcao === 'recebida' ? separarCitacao(m.texto ?? '') : [m.texto ?? '', '']), [m]);
@@ -123,6 +127,12 @@ function Balao({ m, contato, whatsapp, reenviar, verOriginal, ocupado }: {
             <button className="caixa-link" disabled={ocupado} onClick={() => reenviar(m)}><RotateCcw size={13} /> Tentar de novo</button>
           </> : m.envio === 'enviando'
             ? <span className="texto-fraco"><Loader2 size={13} className="girar" /> Enviando…</span>
+            : app
+              ? <span className="texto-fraco">
+                {vistoEm && new Date(vistoEm).getTime() >= new Date(m.criada_em).getTime()
+                  ? <><CheckCheck size={13} style={{ color: 'var(--azul, #0052CC)' }} /> Vista no app</>
+                  : <><Check size={13} /> Enviada para o app</>}
+              </span>
             : whatsapp
               ? <span className="texto-fraco" title={m.lida_em ? `Lida em ${dataHora(m.lida_em)}` : m.entregue_em ? `Entregue em ${dataHora(m.entregue_em)}` : undefined}>
                 {m.lida_em ? <><CheckCheck size={13} style={{ color: 'var(--azul, #0052CC)' }} /> Lida</>
@@ -156,9 +166,10 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
   useEffect(() => { setTexto(''); setModo('responder'); primeiraCarga.current = true; }, [id]);
   // Atualiza sozinho enquanto a conversa está aberta (resposta do cliente aparece sem recarregar).
   useEffect(() => {
-    const t = setInterval(() => { if (document.visibilityState === 'visible') recarregar(); }, ATUALIZAR_MS);
+    // Chat do app é conversa ao vivo: confere mais rápido.
+    const t = setInterval(() => { if (document.visibilityState === 'visible') recarregar(); }, dados?.canal === 'app' ? 6000 : ATUALIZAR_MS);
     return () => clearInterval(t);
-  }, [recarregar]);
+  }, [recarregar, dados?.canal]);
   const qtd = dados?.mensagens.length ?? 0;
   useEffect(() => {
     if (!qtd) return;
@@ -176,7 +187,10 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
   // WhatsApp: texto livre só até 24 h depois da última mensagem do cliente (regra da Meta).
   const janelaAberta = !zap || (!!c.janela_ate && new Date(c.janela_ate).getTime() > Date.now());
   const podeResponder = !zap || (!!c.whatsapp_ativo && janelaAberta);
-  const enviarResposta = zap ? enviarWhatsapp : enviarEmail;
+  const app = c.canal === 'app';
+  const enviarResposta = zap ? enviarWhatsapp : app
+    ? (b: { conversa_id?: number; texto?: string; reenviar?: number }) => responderApp({ conversa_id: b.conversa_id ?? c.id, texto: b.texto ?? '' })
+    : enviarEmail;
 
   const status = async (s: StatusConversa, aviso: string) => {
     if (await executar(() => rpc('admin_suporte_status', { p_id: c.id, p_status: s }), aviso)) { recarregar(); mudou(); }
@@ -202,7 +216,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
       } else {
         await enviarResposta({ conversa_id: c.id, texto: t });
         if (encerrar) await rpc('admin_suporte_status', { p_id: c.id, p_status: 'encerrado' });
-        avisar(encerrar ? 'Resposta enviada e conversa encerrada.' : `Resposta enviada para ${contato}${zap ? ' pelo WhatsApp' : ''}.`);
+        avisar(encerrar ? 'Resposta enviada e conversa encerrada.' : app ? `Resposta enviada para o app de ${nome.split(' ')[0]}.` : `Resposta enviada para ${contato}${zap ? ' pelo WhatsApp' : ''}.`);
       }
       setTexto('');
     } catch (e) {
@@ -226,7 +240,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         <div style={{ minWidth: 0, flex: 1 }}>
           <h2>{c.assunto}</h2>
           <p>
-            <span className="mono">{c.protocolo}</span>{zap ? <> · <SeloWhatsapp /></> : null} · {nome}{nome !== contato ? <> {zap ? contato : <>&lt;{contato}&gt;</>}</> : null}
+            <span className="mono">{c.protocolo}</span>{zap ? <> · <SeloWhatsapp /></> : app ? <> · <SeloApp /></> : null} · {nome}{nome !== contato ? <> {zap ? contato : <>&lt;{contato}&gt;</>}</> : null}
             {c.pessoa ? <> · <Link href={`/pessoa/?id=${c.pessoa.id}`}>ver cadastro ({c.pessoa.e_profissional ? 'profissional' : 'cliente'}, {c.pessoa.pedidos} {c.pessoa.pedidos === 1 ? 'pedido' : 'pedidos'})</Link></> : <> · sem conta no app</>}
             {c.outras ? <> · {c.outras} {c.outras === 1 ? 'outra conversa' : 'outras conversas'}</> : null}
           </p>
@@ -256,7 +270,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
       </div>
 
       <div className="caixa-mensagens">
-        {c.mensagens.map((m) => <Balao key={m.id} m={m} contato={contato} whatsapp={zap} reenviar={reenviar} verOriginal={setOriginal} ocupado={ocupado} />)}
+        {c.mensagens.map((m) => <Balao key={m.id} m={m} contato={contato} whatsapp={zap} app={app} vistoEm={c.contato_viu_em} reenviar={reenviar} verOriginal={setOriginal} ocupado={ocupado} />)}
         <div ref={fim} />
       </div>
 
@@ -268,7 +282,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
             <MessageSquareText size={14} /> Respostas prontas
           </button>
           <span className="espaco" />
-          <span className="texto-fraco" style={{ fontSize: 12 }}>{modo === 'responder' ? `Para ${contato}${zap ? ' (WhatsApp)' : ''}` : 'O cliente não vê'}</span>
+          <span className="texto-fraco" style={{ fontSize: 12 }}>{modo === 'responder' ? (app ? `Para o app de ${nome.split(' ')[0]}` : `Para ${contato}${zap ? ' (WhatsApp)' : ''}`) : 'O cliente não vê'}</span>
         </div>
         {zap && modo === 'responder' && !c.whatsapp_ativo ? (
           <div className="alerta-faixa laranja" style={{ margin: '0 0 8px' }}><AlertTriangle />
@@ -280,14 +294,14 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         ) : zap && modo === 'responder' && c.janela_ate ? (
           <div className="texto-fraco" style={{ fontSize: 12, margin: '0 0 6px' }}><Clock size={12} style={{ verticalAlign: '-2px' }} /> Pode responder até {dataHora(c.janela_ate)}.</div>
         ) : null}
-        <textarea className="entrada" value={texto} onChange={(e) => setTexto(e.target.value)} rows={4} maxLength={zap && modo === 'responder' ? 4000 : 20000}
+        <textarea className="entrada" value={texto} onChange={(e) => setTexto(e.target.value)} rows={4} maxLength={(zap || app) && modo === 'responder' ? 4000 : 20000}
           disabled={modo === 'responder' && !podeResponder}
           aria-label={modo === 'responder' ? 'Sua resposta' : 'Nota interna'}
           placeholder={modo === 'responder' ? `Olá, ${(nome.split(/[\s@]/)[0] || '').replace(/^./, (x) => x.toUpperCase())}! …` : 'Anote o que a equipe precisa saber sobre este atendimento.'}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); enviar(); } }} />
         <div className="linha-flex">
           <span className="texto-fraco" style={{ fontSize: 12 }}>
-            {modo === 'responder' ? <>{zap ? 'Sai pelo WhatsApp do atendimento' : <>Sai de {ENDERECO} com a sua assinatura</>}{c.status === 'aberto' ? ' e a conversa passa para Em atendimento' : ''}. Ctrl+Enter envia.</> : 'Ctrl+Enter salva.'}
+            {modo === 'responder' ? <>{zap ? 'Sai pelo WhatsApp do atendimento' : app ? 'Aparece no app da pessoa, com aviso no celular' : <>Sai de {ENDERECO} com a sua assinatura</>}{c.status === 'aberto' ? ' e a conversa passa para Em atendimento' : ''}. Ctrl+Enter envia.</> : 'Ctrl+Enter salva.'}
           </span>
           <span className="espaco" />
           {modo === 'responder' && c.status !== 'encerrado' ? (
@@ -493,8 +507,9 @@ function Pagina() {
           {(todos ? equipe.dados ?? [] : []).filter((m) => m.ativo && !m.voce).map((m) => <option key={m.email} value={m.email}>{m.nome}</option>)}
         </select>
         <select className="entrada" value={canal} onChange={(ev) => setCanal(ev.target.value as Canal | 'todos')} aria-label="Canal">
-          <option value="todos">E-mail e WhatsApp</option>
+          <option value="todos">Todos os canais</option>
           <option value="email">Só e-mail</option>
+          <option value="app">Só chat do app</option>
           <option value="whatsapp">Só WhatsApp</option>
         </select>
         <div className="busca">
