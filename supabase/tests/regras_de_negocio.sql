@@ -251,13 +251,14 @@ select pg_temp.como('00000000-0000-0000-0000-0000000000a3');
 select pg_temp.ok((select count(*) from public.pedidos) = 0, 'outro profissional não enxerga o pedido');
 select pg_temp.admin();
 
--- Aceite: some das buscas enquanto atende.
+-- Aceite: enquanto atende, fica no fim da busca como ocupado e some do Top.
 select pg_temp.como('00000000-0000-0000-0000-0000000000a2');
 select public.responder_pedido((select pedido from t), true);
 select pg_temp.admin();
 select pg_temp.como('00000000-0000-0000-0000-0000000000c1');
-select pg_temp.ok(not exists (select 1 from public.buscar_profissionais('eletricista', -15.8150, -47.8960) where right(profissional_id::text, 2) = 'a2'),
-  'profissional em atendimento some das buscas');
+select pg_temp.ok((select ocupado and posicao = (select max(posicao) from public.buscar_profissionais('eletricista', -15.8150, -47.8960))
+    from public.buscar_profissionais('eletricista', -15.8150, -47.8960) where right(profissional_id::text, 2) = 'a2'),
+  'profissional em atendimento vai para o fim da busca, marcado como ocupado (para agendar)');
 select pg_temp.ok(not exists (select 1 from public.top_regiao(-15.8150, -47.8960) where right(profissional_id::text, 2) = 'a2'),
   'e some do Top da região');
 insert into public.mensagens (pedido_id, autor_id, texto) values ((select pedido from t), auth.uid(), 'Oi! O portão é o azul.');

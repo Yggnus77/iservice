@@ -267,7 +267,7 @@ class CartaoProfissional extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Avatar(nome: p.nome, url: p.fotoUrl, tamanho: 60, online: true),
+            Avatar(nome: p.nome, url: p.fotoUrl, tamanho: 60, online: !p.ocupado),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -289,6 +289,14 @@ class CartaoProfissional extends StatelessWidget {
                 if (p.especialidades.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(p.especialidades.take(3).join(' · '), style: t.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+                if (p.ocupado) ...[
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Icon(Symbols.event_rounded, size: 14, color: c.alerta),
+                    const SizedBox(width: 4),
+                    Flexible(child: Text('Ocupado agora', style: t.labelMedium?.copyWith(color: c.alerta), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
                 ],
               ]),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../dados/modelos.dart';
 import '../tema/cores.dart';
 import '../tema/tema.dart';
 import '../util/formatos.dart';
@@ -9,13 +10,15 @@ import 'componentes.dart';
 
 /// Abre a folha para escolher dia e horário na agenda (até [diasMax] dias).
 /// [ocupados] são horários já marcados com o profissional: ficam bloqueados
-/// com 1 hora de folga para cada lado.
+/// com 1 hora de folga para cada lado. Com [agenda], só aparecem os horários
+/// dentro do expediente do profissional, fora dos bloqueios e livres.
 Future<DateTime?> escolherHorarioAgenda(
   BuildContext context, {
   required int diasMax,
   required String titulo,
   String? subtitulo,
   List<DateTime> ocupados = const [],
+  AgendaProfissional? agenda,
   DateTime? inicial,
   String rotuloConfirmar = 'Confirmar',
 }) {
@@ -28,6 +31,7 @@ Future<DateTime?> escolherHorarioAgenda(
       titulo: titulo,
       subtitulo: subtitulo,
       ocupados: ocupados,
+      agenda: agenda,
       inicial: inicial,
       rotuloConfirmar: rotuloConfirmar,
     ),
@@ -40,6 +44,7 @@ class _FolhaHorario extends StatefulWidget {
     required this.titulo,
     required this.subtitulo,
     required this.ocupados,
+    required this.agenda,
     required this.inicial,
     required this.rotuloConfirmar,
   });
@@ -47,6 +52,7 @@ class _FolhaHorario extends StatefulWidget {
   final String titulo;
   final String? subtitulo;
   final List<DateTime> ocupados;
+  final AgendaProfissional? agenda;
   final DateTime? inicial;
   final String rotuloConfirmar;
 
@@ -76,15 +82,35 @@ class _FolhaHorarioState extends State<_FolhaHorario> {
   /// Último instante permitido (o banco aceita até agora + diasMax dias).
   DateTime get _limite => DateTime.now().add(Duration(days: widget.diasMax));
 
-  bool _ocupado(DateTime h) => widget.ocupados.any((o) => h.difference(o).inMinutes.abs() < 60);
+  bool _ocupado(DateTime h) => widget.ocupados.any((o) => h.difference(o).inMinutes.abs() < 60) || (widget.agenda?.ocupado(h) ?? false);
 
-  bool _valido(DateTime h) => h.isAfter(DateTime.now().add(const Duration(minutes: 30))) && !h.isAfter(_limite) && !_ocupado(h);
+  /// Fora do expediente ou num bloqueio do profissional.
+  bool _fechado(DateTime h) {
+    final a = widget.agenda;
+    return a != null && (!a.dentroDoExpediente(h) || a.bloqueado(h));
+  }
 
-  List<DateTime> _horarios(DateTime dia) => [
-        for (var h = _inicio; h <= _fim; h++)
-          for (final m in const [0, 30])
-            if (!(h == _fim && m == 30)) DateTime(dia.year, dia.month, dia.day, h, m),
+  bool _valido(DateTime h) =>
+      h.isAfter(DateTime.now().add(const Duration(minutes: 30))) && !h.isAfter(_limite) && !_ocupado(h) && !_fechado(h);
+
+  /// Não atende neste dia da semana (expediente salvo sem esse dia).
+  bool _folga(DateTime dia) => widget.agenda != null && widget.agenda!.expedienteDo(dia) == null;
+
+  List<DateTime> _horarios(DateTime dia) {
+    final e = widget.agenda?.temExpediente == true ? widget.agenda!.expedienteDo(dia) : null;
+    if (e != null) {
+      final ini = ((e.inicio + 29) ~/ 30) * 30;
+      return [
+        for (var m = ini; m < e.fim; m += 30) DateTime(dia.year, dia.month, dia.day, m ~/ 60, m % 60),
       ];
+    }
+    if (_folga(dia)) return const [];
+    return [
+      for (var h = _inicio; h <= _fim; h++)
+        for (final m in const [0, 30])
+          if (!(h == _fim && m == 30)) DateTime(dia.year, dia.month, dia.day, h, m),
+    ];
+  }
 
   int _livres(DateTime dia) => _horarios(dia).where(_valido).length;
 
@@ -101,7 +127,11 @@ class _FolhaHorarioState extends State<_FolhaHorario> {
     if (!_valido(h)) {
       mostrarMensagem(
         context,
-        _ocupado(h) ? 'Esse horário já está marcado com outro cliente.' : 'Escolha a partir de 30 minutos daqui e até ${widget.diasMax} dias.',
+        _ocupado(h)
+            ? 'Esse horário já está marcado com outro cliente.'
+            : _fechado(h)
+                ? 'O profissional não atende nesse horário. Escolha um dos horários livres.'
+                : 'Escolha a partir de 30 minutos daqui e até ${widget.diasMax} dias.',
       );
       return;
     }
@@ -141,7 +171,7 @@ class _FolhaHorarioState extends State<_FolhaHorario> {
                 return CartaoDia(
                   dia: d,
                   selecionado: DateUtils.isSameDay(d, _dia),
-                  rodape: _livres(d) == 0 ? 'cheio' : null,
+                  rodape: _folga(d) ? 'folga' : (_livres(d) == 0 ? 'cheio' : null),
                   aoTocar: () => setState(() => _dia = d),
                 );
               },
@@ -158,11 +188,14 @@ class _FolhaHorarioState extends State<_FolhaHorario> {
                 if (!temLivre)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text('Não há horários livres neste dia. Escolha outro dia.', style: t.bodySmall),
+                    child: Text(
+                      _folga(_dia) ? 'O profissional não atende neste dia. Escolha outro dia.' : 'Não há horários livres neste dia. Escolha outro dia.',
+                      style: t.bodySmall,
+                    ),
                   ),
                 Wrap(spacing: 8, runSpacing: 8, children: [
                   for (final h in horarios)
-                    if (h.isAfter(DateTime.now().add(const Duration(minutes: 30))) && !h.isAfter(_limite))
+                    if (h.isAfter(DateTime.now().add(const Duration(minutes: 30))) && !h.isAfter(_limite) && !_fechado(h))
                       ChoiceChip(
                         label: Text(_ocupado(h) ? '${hora(h)} · ocupado' : hora(h)),
                         selected: _escolhido == h,
@@ -171,12 +204,20 @@ class _FolhaHorarioState extends State<_FolhaHorario> {
                       ),
                 ]),
                 const SizedBox(height: 8),
-                TextButton.icon(onPressed: _outroHorario, icon: const Icon(Symbols.schedule_rounded), label: const Text('Outro horário')),
-                if (widget.ocupados.isNotEmpty)
+                if (!_folga(_dia))
+                  TextButton.icon(onPressed: _outroHorario, icon: const Icon(Symbols.schedule_rounded), label: const Text('Outro horário')),
+                if (widget.agenda != null || widget.ocupados.isNotEmpty)
                   Row(children: [
                     Icon(Symbols.info_rounded, size: 16, color: c.textoSuave),
                     const SizedBox(width: 6),
-                    Expanded(child: Text('Horários marcados com outros clientes ficam bloqueados.', style: t.bodySmall)),
+                    Expanded(
+                      child: Text(
+                        widget.agenda != null
+                            ? 'Aparecem só os horários em que o profissional atende e que estão livres.'
+                            : 'Horários marcados com outros clientes ficam bloqueados.',
+                        style: t.bodySmall,
+                      ),
+                    ),
                   ]),
                 const SizedBox(height: 12),
               ]),

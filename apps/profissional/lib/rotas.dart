@@ -10,6 +10,7 @@ import 'telas/atendimento.dart';
 import 'telas/boas_vindas.dart';
 import 'telas/cadastro.dart';
 import 'telas/ganhos.dart';
+import 'telas/meus_horarios.dart';
 import 'telas/painel.dart';
 import 'telas/perfil.dart';
 import 'telas/recebimentos.dart';
@@ -110,6 +111,7 @@ final rotasProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/suporte', builder: (_, _) => const TelaSuporte()),
       GoRoute(path: '/documentos', builder: (_, _) => const TelaDocumentos()),
       GoRoute(path: '/recebimentos', builder: (_, _) => const TelaRecebimentos()),
+      GoRoute(path: '/meus-horarios', builder: (_, _) => const TelaMeusHorarios()),
     ],
   );
 });

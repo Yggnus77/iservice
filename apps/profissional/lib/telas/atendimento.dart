@@ -120,6 +120,28 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
     if (ok == true) await _acao(() => ref.read(pedidosRepo).cancelar(p.id, motivo: 'Cancelado pelo profissional'));
   }
 
+  Future<void> _remarcar() async {
+    final ok = await pedirRemarcacao(context, ref, p, profissionalId: supabase.auth.currentUser!.id, souProfissional: true);
+    if (ok) ref.invalidate(pedidosProProvider);
+  }
+
+  Future<void> _clienteAusente() async {
+    final nome = primeiroNome(p.outraParteNome ?? 'o cliente');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$nome não está no local?'),
+        content: Text('Antes, tente falar com $nome pelo chat. Se encerrar, o atendimento é cancelado sem contar contra você'
+            '${p.deslocamento > 0 ? ' e, com o pagamento pelo app, você recebe o deslocamento' : ''}. Use só se você chegou e ninguém atendeu.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Voltar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: Cores.perigo), child: const Text('Encerrar')),
+        ],
+      ),
+    );
+    if (ok == true) await _acao(() => ref.read(pedidosRepo).clienteAusente(p.id));
+  }
+
   Future<void> _emergencia() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -241,6 +263,10 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
           const SizedBox(height: 12),
           AguardandoCliente(p: p),
         ],
+        if (p.remarcacaoPendente) ...[
+          const SizedBox(height: 12),
+          CartaoRemarcacao(p: p, aoMudar: () => ref.invalidate(pedidosProProvider)),
+        ],
         if (p.status == StatusPedido.concluido && resumo != null) ...[
           const SizedBox(height: 16),
           Card(
@@ -273,14 +299,31 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             switch (p.status) {
               StatusPedido.recusado => 'Você recusou este pedido.',
               StatusPedido.expirado => 'O prazo de resposta acabou e o pedido foi encerrado.',
+              _ when p.clienteAusente => 'Encerrado: o cliente não estava no local. Isso não conta contra você.'
+                  '${p.taxaCancelamento > 0 ? ' Você recebe ${reais(p.taxaCancelamento)} pelo deslocamento.' : ''}',
+              _ when p.taxaCancelamento > 0 => 'O cliente cancelou em cima da hora. Você recebe ${reais(p.taxaCancelamento)} pelo deslocamento.',
               _ => 'Este pedido foi cancelado.',
             },
             style: t.bodyMedium,
             textAlign: TextAlign.center,
           ),
         ],
-        if (p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho) ...[
+        if (p.podeRemarcar) ...[
           const SizedBox(height: 16),
+          OutlinedButton.icon(onPressed: _ocupado ? null : _remarcar, icon: const Icon(Symbols.edit_calendar_rounded), label: const Text('Remarcar')),
+        ],
+        if (p.status == StatusPedido.aCaminho) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: _ocupado ? null : _clienteAusente,
+              icon: const Icon(Symbols.person_off_rounded),
+              label: const Text('O cliente não está no local'),
+            ),
+          ),
+        ],
+        if (p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho) ...[
+          const SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: _ocupado ? null : _cancelar,

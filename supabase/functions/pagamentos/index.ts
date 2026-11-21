@@ -154,11 +154,25 @@ async function liberarPendentes(pedidoId?: string) {
 }
 
 // Pedido cancelado: estorna o que foi pago e cancela o que ainda não foi.
+// Cancelamento em cima da hora ou cliente ausente (pedidos.taxa_cancelamento): o deslocamento
+// fica com o profissional e só o resto volta ao cliente.
 async function estornar(pedidoId: string) {
+  const { data: ped } = await db.from("pedidos").select("taxa_cancelamento").eq("id", pedidoId).maybeSingle();
+  let reter = Number(ped?.taxa_cancelamento ?? 0);
   const { data: lista } = await db.from("pagamentos").select("*").eq("pedido_id", pedidoId).in("status", ["criando", "aguardando", "falhou", "pago"]);
   for (const g of lista ?? []) {
     try {
       if (g.status === "pago" && g.asaas_cobranca_id) {
+        const fica = Math.min(reter, Number(g.valor));
+        reter -= fica;
+        if (fica > 0.009) {
+          const volta = Math.round((Number(g.valor) - fica) * 100) / 100;
+          if (volta > 0.009) await asaas("POST", `/payments/${g.asaas_cobranca_id}/refund`, { value: volta, description: "Cancelamento: deslocamento fica com o profissional" });
+          await db.from("pagamentos").update({
+            status: "a_liberar", estornado_valor: volta, valor: fica, valor_profissional: fica, valor_plataforma: 0,
+          }).eq("id", g.id);
+          continue;
+        }
         await asaas("POST", `/payments/${g.asaas_cobranca_id}/refund`, { description: "Pedido cancelado" });
         await db.from("pagamentos").update({ status: "estornado", estornado_valor: g.valor }).eq("id", g.id);
       } else {
@@ -169,6 +183,7 @@ async function estornar(pedidoId: string) {
       await db.from("pagamentos").update({ erro: String(e).slice(0, 500) }).eq("id", g.id);
     }
   }
+  await liberarPendentes(pedidoId);
 }
 
 // Conta de recebimento (subconta) do profissional.
