@@ -200,7 +200,8 @@ for app in ["cliente", "profissional"]:
 # pacote compartilhado (logo dentro dos apps)
 core = os.path.join(REPO, "packages/iservice_core/assets/marca")
 for f in os.listdir(core):
-    os.remove(os.path.join(core, f))
+    if os.path.isfile(os.path.join(core, f)):
+        os.remove(os.path.join(core, f))
 reduzir(M("simbolo.svg"), os.path.join(core, "simbolo.png"), 256)
 reduzir(M("simbolo.svg"), os.path.join(core, "2.0x/simbolo.png"), 512)
 reduzir(M("simbolo.svg"), os.path.join(core, "3.0x/simbolo.png"), 768)

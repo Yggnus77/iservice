@@ -169,20 +169,29 @@ def horizontal(nome, claro_no_escuro):
 
 
 # ============================================================ 4. ícones de app
-def icone(nome, pro=False, cantos=False):
+# Desde 21/11/2026 (escolha do usuário, "Opção C"): cada app tem a sua cor de fundo
+# (Cliente azul, Profissional laranja, iguais ao tema de cada app) e o pin colorido
+# da marca num disco branco no centro.
+FUNDO_APP = {False: ("#2E8BFF", "#003FA3"), True: ("#FFB23F", "#F26A00")}
+
+
+def defs_app(px, pro):
+    a, b = FUNDO_APP[pro]
+    return (f'<linearGradient id="{px}bg" x1="0" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="{a}"/><stop offset="1" stop-color="{b}"/></linearGradient>'
+            f'<filter id="{px}sb" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#00163D" flood-opacity=".28"/></filter>')
+
+
+def disco_pin(px, c, r, esc):
+    s = f'<circle cx="{num(c)}" cy="{num(c)}" r="{num(r)}" fill="#FFFFFF" filter="url(#{px}sb)"/>'
+    return s + pin(px, c - 50 * esc, c - PIN_H / 2 * esc, esc, sombra_icones=True)
+
+
+def icone(nome, pro=False):
     px = "i"
     t = 1024
     c = t / 2
-    defs = defs_anel(px, c, c, 430) + defs_pin(px)
-    corpo = f'<rect width="{t}" height="{t}" fill="url(#{px}fundo)"/>'
-    # o fundo do disco já cobre tudo: usa o mesmo degradê em tela cheia
-    corpo += anel(px, c, c, 418, 22, disco=False, arcos=False)
-    esc = 5.0 if not pro else 4.6
-    cy = c - (40 if pro else 4)
-    corpo += pin(px, c - 50 * esc, cy - PIN_H / 2 * esc, esc, sombra_icones=True)
-    if pro:
-        corpo += selo_pro(c, 806)
-    salvar(nome, t, t, corpo, defs)
+    corpo = f'<rect width="{t}" height="{t}" fill="url(#{px}bg)"/>' + disco_pin(px, c, 330, 4.1)
+    salvar(nome, t, t, corpo, defs_app(px, pro) + defs_pin(px))
 
 
 def selo_pro(cx, cy):
@@ -198,16 +207,10 @@ def adaptativo(pro=False):
     t = 1024
     c = t / 2
     sufixo = "-profissional" if pro else "-cliente"
-    salvar(f"android-fundo{sufixo}.svg", t, t, f'<rect width="{t}" height="{t}" fill="url(#{px}fundo)"/>', defs_anel(px, c, c, 330))
-    # zona segura: círculo de 66dp em 108dp -> raio 313 em 1024
-    corpo = anel(px, c, c, 292, 15, disco=False, arcos=False)
-    esc = 3.35 if not pro else 3.05
-    cy = c - (26 if pro else 3)
-    corpo += pin(px, c - 50 * esc, cy - PIN_H / 2 * esc, esc, sombra_icones=True)
-    if pro:
-        g = selo_pro(0, 0)
-        corpo += f'<g transform="translate({c} {c + 228}) scale(.62)">{g}</g>'
-    salvar(f"android-frente{sufixo}.svg", t, t, corpo, defs_anel(px, c, c, 292) + defs_pin(px))
+    salvar(f"android-fundo{sufixo}.svg", t, t, f'<rect width="{t}" height="{t}" fill="url(#{px}bg)"/>', defs_app(px, pro))
+    # a parte visível é 72dp de 108dp (2/3): mesmo desenho do ícone, em 2/3
+    k = 72 / 108
+    salvar(f"android-frente{sufixo}.svg", t, t, disco_pin(px, c, 330 * k, 4.1 * k), defs_app(px, pro) + defs_pin(px))
     esc = 3.4
     salvar("android-monocromatico.svg", t, t,
            f'<g transform="translate({num(c - 50 * esc)} {num(c - PIN_H / 2 * esc)}) scale({esc})">{corpo_pin_mono()}</g>')
