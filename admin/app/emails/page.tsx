@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, ArrowLeftRight, CheckCircle2, ChevronLeft, Code, Download, Inbox, Loader2, Mail, MailPlus, Paperclip,
+  AlertTriangle, ArrowLeftRight, Check, CheckCheck, CheckCircle2, ChevronLeft, Clock, Code, Download, Inbox, Loader2, Mail, MailPlus, MessageCircle, Paperclip,
   MessageSquareText, RotateCcw, Search, Send, Shuffle, StickyNote, UserCheck,
 } from 'lucide-react';
 import { Ajuda } from '@/components/Ajuda';
@@ -14,18 +14,27 @@ import { Abas, Avatar, Carregando, Dialogo, ErroCaixa, Interruptor, Pessoa, Selo
 import { MudarGravidade, Prazos, ordenarPorPrazo, usePrazos, type Prazo } from '@/components/Prazo';
 import { rpc, ErroPainel } from '@/lib/supabase';
 import { urlArquivo } from '@/lib/arquivos';
-import { dataHora, haQuanto } from '@/lib/formatos';
+import { dataHora, haQuanto, telefone as formatarTelefone } from '@/lib/formatos';
 import {
-  enviarEmail, separarCitacao, statusConversa, tamanhoArquivo,
-  type Anexo, type Conversa, type ItemConversa, type Mensagem, type MembroRodizio, type StatusConversa,
+  enviarEmail, enviarWhatsapp, separarCitacao, statusConversa, tamanhoArquivo,
+  type Anexo, type Canal, type Conversa, type ItemConversa, type Mensagem, type MembroRodizio, type StatusConversa,
 } from '@/lib/suporte';
 
 const ENDERECO = 'suporte@iservice.app.br';
 const ATUALIZAR_MS = 30000;
 
+/** Como chamar o contato: nome, e-mail ou o número do WhatsApp. */
+function contatoDe(c: { contato_nome?: string | null; contato_email?: string | null; contato_telefone?: string | null }) {
+  return c.contato_email || (c.contato_telefone ? formatarTelefone(c.contato_telefone) : 'Contato');
+}
+
+function SeloWhatsapp() {
+  return <Selo tom="verde"><MessageCircle size={11} style={{ verticalAlign: '-1px' }} /> WhatsApp</Selo>;
+}
+
 // ------------------------------------------------------------------ lista
 function ItemLista({ c, ativo, mostrarResponsavel, abrir, prazo }: { c: ItemConversa; ativo: boolean; mostrarResponsavel: boolean; abrir: () => void; prazo?: Prazo }) {
-  const nome = c.contato_nome || c.contato_email;
+  const nome = c.contato_nome || contatoDe(c);
   return (
     <button className={`caixa-item ${ativo ? 'ativo' : ''} ${c.nao_lida ? 'nao-lida' : ''}`} onClick={abrir} aria-current={ativo ? 'true' : undefined}>
       <Avatar nome={nome} foto={c.foto_url} tamanho={38} />
@@ -38,6 +47,7 @@ function ItemLista({ c, ativo, mostrarResponsavel, abrir, prazo }: { c: ItemConv
         <span className="caixa-item-previa">{c.ultima_direcao === 'enviada' ? 'Você: ' : ''}{c.previa || 'Sem texto'}</span>
         <span className="caixa-item-rodape">
           <span className="mono">{c.protocolo}</span>
+          {c.canal === 'whatsapp' ? <SeloWhatsapp /> : null}
           <Prazos p={prazo} encerrado={c.status === 'encerrado'} />
           {c.assunto.startsWith('Reclamação pelo site') ? <Selo tom="vermelho">Reclamação · site</Selo> : null}
           {c.usuario_id ? <Selo tom={c.e_profissional ? 'laranja' : 'azul'}>{c.e_profissional ? 'Profissional' : 'Cliente'}</Selo> : null}
@@ -79,8 +89,8 @@ function Original({ id, fechar }: { id: number | null; fechar: () => void }) {
   );
 }
 
-function Balao({ m, contato, reenviar, verOriginal, ocupado }: {
-  m: Mensagem; contato: string; reenviar: (m: Mensagem) => void; verOriginal: (id: number) => void; ocupado: boolean;
+function Balao({ m, contato, whatsapp, reenviar, verOriginal, ocupado }: {
+  m: Mensagem; contato: string; whatsapp: boolean; reenviar: (m: Mensagem) => void; verOriginal: (id: number) => void; ocupado: boolean;
 }) {
   const [mostrarCitacao, setMostrarCitacao] = useState(false);
   const [novo, citado] = useMemo(() => (m.direcao === 'recebida' ? separarCitacao(m.texto ?? '') : [m.texto ?? '', '']), [m]);
@@ -113,7 +123,12 @@ function Balao({ m, contato, reenviar, verOriginal, ocupado }: {
             <button className="caixa-link" disabled={ocupado} onClick={() => reenviar(m)}><RotateCcw size={13} /> Tentar de novo</button>
           </> : m.envio === 'enviando'
             ? <span className="texto-fraco"><Loader2 size={13} className="girar" /> Enviando…</span>
-            : <span className="texto-fraco"><CheckCircle2 size={13} /> Enviado para {m.para?.[0] ?? contato}</span>
+            : whatsapp
+              ? <span className="texto-fraco" title={m.lida_em ? `Lida em ${dataHora(m.lida_em)}` : m.entregue_em ? `Entregue em ${dataHora(m.entregue_em)}` : undefined}>
+                {m.lida_em ? <><CheckCheck size={13} style={{ color: 'var(--azul, #0052CC)' }} /> Lida</>
+                  : m.entregue_em ? <><CheckCheck size={13} /> Entregue</> : <><Check size={13} /> Enviada</>}
+              </span>
+              : <span className="texto-fraco"><CheckCircle2 size={13} /> Enviado para {m.para?.[0] ?? contato}</span>
         ) : null}
         {m.direcao === 'nota' ? <span className="texto-fraco">Só a equipe vê</span> : null}
       </div>
@@ -155,7 +170,13 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
   if (!dados) return <div className="caixa-detalhe">{carregando ? <Carregando /> : null}</div>;
   const c = dados;
   const minha = c.responsavel && c.responsavel === c.eu;
-  const nome = c.pessoa?.nome || c.contato_nome || c.contato_email;
+  const zap = c.canal === 'whatsapp';
+  const contato = contatoDe(c);
+  const nome = c.pessoa?.nome || c.contato_nome || contato;
+  // WhatsApp: texto livre só até 24 h depois da última mensagem do cliente (regra da Meta).
+  const janelaAberta = !zap || (!!c.janela_ate && new Date(c.janela_ate).getTime() > Date.now());
+  const podeResponder = !zap || (!!c.whatsapp_ativo && janelaAberta);
+  const enviarResposta = zap ? enviarWhatsapp : enviarEmail;
 
   const status = async (s: StatusConversa, aviso: string) => {
     if (await executar(() => rpc('admin_suporte_status', { p_id: c.id, p_status: s }), aviso)) { recarregar(); mudou(); }
@@ -179,9 +200,9 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         await rpc('admin_suporte_nota', { p_id: c.id, p_texto: t });
         avisar('Nota salva. Só a equipe vê.');
       } else {
-        await enviarEmail({ conversa_id: c.id, texto: t });
+        await enviarResposta({ conversa_id: c.id, texto: t });
         if (encerrar) await rpc('admin_suporte_status', { p_id: c.id, p_status: 'encerrado' });
-        avisar(encerrar ? 'Resposta enviada e conversa encerrada.' : `Resposta enviada para ${c.contato_email}.`);
+        avisar(encerrar ? 'Resposta enviada e conversa encerrada.' : `Resposta enviada para ${contato}${zap ? ' pelo WhatsApp' : ''}.`);
       }
       setTexto('');
     } catch (e) {
@@ -194,7 +215,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
     }
   };
   const reenviar = async (m: Mensagem) => {
-    if (await executar(() => enviarEmail({ reenviar: m.id }), 'Resposta enviada.')) mudou();
+    if (await executar(() => enviarResposta({ reenviar: m.id }), 'Resposta enviada.')) mudou();
     recarregar();
   };
 
@@ -205,7 +226,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
         <div style={{ minWidth: 0, flex: 1 }}>
           <h2>{c.assunto}</h2>
           <p>
-            <span className="mono">{c.protocolo}</span> · {nome}{nome !== c.contato_email ? <> &lt;{c.contato_email}&gt;</> : null}
+            <span className="mono">{c.protocolo}</span>{zap ? <> · <SeloWhatsapp /></> : null} · {nome}{nome !== contato ? <> {zap ? contato : <>&lt;{contato}&gt;</>}</> : null}
             {c.pessoa ? <> · <Link href={`/pessoa/?id=${c.pessoa.id}`}>ver cadastro ({c.pessoa.e_profissional ? 'profissional' : 'cliente'}, {c.pessoa.pedidos} {c.pessoa.pedidos === 1 ? 'pedido' : 'pedidos'})</Link></> : <> · sem conta no app</>}
             {c.outras ? <> · {c.outras} {c.outras === 1 ? 'outra conversa' : 'outras conversas'}</> : null}
           </p>
@@ -235,7 +256,7 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
       </div>
 
       <div className="caixa-mensagens">
-        {c.mensagens.map((m) => <Balao key={m.id} m={m} contato={c.contato_email} reenviar={reenviar} verOriginal={setOriginal} ocupado={ocupado} />)}
+        {c.mensagens.map((m) => <Balao key={m.id} m={m} contato={contato} whatsapp={zap} reenviar={reenviar} verOriginal={setOriginal} ocupado={ocupado} />)}
         <div ref={fim} />
       </div>
 
@@ -247,23 +268,34 @@ function Detalhe({ id, equipe, voltar, mudou }: { id: number; equipe: MembroRodi
             <MessageSquareText size={14} /> Respostas prontas
           </button>
           <span className="espaco" />
-          <span className="texto-fraco" style={{ fontSize: 12 }}>{modo === 'responder' ? `Para ${c.contato_email}` : 'O cliente não vê'}</span>
+          <span className="texto-fraco" style={{ fontSize: 12 }}>{modo === 'responder' ? `Para ${contato}${zap ? ' (WhatsApp)' : ''}` : 'O cliente não vê'}</span>
         </div>
-        <textarea className="entrada" value={texto} onChange={(e) => setTexto(e.target.value)} rows={4} maxLength={20000}
+        {zap && modo === 'responder' && !c.whatsapp_ativo ? (
+          <div className="alerta-faixa laranja" style={{ margin: '0 0 8px' }}><AlertTriangle />
+            <div>O WhatsApp do atendimento ainda não foi ligado. Dá para ler e fazer notas; responder entra no ar depois do CNPJ e da verificação na Meta.</div></div>
+        ) : zap && modo === 'responder' && !janelaAberta ? (
+          <div className="alerta-faixa laranja" style={{ margin: '0 0 8px' }}><Clock />
+            <div>Passaram 24 horas desde a última mensagem do cliente. Pela regra do WhatsApp, só dá para responder quando ele escrever de novo.
+              {c.pessoa?.id || c.contato_email ? ' Se for urgente, mande um e-mail.' : ''}</div></div>
+        ) : zap && modo === 'responder' && c.janela_ate ? (
+          <div className="texto-fraco" style={{ fontSize: 12, margin: '0 0 6px' }}><Clock size={12} style={{ verticalAlign: '-2px' }} /> Pode responder até {dataHora(c.janela_ate)}.</div>
+        ) : null}
+        <textarea className="entrada" value={texto} onChange={(e) => setTexto(e.target.value)} rows={4} maxLength={zap && modo === 'responder' ? 4000 : 20000}
+          disabled={modo === 'responder' && !podeResponder}
           aria-label={modo === 'responder' ? 'Sua resposta' : 'Nota interna'}
           placeholder={modo === 'responder' ? `Olá, ${(nome.split(/[\s@]/)[0] || '').replace(/^./, (x) => x.toUpperCase())}! …` : 'Anote o que a equipe precisa saber sobre este atendimento.'}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); enviar(); } }} />
         <div className="linha-flex">
           <span className="texto-fraco" style={{ fontSize: 12 }}>
-            {modo === 'responder' ? <>Sai de {ENDERECO} com a sua assinatura{c.status === 'aberto' ? ' e a conversa passa para Em atendimento' : ''}. Ctrl+Enter envia.</> : 'Ctrl+Enter salva.'}
+            {modo === 'responder' ? <>{zap ? 'Sai pelo WhatsApp do atendimento' : <>Sai de {ENDERECO} com a sua assinatura</>}{c.status === 'aberto' ? ' e a conversa passa para Em atendimento' : ''}. Ctrl+Enter envia.</> : 'Ctrl+Enter salva.'}
           </span>
           <span className="espaco" />
           {modo === 'responder' && c.status !== 'encerrado' ? (
-            <button className="botao contorno" disabled={enviando || !texto.trim()} onClick={() => enviar(true)}>
+            <button className="botao contorno" disabled={enviando || !texto.trim() || !podeResponder} onClick={() => enviar(true)}>
               Enviar e encerrar
             </button>
           ) : null}
-          <button className="botao primario" disabled={enviando || !texto.trim()} onClick={() => enviar()}>
+          <button className="botao primario" disabled={enviando || !texto.trim() || (modo === 'responder' && !podeResponder)} onClick={() => enviar()}>
             {enviando ? <Loader2 className="girar" /> : modo === 'responder' ? <Send /> : <StickyNote />} {modo === 'responder' ? 'Enviar' : 'Salvar nota'}
           </button>
         </div>
@@ -388,6 +420,7 @@ function Pagina() {
   const aberta = Number(params.get('id')) || null;
   const [status, setStatus] = useState<StatusConversa>('aberto');
   const [quem, setQuem] = useState<Quem>('meus');
+  const [canal, setCanal] = useState<Canal | 'todos'>('todos');
   const [busca, setBusca] = useState('');
   const [buscaAtiva, setBuscaAtiva] = useState('');
   const [limite, setLimite] = useState(50);
@@ -395,11 +428,13 @@ function Pagina() {
   const [novo, setNovo] = useState(false);
 
   useEffect(() => { const t = setTimeout(() => setBuscaAtiva(busca.trim()), 350); return () => clearTimeout(t); }, [busca]);
-  useEffect(() => setLimite(50), [status, quem, buscaAtiva]);
+  useEffect(() => setLimite(50), [status, quem, buscaAtiva, canal]);
 
   const lista = useCarregar(() => rpc<ItemConversa[]>('admin_suporte_conversas', {
     p_status: buscaAtiva ? 'todos' : status, p_quem: quem, p_busca: buscaAtiva || null, p_limite: limite,
-  }), [status, quem, buscaAtiva, limite]);
+    // Só manda o canal quando filtra: a lista continua abrindo antes do SQL do WhatsApp.
+    ...(canal !== 'todos' ? { p_canal: canal } : {}),
+  }), [status, quem, buscaAtiva, limite, canal]);
   const equipe = useCarregar(() => rpc<MembroRodizio[]>('admin_suporte_equipe'), []);
 
   const recarregarLista = lista.recarregar;
@@ -427,7 +462,9 @@ function Pagina() {
           A caixa do <strong>{ENDERECO}</strong>. Cada e-mail novo vai para uma pessoa da equipe, em rodízio.<br />
           <strong>Em aberto:</strong> ninguém respondeu ainda. <strong>Em atendimento:</strong> já respondido, esperando o cliente.
           <strong> Encerrado:</strong> resolvido (se a pessoa responder, volta a abrir).<br />
-          Use <strong>Respostas prontas</strong> para os assuntos que se repetem, e <strong>Nota interna</strong> para recados que o cliente não vê.
+          Use <strong>Respostas prontas</strong> para os assuntos que se repetem, e <strong>Nota interna</strong> para recados que o cliente não vê.<br />
+          <strong>WhatsApp:</strong> as mensagens do WhatsApp do atendimento entram aqui também, com o selo verde, no mesmo rodízio. Pela regra do WhatsApp,
+          dá para responder até 24 horas depois da última mensagem do cliente. Ligações continuam no celular.
         </>}
         texto={<>Tudo o que chega em <strong>{ENDERECO}</strong> e as respostas aos e-mails automáticos. Cada e-mail novo vai para uma pessoa da equipe, em rodízio.</>}
         acoes={<>
@@ -455,9 +492,14 @@ function Pagina() {
           <option value="sem_responsavel">Sem responsável</option>
           {(todos ? equipe.dados ?? [] : []).filter((m) => m.ativo && !m.voce).map((m) => <option key={m.email} value={m.email}>{m.nome}</option>)}
         </select>
+        <select className="entrada" value={canal} onChange={(ev) => setCanal(ev.target.value as Canal | 'todos')} aria-label="Canal">
+          <option value="todos">E-mail e WhatsApp</option>
+          <option value="email">Só e-mail</option>
+          <option value="whatsapp">Só WhatsApp</option>
+        </select>
         <div className="busca">
           <Search />
-          <input className="entrada" type="search" value={busca} onChange={(ev) => setBusca(ev.target.value)} placeholder="Buscar por nome, e-mail, assunto ou protocolo" aria-label="Buscar e-mails" />
+          <input className="entrada" type="search" value={busca} onChange={(ev) => setBusca(ev.target.value)} placeholder="Buscar por nome, e-mail, celular, assunto ou protocolo" aria-label="Buscar conversas" />
         </div>
       </div>
 

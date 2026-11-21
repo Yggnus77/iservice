@@ -446,3 +446,6 @@ verify_jwt = false
 
 [functions.responder-suporte]
 verify_jwt = false
+
+[functions.whatsapp]
+verify_jwt = false
