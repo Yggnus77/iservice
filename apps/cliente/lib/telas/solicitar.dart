@@ -62,14 +62,14 @@ class _TelaSolicitarState extends ConsumerState<TelaSolicitar> {
   }
 
   Future<void> _escolherHorario(PerfilProfissional pro, int diasMax) async {
-    final ocupados = await ref.read(pedidosRepo).horariosOcupados(pro.id).catchError((_) => <DateTime>[]);
+    final agenda = await ref.read(pedidosRepo).agenda(pro.id).catchError((_) => AgendaProfissional.vazia);
     if (!mounted) return;
     final h = await escolherHorarioAgenda(
       context,
       diasMax: diasMax,
       titulo: 'Agendar com ${primeiroNome(pro.nome)}',
-      subtitulo: 'Escolha um dia nos próximos $diasMax dias. ${primeiroNome(pro.nome)} confirma ou sugere outro horário.',
-      ocupados: ocupados,
+      subtitulo: 'Escolha um dia nos próximos $diasMax dias, entre os horários livres. ${primeiroNome(pro.nome)} confirma ou sugere outro horário.',
+      agenda: agenda,
       inicial: _combinado,
       rotuloConfirmar: 'Escolher',
     );

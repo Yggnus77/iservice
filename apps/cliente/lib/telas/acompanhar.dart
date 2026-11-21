@@ -95,7 +95,45 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         context.pushReplacement('/profissao/${p.profissaoId}/lista?excluir=${p.outraParteId ?? ''}');
       });
 
+  Future<void> _remarcar() async {
+    final ok = await pedirRemarcacao(context, ref, p, profissionalId: p.outraParteId!, souProfissional: false);
+    if (ok) ref.invalidate(pedidosClienteProvider);
+  }
+
   Future<void> _cancelar() async {
+    // Em cima da hora (ou com o profissional a caminho): avisa antes e oferece remarcar.
+    if (p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho) {
+      final previa = await ref.read(pedidosRepo).previaCancelamento(p.id).catchError((_) => const PreviaCancelamento(emCima: false, aCaminho: false, horas: 2, taxa: 0, podeRemarcar: false));
+      if (!mounted) return;
+      if (previa.emCima) {
+        final nome = primeiroNome(p.outraParteNome ?? 'O profissional');
+        final escolha = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Cancelar em cima da hora?'),
+            content: Text([
+              if (previa.aCaminho) '$nome já está a caminho do seu endereço.' else 'Falta menos de ${previa.horas} horas para o atendimento e $nome já reservou esse horário para você.',
+              if (previa.taxa > 0) 'Se cancelar agora, o deslocamento (${reais(previa.taxa)}) fica com $nome e o restante volta para você.',
+              if (previa.podeRemarcar) 'Se o problema é o horário, você pode remarcar sem custo.',
+            ].join('\n\n')),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Voltar')),
+              if (previa.podeRemarcar) TextButton(onPressed: () => Navigator.pop(ctx, 'remarcar'), child: const Text('Remarcar')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'cancelar'),
+                style: TextButton.styleFrom(foregroundColor: Cores.perigo),
+                child: const Text('Cancelar mesmo assim'),
+              ),
+            ],
+          ),
+        );
+        if (escolha == 'remarcar') {
+          await _remarcar();
+          return;
+        }
+        if (escolha != 'cancelar' || !mounted) return;
+      }
+    }
     final motivo = await showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -216,6 +254,10 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
             ),
           ),
         ],
+        if (p.remarcacaoPendente) ...[
+          const SizedBox(height: 16),
+          CartaoRemarcacao(p: p, aoMudar: () => ref.invalidate(pedidosClienteProvider)),
+        ],
         for (final g in ref.watch(pagamentosDoPedidoProvider(p.id)).value ?? const <PagamentoPedido>[])
           if (g.aguardando && p.status != StatusPedido.cancelado) ...[const SizedBox(height: 16), _CartaoPagar(g: g)],
         if (p.status == StatusPedido.aCaminho) ...[
@@ -264,10 +306,16 @@ class _ConteudoState extends ConsumerState<_Conteudo> {
         if (p.taxaForaHorario > 0) _Linha(Symbols.nights_stay_rounded, 'Fora do horário comercial', '+ ${reais(p.taxaForaHorario)}'),
         if (p.taxaServico > 0) _Linha(Symbols.receipt_long_rounded, 'Taxa de serviço', '+ ${reais(p.taxaServico)}'),
         if (p.valorCobrado != null) _Linha(Symbols.payments_rounded, 'Valor cobrado', reais(p.valorCobrado)),
+        if (p.clienteAusente) const _Linha(Symbols.person_off_rounded, 'Encerrado', 'O profissional não encontrou você no local'),
+        if (p.taxaCancelamento > 0) _Linha(Symbols.directions_car_rounded, 'Deslocamento do profissional', reais(p.taxaCancelamento)),
         const SizedBox(height: 16),
         if (ativo) ...[
           OutlinedButton.icon(onPressed: _ocupado ? null : _compartilhar, icon: const Icon(Symbols.share_location_rounded), label: const Text('Compartilhar acompanhamento ao vivo')),
           const SizedBox(height: 10),
+        ],
+        if (p.podeRemarcar && p.outraParteId != null) ...[
+          OutlinedButton.icon(onPressed: _ocupado ? null : _remarcar, icon: const Icon(Symbols.edit_calendar_rounded), label: const Text('Remarcar')),
+          const SizedBox(height: 4),
         ],
         if (p.status == StatusPedido.solicitado || p.status == StatusPedido.aceito || p.status == StatusPedido.aCaminho)
           if (!p.aguardandoCliente)

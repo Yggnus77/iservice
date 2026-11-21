@@ -336,11 +336,15 @@ class ProfissionalResumo {
     this.especialidades = const [],
     this.favorito = false,
     this.faseLancamento = false,
+    this.ocupado = false,
   });
   final String id;
   final String nome;
   final String? fotoUrl;
   final String? profissaoId;
+
+  /// Atendendo agora: aparece no fim da busca, só para agendar.
+  final bool ocupado;
   final double notaMedia;
   final int totalAvaliacoes;
   final int servicosConcluidos;
@@ -371,6 +375,7 @@ class ProfissionalResumo {
         favorito: j['favorito'] ?? false,
         faseLancamento: j['fase_lancamento'] ?? false,
         posicao: j['posicao'] ?? 0,
+        ocupado: j['ocupado'] ?? false,
       );
 }
 
@@ -616,6 +621,13 @@ class Pedido {
     this.aCaminhoEm,
     this.iniciadoEm,
     this.minutosTrabalhados,
+    this.remarcarPara,
+    this.remarcarPor,
+    this.remarcarAte,
+    this.remarcacoes = 0,
+    this.taxaCancelamento = 0,
+    this.canceladoEmCima = false,
+    this.clienteAusente = false,
   });
   final String id;
   final String codigo;
@@ -662,6 +674,26 @@ class Pedido {
 
   /// Tempo de trabalho registrado pelo banco ao concluir.
   final int? minutosTrabalhados;
+
+  /// Pedido de remarcação de um agendamento confirmado: novo horário, quem pediu e o prazo.
+  final DateTime? remarcarPara;
+  final String? remarcarPor;
+  final DateTime? remarcarAte;
+
+  /// Quantas vezes o agendamento já foi remarcado.
+  final int remarcacoes;
+
+  /// Deslocamento que ficou com o profissional (cancelamento em cima da hora ou cliente ausente).
+  final double taxaCancelamento;
+  final bool canceladoEmCima;
+  final bool clienteAusente;
+
+  /// Há um pedido de remarcação esperando resposta.
+  bool get remarcacaoPendente => remarcarPara != null && remarcarAte != null && remarcarAte!.isAfter(DateTime.now());
+
+  /// Agendamento confirmado que ainda dá para remarcar.
+  bool get podeRemarcar =>
+      status == StatusPedido.aceito && agendado && combinadoPara!.isAfter(DateTime.now()) && !remarcacaoPendente;
 
   /// Quando o relógio do trabalho começa: no aceite (agora/hoje) ou ao sair
   /// para o endereço (agendados). Mesma regra de public.inicio_do_trabalho.
@@ -756,6 +788,13 @@ class Pedido {
         aCaminhoEm: _data(j['a_caminho_em']),
         iniciadoEm: _data(j['iniciado_em']),
         minutosTrabalhados: (j['minutos_trabalhados'] as num?)?.toInt(),
+        remarcarPara: _data(j['remarcar_para']),
+        remarcarPor: j['remarcar_por'],
+        remarcarAte: _data(j['remarcar_ate']),
+        remarcacoes: (j['remarcacoes'] as num?)?.toInt() ?? 0,
+        taxaCancelamento: _d(j['taxa_cancelamento']),
+        canceladoEmCima: j['cancelado_em_cima'] ?? false,
+        clienteAusente: j['cliente_ausente'] ?? false,
       );
 }
 
@@ -974,5 +1013,119 @@ class Recebimento {
         servico: j['servico'],
         cliente: j['cliente'],
         complemento: j['tipo'] == 'complemento',
+      );
+}
+
+
+/// Período bloqueado na agenda do profissional (folga, almoço, compromisso).
+class BloqueioAgenda {
+  const BloqueioAgenda({required this.inicio, required this.fim, this.id, this.motivo = ''});
+  final int? id;
+  final DateTime inicio;
+  final DateTime fim;
+  final String motivo;
+
+  factory BloqueioAgenda.fromJson(Map<String, dynamic> j) => BloqueioAgenda(
+        id: (j['id'] as num?)?.toInt(),
+        inicio: DateTime.parse(j['inicio']).toLocal(),
+        fim: DateTime.parse(j['fim']).toLocal(),
+        motivo: j['motivo'] ?? '',
+      );
+}
+
+/// Expediente de um dia da semana, em minutos desde a meia-noite.
+class Expediente {
+  const Expediente(this.inicio, this.fim);
+  final int inicio;
+  final int fim;
+
+  static int _min(String hhmm) {
+    final p = hhmm.split(':');
+    return int.parse(p[0]) * 60 + int.parse(p[1]);
+  }
+
+  static String texto(int minutos) => '${(minutos ~/ 60).toString().padLeft(2, '0')}:${(minutos % 60).toString().padLeft(2, '0')}';
+
+  String get descricao => '${texto(inicio)} às ${texto(fim)}';
+}
+
+/// Agenda de um profissional: expediente por dia da semana (vazio = qualquer horário),
+/// bloqueios e horários já marcados.
+class AgendaProfissional {
+  const AgendaProfissional({this.expediente = const {}, this.bloqueios = const [], this.ocupados = const []});
+
+  /// Dia da semana como no banco: 0 = domingo ... 6 = sábado.
+  final Map<int, Expediente> expediente;
+  final List<BloqueioAgenda> bloqueios;
+  final List<DateTime> ocupados;
+
+  static const vazia = AgendaProfissional();
+
+  bool get temExpediente => expediente.isNotEmpty;
+
+  /// Dia da semana do banco (0 = domingo) a partir de um DateTime.
+  static int diaDaSemana(DateTime d) => d.weekday % 7;
+
+  /// Expediente do dia, ou null quando não trabalha. Sem expediente salvo: 7h às 21h.
+  Expediente? expedienteDo(DateTime dia) =>
+      temExpediente ? expediente[diaDaSemana(dia)] : const Expediente(7 * 60, 21 * 60);
+
+  bool dentroDoExpediente(DateTime h) {
+    if (!temExpediente) return true;
+    final e = expediente[diaDaSemana(h)];
+    final m = h.hour * 60 + h.minute;
+    return e != null && m >= e.inicio && m < e.fim;
+  }
+
+  bool bloqueado(DateTime h) => bloqueios.any((b) => h.isAfter(b.inicio.subtract(const Duration(hours: 1))) && h.isBefore(b.fim));
+
+  bool ocupado(DateTime h) => ocupados.any((o) => h.difference(o).inMinutes.abs() < 60);
+
+  /// Bloqueios que tocam o dia.
+  List<BloqueioAgenda> bloqueiosDo(DateTime dia) {
+    final ini = DateTime(dia.year, dia.month, dia.day);
+    final fim = ini.add(const Duration(days: 1));
+    return [for (final b in bloqueios) if (b.inicio.isBefore(fim) && b.fim.isAfter(ini)) b];
+  }
+
+  /// O dia inteiro está fechado (sem expediente ou bloqueado de ponta a ponta).
+  bool diaFechado(DateTime dia) {
+    final e = expedienteDo(dia);
+    if (e == null) return true;
+    final ini = DateTime(dia.year, dia.month, dia.day).add(Duration(minutes: e.inicio));
+    final fim = DateTime(dia.year, dia.month, dia.day).add(Duration(minutes: e.fim));
+    return bloqueios.any((b) => !b.inicio.isAfter(ini) && !b.fim.isBefore(fim));
+  }
+
+  factory AgendaProfissional.fromJson(Map<String, dynamic> j) => AgendaProfissional(
+        expediente: {
+          for (final h in (j['horario'] as List? ?? const []))
+            (h['dia'] as num).toInt(): Expediente(Expediente._min(h['inicio']), Expediente._min(h['fim'])),
+        },
+        bloqueios: [for (final b in (j['bloqueios'] as List? ?? const [])) BloqueioAgenda.fromJson(b as Map<String, dynamic>)],
+        ocupados: [for (final o in (j['ocupados'] as List? ?? const [])) DateTime.parse(o as String).toLocal()],
+      );
+
+  /// Sem um horário (o do próprio pedido, ao remarcar).
+  AgendaProfissional sem(DateTime? horario) => horario == null
+      ? this
+      : AgendaProfissional(expediente: expediente, bloqueios: bloqueios, ocupados: [for (final o in ocupados) if (!o.isAtSameMomentAs(horario)) o]);
+}
+
+/// Resposta de previa_cancelamento.
+class PreviaCancelamento {
+  const PreviaCancelamento({required this.emCima, required this.aCaminho, required this.horas, required this.taxa, required this.podeRemarcar});
+  final bool emCima;
+  final bool aCaminho;
+  final int horas;
+  final double taxa;
+  final bool podeRemarcar;
+
+  factory PreviaCancelamento.fromJson(Map<String, dynamic> j) => PreviaCancelamento(
+        emCima: j['em_cima'] ?? false,
+        aCaminho: j['a_caminho'] ?? false,
+        horas: (j['horas'] as num?)?.toInt() ?? 2,
+        taxa: _d(j['taxa']),
+        podeRemarcar: j['pode_remarcar'] ?? false,
       );
 }

@@ -146,11 +146,26 @@ class _TelaListaProfissionaisState extends ConsumerState<TelaListaProfissionais>
                       sliver: SliverList.separated(
                         itemCount: l.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => CartaoProfissional(
-                          p: l[i],
-                          preco: precos[l[i].id],
-                          aoTocar: () => context.push('/profissional/${l[i].id}?profissao=${widget.profissaoId}'),
-                        ),
+                        itemBuilder: (_, i) {
+                          final cartao = CartaoProfissional(
+                            p: l[i],
+                            preco: precos[l[i].id],
+                            aoTocar: () => context.push('/profissional/${l[i].id}?profissao=${widget.profissaoId}'),
+                          );
+                          // Quem está atendendo agora vem no fim, para quem prefere esperar e agendar.
+                          if (!l[i].ocupado || (i > 0 && l[i - 1].ocupado)) return cartao;
+                          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                            Padding(
+                              padding: EdgeInsets.only(top: i == 0 ? 0 : 8, bottom: 10),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(i == 0 ? 'Todos estão atendendo agora' : 'Ocupados agora', style: t.titleSmall),
+                                const SizedBox(height: 2),
+                                Text('Quer esperar por um deles? Agende um dia e horário livre na agenda dele.', style: t.bodySmall),
+                              ]),
+                            ),
+                            cartao,
+                          ]);
+                        },
                       ),
                     ),
                   ],

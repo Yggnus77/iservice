@@ -525,6 +525,59 @@ class PedidosRepo {
         return [for (final l in r as List) DateTime.parse(l['inicio'] as String).toLocal()];
       });
 
+  /// Agenda de um profissional (expediente, bloqueios e horários marcados) para escolher horário.
+  Future<AgendaProfissional> agenda(String profissionalId) => _tentar(() async {
+        final r = await _db.rpc('agenda_profissional', params: {'p_profissional': profissionalId});
+        return r == null ? AgendaProfissional.vazia : AgendaProfissional.fromJson(r as Map<String, dynamic>);
+      });
+
+  /// Salva o horário de trabalho (dia 0 = domingo). Mapa vazio volta ao padrão (qualquer horário).
+  Future<void> salvarExpediente(Map<int, Expediente> expediente) => _tentar(() => _db.rpc('salvar_horario_trabalho', params: {
+        'p_horario': [
+          for (final e in expediente.entries) {'dia': e.key, 'inicio': Expediente.texto(e.value.inicio), 'fim': Expediente.texto(e.value.fim)},
+        ],
+      }));
+
+  /// Bloqueia um período da agenda. Devolve quantos atendimentos confirmados caem nele.
+  Future<int> bloquear(DateTime inicio, DateTime fim, {String motivo = ''}) => _tentar(() async {
+        final r = await _db.rpc('bloquear_horario', params: {
+          'p_inicio': inicio.toUtc().toIso8601String(),
+          'p_fim': fim.toUtc().toIso8601String(),
+          'p_motivo': motivo,
+        });
+        return ((r as Map)['conflitos'] as num?)?.toInt() ?? 0;
+      });
+
+  Future<void> desbloquear(int id) => _tentar(() => _db.rpc('desbloquear_horario', params: {'p_id': id}));
+
+  /// Pede para remarcar um agendamento confirmado; a outra pessoa confirma.
+  Future<Pedido> remarcar(String pedidoId, DateTime para) => _tentar(() async {
+        final r = await _db.rpc('remarcar_pedido', params: {'p_pedido': pedidoId, 'p_para': para.toUtc().toIso8601String()});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
+  Future<Pedido> responderRemarcacao(String pedidoId, {required bool aceitar}) => _tentar(() async {
+        final r = await _db.rpc('responder_remarcacao', params: {'p_pedido': pedidoId, 'p_aceitar': aceitar});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
+  Future<Pedido> desistirRemarcacao(String pedidoId) => _tentar(() async {
+        final r = await _db.rpc('desistir_remarcacao', params: {'p_pedido': pedidoId});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
+  /// Antes de o cliente cancelar: é em cima da hora? Quanto fica com o profissional?
+  Future<PreviaCancelamento> previaCancelamento(String pedidoId) => _tentar(() async {
+        final r = await _db.rpc('previa_cancelamento', params: {'p_pedido': pedidoId});
+        return PreviaCancelamento.fromJson(r as Map<String, dynamic>);
+      });
+
+  /// O profissional chegou e o cliente não estava (depois da tolerância).
+  Future<Pedido> clienteAusente(String pedidoId) => _tentar(() async {
+        final r = await _db.rpc('marcar_cliente_ausente', params: {'p_pedido': pedidoId});
+        return Pedido.daTabela(r as Map<String, dynamic>);
+      });
+
   Future<Pedido> avancar(String pedidoId, StatusPedido status, {double? valor, String? formaPagamento}) => _tentar(() async {
         final r = await _db.rpc('avancar_pedido', params: {
           'p_pedido': pedidoId,
